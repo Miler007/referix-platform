@@ -739,8 +739,75 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { document.getElementById('search-modal').classList.add('hidden'); document.getElementById('search-modal').classList.remove('flex'); }
 });
 
+// ─── API CLIENT ──────────────────────────────────────────────────────
+// Connected to the Cloudflare Workers API when deployed.
+// Falls back to mock data when running standalone.
+
+const API = {
+  base: 'https://referix-api.reto-diario.workers.dev',
+  headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'demo-tenant' },
+
+  async get(path) {
+    try {
+      const res = await fetch(`${this.base}${path}`, { headers: this.headers });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      return json.data;
+    } catch (e) {
+      console.log(`[API] Fallback para GET ${path}: ${e.message}`);
+      return null;
+    }
+  },
+
+  async post(path, body) {
+    try {
+      const res = await fetch(`${this.base}${path}`, { method: 'POST', headers: this.headers, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      return json.data;
+    } catch (e) {
+      console.log(`[API] Fallback para POST ${path}: ${e.message}`);
+      return null;
+    }
+  },
+
+  async login(email, password) {
+    return this.post('/api/v1/auth/login', { email, password });
+  },
+
+  async getDashboard() {
+    return this.get('/api/v1/dashboard');
+  },
+
+  async createReferral(data) {
+    return this.post('/api/v1/referrals', data);
+  },
+
+  async getReferrals(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.get(`/api/v1/referrals${qs ? '?' + qs : ''}`);
+  },
+
+  async checkCoverage(address, lat, lng) {
+    return this.post('/api/v1/coverage/check', { address, latitude: lat, longitude: lng });
+  },
+
+  async getCommissions(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.get(`/api/v1/commissions${qs ? '?' + qs : ''}`);
+  },
+
+  async getWallet(referrerId) {
+    return this.get(`/api/v1/wallet?referrerId=${referrerId}`);
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
+  // Try to load real data on dashboard
+  API.getDashboard().then(data => {
+    if (data) console.log('[API] Dashboard data loaded:', data);
+  });
 });
 </script>
 </body>

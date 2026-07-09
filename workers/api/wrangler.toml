@@ -1,0 +1,12 @@
+name = "referix-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-16"
+
+[[d1_databases]]
+binding = "REFERIX_DB"
+database_name = "referix-db"
+database_id = "dba85f96-af98-4f75-b08a-976c87ef1468"
+
+# KV Namespace - opcional, se crea cuando sea necesario
+# [[kv_namespaces]]
+# binding = "REFERIX_KV"
