@@ -6,276 +6,323 @@
 <title>Referix — Ventas</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = { theme: { extend: { colors: { primary: { 500: '#0066FF', 600: '#0052CC' }, success: { 500: '#10B981', 600: '#059669' } } } } };
+tailwind.config={theme:{extend:{colors:{primary:{50:'#EFF6FF',100:'#DBEAFE',500:'#0066FF',600:'#0052CC'},success:{500:'#10B981',600:'#059669'}}}}};
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-.slide-in { animation: slideIn 0.3s ease-out; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.card-hover { transition: all 0.2s; }
-.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); }
+*{font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card-hover{transition:all .2s}.card-hover:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.06)}
+.line-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 </style>
 </head>
-<body class="bg-neutral-50">
-
+<body class="bg-neutral-100">
 <div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm relative"></div>
 
 <script>
-const API = {
-  base: 'https://referix-api.reto-diario.workers.dev',
-  headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'interplay' },
-  async get(path) { try { const r = await fetch(this.base+path, {headers:this.headers}); if(!r.ok) return null; return (await r.json()).data; } catch(e){return null} },
-  async post(path, body) { try { const r = await fetch(this.base+path, {method:'POST', headers:this.headers, body:JSON.stringify(body)}); if(!r.ok) return null; return (await r.json()).data; } catch(e){return null} },
-};
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
+  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}},
+  async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});return(await r.json()).data}catch{return null}}};
+// ── State ─────────────────────────────────────────────────────────
+let view='dashboard',zoneList=[],zoneData=[],plans=[],selectedPlan=null,clientType='RESIDENTIAL',form={},docs={cc:false,recibo:false};
+let salespersonName='Carlos',salesCount=18,salesGoal=25,estimatedCommission=1320000;
+const DEVICE_RECOMMENDATIONS={'50':{max:5,label:'Hasta 5 dispositivos','ideal':'Navegación y redes'},'100':{max:10,label:'Hasta 10 dispositivos','ideal':'Streaming 4K y teletrabajo'},'200':{max:20,label:'Más de 20 dispositivos','ideal':'Hogar inteligente y gaming'}};
 
-// ─── STATE ──────────────────────────────────────────────────────────
-let step = 1;
-let zones = [];
-let selectedZone = null;
-let selectedTech = null;
-let plans = [];
-let selectedPlan = null;
-let clientType = 'RESIDENTIAL';
-let form = { name:'', doc:'', phone:'', email:'', address:'' };
-let docs = { cc: false, recibo: false };
+// ── Init ──────────────────────────────────────────────────────────
+(async()=>{zoneData=await API.get('/api/v2/catalog/zones')||[];zoneList=[...new Map(zoneData.map(z=>[z.name,z])).values()];render();})();
 
-// ─── INIT ───────────────────────────────────────────────────────────
-async function init() {
-  const z = await API.get('/api/v2/catalog/zones');
-  if (z) zones = z;
-  render();
-}
-init();
-
-function render() {
-  const app = document.getElementById('app');
-  if (step === 1) app.innerHTML = renderZoneSelect();
-  else if (step === 2) app.innerHTML = renderTechSelect();
-  else if (step === 3) app.innerHTML = renderPlans();
-  else if (step === 4) app.innerHTML = renderClientForm();
-  else if (step === 5) app.innerHTML = renderDocs();
-  else if (step === 6) app.innerHTML = renderConfirm();
-  else if (step === 99) app.innerHTML = renderSuccess();
+// ── Router ─────────────────────────────────────────────────────────
+function render(){
+  const el=document.getElementById('app');
+  el.innerHTML={
+    dashboard:renderDashboard(),
+    coverage:renderCoverage(),
+    plans:renderPlans(),
+    form:renderForm(),
+    docs:renderDocs(),
+    confirm:renderConfirm(),
+    success:renderSuccess(),
+    clientSearch:renderClientSearch()
+  }[view]||renderDashboard();
 }
 
-// ─── STEP 1: ZONE ──────────────────────────────────────────────────
-function renderZoneSelect() {
-  const uniqueZones = [...new Map(zones.map(z => [z.name, z])).values()];
-  return `
-    <div class="p-5 slide-in">
-      <div class="text-center mb-6 pt-4">
-        <div class="w-14 h-14 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">R</div>
-        <h1 class="text-xl font-bold text-neutral-900">Nueva venta</h1>
-        <p class="text-sm text-neutral-500 mt-1">Paso 1: ¿Dónde está el cliente?</p>
-      </div>
-      <div class="space-y-2">
-        ${uniqueZones.map(z => `
-          <button onclick="selectZone('${z.zone_id}','${z.name}')" class="w-full text-left flex items-center gap-4 rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400 transition-all">
-            <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-lg">📍</div>
-            <div><p class="font-semibold text-neutral-900">${z.name}</p>
-            <p class="text-xs text-neutral-500">${zones.filter(t=>t.name===z.name).map(t=>t.technology).join(', ')}</p></div>
-          </button>`).join('')}
-      </div>
-    </div>`;
+// ═══════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const opps=['Juan Pérez - Cotización','María García - Seguimiento','Carlos Ruiz - Instalación'];
+  return `<div class="p-5 slide-in">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-xl font-bold text-primary-600">${salespersonName[0]}</div>
+      <div><h1 class="text-lg font-bold">Hola, ${salespersonName} 👋</h1><p class="text-sm text-neutral-500">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 mb-5">
+      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Ventas</p><p class="text-2xl font-bold text-primary-600">${salesCount}</p><p class="text-[10px] text-neutral-400">del mes</p></div>
+      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Meta</p><p class="text-2xl font-bold text-neutral-900">${salesGoal}</p><p class="text-[10px] text-neutral-400">${salesGoal-salesCount} restan</p></div>
+      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Comisión</p><p class="text-2xl font-bold text-success-600">$${(estimatedCommission/1000).toFixed(0)}K</p><p class="text-[10px] text-neutral-400">estimada</p></div>
+    </div>
+    <div class="h-2 bg-neutral-100 rounded-full mb-5 overflow-hidden"><div class="h-full bg-primary-500 rounded-full transition-all" style="width:${(salesCount/salesGoal*100)}%"></div></div>
+    <button onclick="initCoverage()" class="w-full rounded-xl bg-primary-500 text-white py-4 text-lg font-semibold shadow-lg mb-5 hover:bg-primary-600 active:scale-[0.98] transition-all">📝 Nueva venta</button>
+
+    ${/* Opportunidades */''}
+    <div class="mb-5"><h2 class="text-sm font-semibold text-neutral-700 mb-3">📋 Tus oportunidades</h2>
+      ${opps.map((o,i)=>`<div class="flex items-center gap-3 rounded-xl bg-white border p-3 mb-2 card-hover">
+        <div class="w-9 h-9 rounded-full ${['bg-warning-50','bg-primary-50','bg-success-50'][i]} flex items-center justify-center text-sm">👤</div>
+        <div class="flex-1"><p class="text-sm font-medium">${o.split(' - ')[0]}</p><p class="text-xs text-neutral-500">${o.split(' - ')[1]}</p></div>
+        <span class="text-[10px] ${['bg-warning-100 text-warning-700','bg-primary-100 text-primary-700','bg-success-100 text-success-700'][i]} px-2 py-0.5 rounded-full">${['Cotización','Contactar','Instalación'][i]}</span>
+      </div>`).join('')}
+    </div>
+
+    <div class="flex gap-2 mt-4">
+      <button onclick="view='clientSearch';render()" class="flex-1 rounded-xl bg-neutral-100 py-3 text-sm font-medium flex items-center justify-center gap-2">🔍 Buscar cliente</button>
+      <button onclick="initCoverage()" class="flex-1 rounded-xl bg-neutral-100 py-3 text-sm font-medium flex items-center justify-center gap-2">📍 Ver cobertura</button>
+    </div>
+
+    <div class="mt-6 text-xs text-neutral-400 border-t pt-4 flex justify-around">
+      <span class="text-primary-600 font-medium">📊 Dashboard</span>
+      <span class="text-neutral-400">📝 Vender</span>
+      <span class="text-neutral-400">💰 Comisiones</span>
+    </div>
+  </div>`;
 }
 
-function selectZone(id, name) {
-  selectedZone = { id, name };
-  const techs = [...new Set(zones.filter(z => z.name === name).map(z => z.technology_code))];
-  if (techs.length === 1) { selectedTech = techs[0]; loadPlans(); }
-  else { step = 2; render(); }
+// ═══════════════════════════════════════════════════════════════════
+// COVERAGE - Auto-detect technology from address
+// ═══════════════════════════════════════════════════════════════════
+let selectedZone=null,coverResult=null;
+function initCoverage(){selectedZone=null;coverResult=null;view='coverage';render();}
+function selectCoverageZone(id,name){selectedZone={id,name};coverResult=null;view='coverage';render();}
+async function checkCoverage(){
+  const addr=document.getElementById('cov-addr')?.value||'';
+  if(!addr||!selectedZone) return;
+  coverResult={loading:true};view='coverage';render();
+  // Simulate coverage check
+  const techs=zoneData.filter(z=>z.name===selectedZone.name);
+  setTimeout(()=>{
+    coverResult={available:true,technology:techs[0]?.technology_code||'GPON',technologyName:techs[0]?.technology||'Fibra Óptica',zoneName:selectedZone.name};
+    view='coverage';render();
+  },800);
+}
+function continueToPlans(){
+  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
+  loadPlans(selectedZone.id,techId);
 }
 
-// ─── STEP 2: TECHNOLOGY ─────────────────────────────────────────────
-function renderTechSelect() {
-  const techs = [...new Set(zones.filter(z => z.name === selectedZone.name).map(z => ({ code: z.technology_code, name: z.technology })))];
-  return `
-    <div class="p-5 slide-in">
-      <div class="mb-6">
-        <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
-          <button onclick="step=1;render()" class="text-primary-500 hover:underline">← Zonas</button>
-          <span>/</span>
-          <span class="text-neutral-900 font-medium">${selectedZone.name}</span>
-        </div>
-        <h2 class="text-lg font-bold text-neutral-900">¿Qué tecnología?</h2>
-        <p class="text-sm text-neutral-500 mt-1">Selecciona la tecnología disponible en ${selectedZone.name}</p>
-      </div>
-      <div class="space-y-3">
-        ${techs.map(t => `
-          <button onclick="selectedTech='${t.code}';loadPlans()" class="w-full flex items-center gap-4 rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400">
-            <div class="w-12 h-12 rounded-xl ${t.code === 'GPON' ? 'bg-blue-100' : 'bg-amber-100'} flex items-center justify-center text-2xl">${t.code === 'GPON' ? '🔵' : '🟠'}</div>
-            <div><p class="font-semibold text-neutral-900">${t.name}</p><p class="text-xs text-neutral-500">${t.code === 'GPON' ? 'Fibra óptica de alta velocidad' : 'Conexión inalámbrica'}</p></div>
-          </button>`).join('')}
-      </div>
-    </div>`;
+function renderCoverage(){
+  const steps=['Zona','Dirección','Cobertura','Plan'];
+  const stepIdx=selectedZone?coverResult?coverResult.loading?2:3:1:0;
+  return `<div class="p-5 slide-in">
+    <div class="flex items-center gap-1 mb-6">${steps.map((s,i)=>`<div class="flex items-center gap-1 ${i>0?'ml-1':''}"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i<stepIdx?'bg-success-500 text-white':i===stepIdx?'bg-primary-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<stepIdx?'✓':i+1}</div><span class="text-[10px] ${i===stepIdx?'text-primary-600 font-medium':'text-neutral-400'}">${s}</span>${i<steps.length-1?'<div class="w-4 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
+    <h2 class="text-lg font-bold mb-1">¿Dónde está el cliente?</h2>
+    <p class="text-sm text-neutral-500 mb-5">Ingresa la dirección para verificar cobertura automáticamente</p>
+    <div class="mb-4"><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Municipio</label>
+      <div class="grid grid-cols-2 gap-2">${zoneList.map(z=>`<button onclick="selectCoverageZone('${z.zone_id}','${z.name}')" class="rounded-xl border-2 py-3 text-sm text-center transition-all ${selectedZone?.name===z.name?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200 hover:border-primary-300'}">📍 ${z.name}</button>`).join('')}
+    </div></div>
+    ${selectedZone?`<div class="mb-4"><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Dirección</label><input id="cov-addr" placeholder="Ej: Cra 5 #10-20, ${selectedZone.name}" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm"></div>
+    <button onclick="checkCoverage()" class="w-full rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Verificar cobertura</button>`:''}
+    ${coverResult?.loading?`<div class="text-center py-8 text-neutral-400">Verificando cobertura...</div>`:''}
+    ${coverResult?.available?`<div class="mt-4 rounded-xl bg-success-50 border border-success-200 p-4">
+      <p class="font-semibold text-success-700 mb-2">✅ Cobertura disponible</p>
+      <p class="text-sm text-success-600">Tecnología: ${coverResult.technologyName} (${coverResult.technology})</p>
+      <p class="text-sm text-success-600">Zona: ${coverResult.zoneName}</p>
+      <button onclick="continueToPlans()" class="w-full mt-4 rounded-xl bg-success-500 text-white py-3 font-semibold hover:bg-success-600">Ver planes disponibles →</button>
+    </div>`:coverResult&&!coverResult.loading&&!coverResult.available?`<div class="mt-4 rounded-xl bg-danger-50 border border-danger-200 p-4">
+      <p class="font-semibold text-danger-700">❌ Sin cobertura</p><p class="text-sm text-danger-600 mt-1">No hay cobertura disponible en esta dirección</p></div>`:''}
+  </div>`;
 }
 
-// ─── STEP 3: PLANS ──────────────────────────────────────────────────
-async function loadPlans() {
-  const p = await API.get(`/api/v2/catalog/plans?zone_id=${selectedZone.id}&technology_id=${zones.find(z=>z.technology_code===selectedTech)?.technology_id}`);
-  if (p) plans = p;
-  step = 3; render();
+// ═══════════════════════════════════════════════════════════════════
+// PLANS - With badges, recommendations, benefits
+// ═══════════════════════════════════════════════════════════════════
+async function loadPlans(zoneId,techId){
+  const p=await API.get(`/api/v2/catalog/plans?zone_id=${zoneId}&technology_id=${techId}`);
+  if(p)plans=p;
+  selectedPlan=null;view='plans';render();
 }
 
-function renderPlans() {
-  return `
-    <div class="p-5 slide-in">
-      <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
-        <button onclick="step=2;render()" class="text-primary-500 hover:underline">← Tecnología</button>
-        <span>/</span>
-        <span>${selectedZone.name} · ${selectedTech}</span>
-      </div>
-      <h2 class="text-lg font-bold text-neutral-900 mb-1">Planes disponibles</h2>
-      <p class="text-sm text-neutral-500 mb-4">${plans.length} planes en ${selectedZone.name}</p>
-      <div class="space-y-3">
-        ${plans.map(p => `
-          <div onclick="selectedPlan=p;step=4;render()" class="rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400 cursor-pointer">
-            <div class="flex items-start justify-between mb-2">
-              <div>
-                <h3 class="font-bold text-neutral-900">${p.name}</h3>
-                <div class="flex items-center gap-2 mt-1">
-                  <span class="text-[10px] ${selectedTech === 'GPON' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'} px-2 py-0.5 rounded-full">${selectedTech}</span>
-                  <span class="text-[10px] bg-success-100 text-success-700 px-2 py-0.5 rounded-full">${selectedZone.name}</span>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-xl font-bold text-primary-600">$${(p.price||0).toLocaleString('es-CO')}</p>
-                <p class="text-[10px] text-neutral-400">/mes</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-neutral-600 mb-2">
-              <span>🚀 ${p.is_symmetric ? p.download_speed+' Mbps Simétricos' : p.download_speed+'/'+p.upload_speed+' Mbps'}</span>
-              <span>📺 TV Digital</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-success-600 font-medium">💰 Comisión: ~$${Math.round((p.price||0)*0.10).toLocaleString('es-CO')}</span>
-              <span class="text-neutral-400">⏱ 2-3 días</span>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
+function getRecommendation(plan){
+  const speed=plan.download_speed||50;
+  const rec=DEVICE_RECOMMENDATIONS[String(speed)]||DEVICE_RECOMMENDATIONS['100'];
+  if(speed>=200)return{badge:'⭐ RECOMENDADO',color:'bg-amber-100 text-amber-700',desc:rec.ideal};
+  if(speed>=100)return{badge:'🔥 Popular',color:'bg-primary-100 text-primary-700',desc:rec.ideal};
+  return{badge:'💰 Económico',color:'bg-success-100 text-success-700',desc:rec.ideal};
 }
 
-// ─── STEP 4: CLIENT ─────────────────────────────────────────────────
-function renderClientForm() {
-  return `
-    <div class="p-5 slide-in">
-      <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
-        <button onclick="step=3;render()" class="text-primary-500 hover:underline">← Planes</button>
-        <span>/</span>
-        <span>${selectedPlan?.name}</span>
-      </div>
-      <div class="rounded-xl bg-primary-50 border border-primary-200 p-3 mb-4 text-sm">
-        <p class="font-medium text-primary-800">${selectedPlan?.name}</p>
-        <p class="text-primary-600">$${(selectedPlan?.price||0).toLocaleString('es-CO')}/mes · ${selectedTech}</p>
-      </div>
-      <h2 class="text-lg font-bold text-neutral-900 mb-4">Datos del cliente</h2>
-      <div class="space-y-3">
-        <input id="f-name" placeholder="Nombre completo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.name}">
-        <input id="f-doc" placeholder="Número de documento" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.doc}">
-        <div class="grid grid-cols-2 gap-3">
-          <input id="f-phone" placeholder="Teléfono" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.phone}">
-          <input id="f-email" placeholder="Correo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.email}">
-        </div>
-        <input id="f-address" placeholder="Dirección" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.address}">
-        <div>
-          <p class="text-xs font-medium text-neutral-600 mb-2">Tipo de cliente</p>
-          <div class="flex gap-2">
-            <button onclick="clientType='RESIDENTIAL';render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='RESIDENTIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200 text-neutral-600'}">🏠 Residencial</button>
-            <button onclick="clientType='COMMERCIAL';render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='COMMERCIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200 text-neutral-600'}">🏢 Comercial</button>
+function selectPlan(plan){
+  selectedPlan=plan;
+  // Reserve plan for 20 minutes
+  setTimeout(()=>{if(view==='form'||view==='docs'||view==='confirm')return;selectedPlan=null;render();},1200000);
+  view='form';render();
+}
+
+function renderPlans(){
+  return `<div class="p-5 slide-in">
+    <button onclick="initCoverage()" class="text-primary-500 text-sm mb-4 flex items-center gap-1">← Cambiar dirección</button>
+    <h2 class="text-lg font-bold mb-1">Planes en ${coverResult?.zoneName||''}</h2>
+    <p class="text-sm text-neutral-500 mb-4">${coverResult?.technologyName||''} · Elige el plan ideal para tu cliente</p>
+    <div class="space-y-4">
+      ${plans.map(p=>{
+        const rec=getRecommendation(p);
+        const commission=Math.round((p.price||0)*0.10);
+        return `<div onclick="selectPlan(${plans.indexOf(p)})" class="rounded-xl bg-white border-2 p-4 card-hover cursor-pointer ${p.download_speed>=100?'border-primary-200':'border-neutral-200'}">
+          <div class="flex justify-between items-start mb-2">
+            <div><h3 class="font-bold text-neutral-900 text-lg">${p.name}</h3></div>
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full ${rec.color}">${rec.badge}</span>
           </div>
-        </div>
+          <div class="flex items-baseline gap-1 mb-3">
+            <span class="text-3xl font-bold text-primary-600">$${(p.price||0).toLocaleString('es-CO')}</span>
+            <span class="text-sm text-neutral-400">/mes</span>
+          </div>
+          <p class="text-xs text-neutral-600 mb-3 line-clamp">${rec.desc}</p>
+          <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+            <div class="flex items-center gap-1.5"><span>🚀</span><span>${p.download_speed} Mbps ${p.is_symmetric?'Simétricos':''}</span></div>
+            <div class="flex items-center gap-1.5"><span>📺</span><span>TV Digital</span></div>
+            <div class="flex items-center gap-1.5"><span>📡</span><span>Router WiFi</span></div>
+            <div class="flex items-center gap-1.5"><span>⏱</span><span>2-3 días</span></div>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-success-50">
+            <span class="text-xs text-success-700">💰 Comisión: $${commission.toLocaleString('es-CO')}</span>
+            <span class="text-[10px] text-success-600">${p.download_speed>=100?'✓ Recomendado para tus dispositivos':''}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FORM - Smart form with conditional fields
+// ═══════════════════════════════════════════════════════════════════
+function renderForm(){
+  const price=selectedPlan?.price||0;
+  const commission=Math.round(price*0.10);
+  return `<div class="p-5 slide-in">
+    <button onclick="view='plans';render()" class="text-primary-500 text-sm mb-4">← Planes</button>
+    <div class="rounded-xl bg-primary-50 border border-primary-200 p-3 mb-4 flex items-center justify-between">
+      <div><p class="font-semibold text-primary-800 text-sm">${selectedPlan?.name}</p><p class="text-xs text-primary-600">$${price.toLocaleString('es-CO')}/mes</p></div>
+      <span class="text-[10px] bg-white text-primary-600 px-2 py-1 rounded-full font-medium">Reservado 20 min</span>
+    </div>
+    <h2 class="text-lg font-bold mb-4">Datos del cliente</h2>
+    <div class="space-y-3">
+      <input id="sf-name" placeholder="Nombre completo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+      <input id="sf-phone" placeholder="Teléfono" type="tel" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <input id="sf-doc" placeholder="Documento" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+        <input id="sf-email" placeholder="Correo" type="email" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
       </div>
-      <button onclick="saveClient()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600 transition-all">Continuar →</button>
-    </div>`;
-}
-
-function saveClient() {
-  form.name = document.getElementById('f-name')?.value || '';
-  form.doc = document.getElementById('f-doc')?.value || '';
-  form.phone = document.getElementById('f-phone')?.value || '';
-  form.email = document.getElementById('f-email')?.value || '';
-  form.address = document.getElementById('f-address')?.value || '';
-  if (!form.name || !form.phone) { alert('Nombre y teléfono requeridos'); return; }
-  step = 5; render();
-}
-
-// ─── STEP 5: DOCUMENTS ──────────────────────────────────────────────
-function renderDocs() {
-  return `
-    <div class="p-5 slide-in">
-      <h2 class="text-lg font-bold text-neutral-900 mb-4">Documentos requeridos</h2>
-      <p class="text-sm text-neutral-500 mb-4">Adjunta los documentos del cliente para completar la venta</p>
-      <div class="space-y-3">
-        <label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300 transition-all">
-          <input type="checkbox" ${docs.cc ? 'checked' : ''} onchange="docs.cc=!docs.cc" class="w-5 h-5 accent-primary-500">
-          <div><p class="font-medium text-neutral-900">Copia de cédula</p><p class="text-xs text-neutral-500">Documento de identidad del cliente</p></div>
-        </label>
-        <label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300 transition-all">
-          <input type="checkbox" ${docs.recibo ? 'checked' : ''} onchange="docs.recibo=!docs.recibo" class="w-5 h-5 accent-primary-500">
-          <div><p class="font-medium text-neutral-900">Fotocopia recibo público</p><p class="text-xs text-neutral-500">Recibo de servicios públicos reciente</p></div>
-        </label>
+      <input id="sf-address" placeholder="Dirección" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+    </div>
+    <div class="mt-4"><p class="text-xs font-medium text-neutral-600 mb-2">Tipo de cliente</p>
+      <div class="flex gap-2">
+        <button onclick="clientType='RESIDENTIAL';document.getElementById('commercial-fields').classList.add('hidden');render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='RESIDENTIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">🏠 Hogar<br><span class="text-[10px] font-normal">IVA 0%</span></button>
+        <button onclick="clientType='COMMERCIAL';document.getElementById('commercial-fields')?.classList.remove('hidden');render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='COMMERCIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">🏢 Empresa<br><span class="text-[10px] font-normal">IVA 19%</span></button>
       </div>
-      <button onclick="step=6;render()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600">Revisar venta →</button>
-    </div>`;
+    </div>
+    <div id="commercial-fields" class="mt-3 space-y-3 ${clientType==='COMMERCIAL'?'':'hidden'}">
+      <input id="sf-nit" placeholder="NIT" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+      <input id="sf-business" placeholder="Razón social" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+    </div>
+    <button onclick="saveClientForm()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Continuar →</button>
+  </div>`;
+}
+function saveClientForm(){
+  const name=document.getElementById('sf-name')?.value;
+  const phone=document.getElementById('sf-phone')?.value;
+  if(!name||!phone){alert('Nombre y teléfono requeridos');return;}
+  form={name,phone,doc:document.getElementById('sf-doc')?.value,email:document.getElementById('sf-email')?.value,address:document.getElementById('sf-address')?.value,nit:document.getElementById('sf-nit')?.value,businessName:document.getElementById('sf-business')?.value};
+  view='docs';render();
 }
 
-// ─── STEP 6: CONFIRM ────────────────────────────────────────────────
-function renderConfirm() {
-  const price = selectedPlan?.price || 0;
-  const commission = Math.round(price * 0.10);
-  const iva = clientType === 'COMMERCIAL' ? Math.round(price * 0.19) : 0;
-  return `
-    <div class="p-5 slide-in">
-      <h2 class="text-lg font-bold text-neutral-900 mb-4">Confirmar venta</h2>
-      <div class="rounded-xl bg-white border-2 border-neutral-200 p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-neutral-900">${selectedPlan?.name}</h3>
-          <span class="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">${selectedTech}</span>
-        </div>
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between"><span class="text-neutral-500">Precio</span><span class="font-semibold">$${price.toLocaleString('es-CO')}/mes</span></div>
-          <div class="flex justify-between"><span class="text-neutral-500">Velocidad</span><span>${selectedPlan?.download_speed} Mbps ${selectedPlan?.is_symmetric ? 'Simétricos' : ''}</span></div>
-          <div class="flex justify-between"><span class="text-neutral-500">Zona</span><span>${selectedZone.name}</span></div>
-          <div class="flex justify-between"><span class="text-neutral-500">Cliente</span><span>${form.name}</span></div>
-          <div class="flex justify-between"><span class="text-neutral-500">Tipo</span><span>${clientType === 'RESIDENTIAL' ? 'Residencial (IVA 0%)' : 'Comercial (IVA 19%)'}</span></div>
-          <div class="h-px bg-neutral-100 my-2"></div>
-          <div class="flex justify-between text-success-600 font-medium"><span>💰 Comisión estimada</span><span>$${commission.toLocaleString('es-CO')}</span></div>
-        </div>
+// ═══════════════════════════════════════════════════════════════════
+// DOCS
+// ═══════════════════════════════════════════════════════════════════
+function renderDocs(){
+  const docsList=clientType==='COMMERCIAL'?['Cédula','NIT','Cámara de Comercio','Recibo público']:['Cédula','Recibo público'];
+  return `<div class="p-5 slide-in">
+    <button onclick="view='form';render()" class="text-primary-500 text-sm mb-4">← Datos</button>
+    <h2 class="text-lg font-bold mb-4">Documentos</h2>
+    <p class="text-sm text-neutral-500 mb-4">Confirma los documentos del cliente</p>
+    <div class="space-y-3">${docsList.map(d=>`<label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300"><input type="checkbox" onchange="toggleDoc('${d}')" class="w-5 h-5 accent-primary-500"><span class="text-sm">${d}</span></label>`).join('')}
+    </div>
+    <button onclick="view='confirm';render()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Revisar venta →</button>
+  </div>`;
+}
+function toggleDoc(d){docs[d]=!docs[d];}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONFIRM - Summary card
+// ═══════════════════════════════════════════════════════════════════
+function renderConfirm(){
+  const price=selectedPlan?.price||0,commission=Math.round(price*0.10),iva=clientType==='COMMERCIAL'?Math.round(price*0.19):0;
+  return `<div class="p-5 slide-in">
+    <button onclick="view='docs';render()" class="text-primary-500 text-sm mb-4">← Documentos</button>
+    <h2 class="text-lg font-bold mb-4">Confirmar venta</h2>
+    <div class="rounded-xl bg-white border-2 border-neutral-200 p-4 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-lg">${selectedPlan?.name}</h3>
+        <span class="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">${coverResult?.zoneName||''}</span>
       </div>
-      ${iva > 0 ? `<div class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 mb-4">IVA 19% aplicado: $${iva.toLocaleString('es-CO')}</div>` : ''}
-      <button onclick="submitSale()" class="w-full rounded-xl bg-success-500 text-white py-4 text-base font-semibold hover:bg-success-600 transition-all">✅ Registrar venta</button>
-    </div>`;
-}
-
-// ─── SUBMIT ─────────────────────────────────────────────────────────
-async function submitSale() {
-  const ref = await API.post('/api/v1/referrals', {
-    fullName: form.name, phone: form.phone, email: form.email,
-    address: form.address, planId: selectedPlan?.id, source: 'SALES_APP'
-  });
-  if (ref) { step = 99; render(); }
-  else { alert('Error al registrar la venta. Intenta de nuevo.'); }
-}
-
-// ─── SUCCESS ────────────────────────────────────────────────────────
-function renderSuccess() {
-  return `
-    <div class="p-5 text-center pt-20 slide-in">
-      <div class="text-6xl mb-4">🎉</div>
-      <h2 class="text-xl font-bold text-neutral-900 mb-2">¡Venta registrada!</h2>
-      <p class="text-neutral-500 mb-6">La venta fue registrada exitosamente</p>
-      <div class="rounded-xl bg-success-50 border border-success-200 p-4 mb-6 text-left">
-        <p class="font-medium text-success-800 mb-2">${selectedPlan?.name}</p>
-        <div class="text-sm text-success-700 space-y-1">
-          <p>📍 ${selectedZone.name}</p>
-          <p>👤 ${form.name}</p>
-          <p>💰 Comisión estimada: $${Math.round((selectedPlan?.price||0)*0.10).toLocaleString('es-CO')}</p>
-        </div>
+      <div class="space-y-2 text-sm border-b pb-3 mb-3">
+        <div class="flex justify-between"><span class="text-neutral-500">Cliente</span><span class="font-medium">${form.name}</span></div>
+        <div class="flex justify-between"><span class="text-neutral-500">Teléfono</span><span>${form.phone}</span></div>
+        ${form.doc?`<div class="flex justify-between"><span class="text-neutral-500">Documento</span><span>${form.doc}</span></div>`:''}
+        ${form.address?`<div class="flex justify-between"><span class="text-neutral-500">Dirección</span><span class="text-right text-xs">${form.address}</span></div>`:''}
+        <div class="flex justify-between"><span class="text-neutral-500">Tipo</span><span>${clientType==='RESIDENTIAL'?'Residencial':'Comercial'}</span></div>
       </div>
-      <button onclick="location.reload()" class="w-full rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600">Nueva venta</button>
-    </div>`;
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-neutral-500">Plan</span><span class="font-semibold">${selectedPlan?.name}</span></div>
+        <div class="flex justify-between"><span class="text-neutral-500">Precio</span><span class="font-semibold">$${price.toLocaleString('es-CO')}/mes</span></div>
+        ${iva>0?`<div class="flex justify-between"><span class="text-neutral-500">IVA 19%</span><span>$${iva.toLocaleString('es-CO')}</span></div>`:''}
+        <div class="flex justify-between"><span class="text-neutral-500">Instalación</span><span>2-3 días hábiles</span></div>
+        <div class="h-px bg-neutral-100 my-2"></div>
+        <div class="flex justify-between text-success-600 font-semibold"><span>💰 Comisión estimada</span><span>$${commission.toLocaleString('es-CO')}</span></div>
+      </div>
+    </div>
+    <button onclick="submitSale()" class="w-full rounded-xl bg-success-500 text-white py-4 text-lg font-semibold hover:bg-success-600">✅ Registrar venta</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════════════════════
+async function submitSale(){
+  const ref=await API.post('/api/v1/referrals',{fullName:form.name,phone:form.phone,email:form.email||'',address:form.address||'',planId:selectedPlan?.id,source:'SALES_APP'});
+  if(ref){salesCount++;estimatedCommission+=Math.round((selectedPlan?.price||0)*0.10);view='success';render();}
+  else alert('Error al registrar. Intenta de nuevo.');
+}
+
+function renderSuccess(){
+  const price=selectedPlan?.price||0,commission=Math.round(price*0.10);
+  return `<div class="p-5 text-center pt-16 slide-in">
+    <div class="text-6xl mb-4">🎉</div>
+    <h2 class="text-xl font-bold mb-2">¡Venta registrada!</h2>
+    <p class="text-neutral-500 mb-6">La venta fue registrada exitosamente</p>
+    <div class="rounded-xl bg-success-50 border p-4 mb-6 text-left">
+      <p class="font-semibold text-success-800 mb-2">${selectedPlan?.name}</p>
+      <div class="text-sm text-success-700 space-y-1">
+        <p>📍 ${coverResult?.zoneName||''}</p>
+        <p>👤 ${form.name}</p>
+        <p>💰 Comisión: $${commission.toLocaleString('es-CO')}</p>
+        <p>📋 Pendiente: validación de documentos</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="initCoverage()" class="flex-1 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Nueva venta</button>
+      <button onclick="view='dashboard';render()" class="flex-1 rounded-xl border-2 border-neutral-300 py-3.5 font-medium">Ir al inicio</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CLIENT SEARCH
+// ═══════════════════════════════════════════════════════════════════
+function renderClientSearch(){
+  return `<div class="p-5 slide-in">
+    <button onclick="view='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button>
+    <h2 class="text-lg font-bold mb-4">Buscar cliente</h2>
+    <input id="search-q" placeholder="Nombre, teléfono o documento..." class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm mb-4" oninput="searchClients()">
+    <div id="search-results" class="text-sm text-neutral-500 text-center py-8">Escribe para buscar clientes existentes</div>
+  </div>`;
 }
 </script>
 </body>
