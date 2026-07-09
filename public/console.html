@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Referix — Console</title>
+<style>*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+body{background:#F3F4F6;min-height:100vh}
+.nav{background:#fff;border-bottom:1px solid #E5E7EB;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-logo div{width:32px;height:32px;background:#0066FF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+.nav-logo span{font-size:18px;font-weight:700;color:#111827}
+.nav a{color:#6B7280;text-decoration:none;font-size:13px}
+.nav a:hover{color:#0066FF}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+h1{font-size:22px;font-weight:700;color:#111827;margin-bottom:4px}
+p{font-size:14px;color:#6B7280;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#fff;border-radius:12px;padding:20px;border:1px solid #E5E7EB}
+.card .num{font-size:28px;font-weight:700;color:#0066FF}
+.card .label{font-size:12px;color:#6B7280;margin-top:4px}
+.card .sub{font-size:11px;color:#9CA3AF;margin-top:2px}
+h2{font-size:16px;font-weight:600;color:#111827;margin-bottom:12px}
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;border-bottom:1px solid #E5E7EB}
+.table td{padding:10px 12px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
+.badge-success{background:#ECFDF5;color:#059669}
+.badge-warning{background:#FFFBEB;color:#D97706}
+.badge-danger{background:#FEF2F2;color:#DC2626}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-logo"><div>R</div><span>Console</span></div>
+  <a href="/">← Salir</a>
+</div>
+<div class="container">
+  <h1>Panel de control</h1>
+  <p>INTERPLAY — Resumen operativo</p>
+  <div class="grid">
+    <div class="card"><div class="num">47</div><div class="label">Ventas del mes</div><div class="sub">↑ 34% vs mes anterior</div></div>
+    <div class="card"><div class="num">$18.45M</div><div class="label">Ingreso mensual</div><div class="sub">Próximo estimado: $21.2M</div></div>
+    <div class="card"><div class="num">$3.24M</div><div class="label">Comisión pendiente</div><div class="sub">14 comisiones en hold</div></div>
+    <div class="card"><div class="num">8</div><div class="label">Técnicos activos</div><div class="sub">3 en ruta ahora</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <h2>Embudo de ventas</h2>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Registrados</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">100</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Cobertura OK</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:87%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">87</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Instalados</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:52%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">52</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Comisión pagada</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:39%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">39</div></div></div>
+    </div>
+    <div class="card">
+      <h2>Top referidores</h2>
+      <table class="table">
+        <tr><th>Nombre</th><th>Ventas</th><th>Comisión</th><th>Conv.</th></tr>
+        <tr><td>María García</td><td>12</td><td style="color:#059669;font-weight:600">$450K</td><td>75%</td></tr>
+        <tr><td>José Hernández</td><td>8</td><td style="color:#059669;font-weight:600">$312K</td><td>62%</td></tr>
+        <tr><td>Ana López</td><td>6</td><td style="color:#059669;font-weight:600">$225K</td><td>50%</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>
