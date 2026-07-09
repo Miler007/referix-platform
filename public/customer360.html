@@ -58,7 +58,7 @@ async function search(){
   try{
     const r=await fetch(`${API}/api/v1/referrals?query=${encodeURIComponent(q)}&limit=10`,{headers:{'X-Tenant-Id':'interplay'}});
     const d=await r.json();
-    results=(d.data||[]).map((ref:any)=>({id:ref.id,name:ref.full_name||ref.fullName||'Cliente',phone:ref.phone||'Sin teléfono',address:ref.address||'',status:ref.funnel_status||ref.status||'ACTIVE',plan:ref.plan_name||ref.plan||'MegaUltra 100',installDate:ref.created_at?.split('T')[0]||''}));
+    results=(d.data||[]).map(function(ref){return{id:ref.id,name:ref.full_name||ref.fullName||'Cliente',phone:ref.phone||'Sin teléfono',address:ref.address||'',status:ref.funnel_status||ref.status||'ACTIVE',plan:ref.plan_name||ref.plan||'MegaUltra 100',installDate:(ref.created_at||'').split('T')[0]||''};});
   }catch(e){
     // Fallback: datos de ejemplo si API no responde
     results=[{id:'demo-1',name:'Juan Pérez',phone:'+573001234567',address:'Calle 5 #10-20, Fresno',status:'WON',plan:'MegaUltra 100',installDate:'2024-07-10'}];
