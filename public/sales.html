@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Referix — Ventas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: { colors: { primary: { 500: '#0066FF', 600: '#0052CC' }, success: { 500: '#10B981', 600: '#059669' } } } } };
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.slide-in { animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.card-hover { transition: all 0.2s; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body class="bg-neutral-50">
+
+<div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm relative"></div>
+
+<script>
+const API = {
+  base: 'https://referix-api.reto-diario.workers.dev',
+  headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'interplay' },
+  async get(path) { try { const r = await fetch(this.base+path, {headers:this.headers}); if(!r.ok) return null; return (await r.json()).data; } catch(e){return null} },
+  async post(path, body) { try { const r = await fetch(this.base+path, {method:'POST', headers:this.headers, body:JSON.stringify(body)}); if(!r.ok) return null; return (await r.json()).data; } catch(e){return null} },
+};
+
+// ─── STATE ──────────────────────────────────────────────────────────
+let step = 1;
+let zones = [];
+let selectedZone = null;
+let selectedTech = null;
+let plans = [];
+let selectedPlan = null;
+let clientType = 'RESIDENTIAL';
+let form = { name:'', doc:'', phone:'', email:'', address:'' };
+let docs = { cc: false, recibo: false };
+
+// ─── INIT ───────────────────────────────────────────────────────────
+async function init() {
+  const z = await API.get('/api/v2/catalog/zones');
+  if (z) zones = z;
+  render();
+}
+init();
+
+function render() {
+  const app = document.getElementById('app');
+  if (step === 1) app.innerHTML = renderZoneSelect();
+  else if (step === 2) app.innerHTML = renderTechSelect();
+  else if (step === 3) app.innerHTML = renderPlans();
+  else if (step === 4) app.innerHTML = renderClientForm();
+  else if (step === 5) app.innerHTML = renderDocs();
+  else if (step === 6) app.innerHTML = renderConfirm();
+  else if (step === 99) app.innerHTML = renderSuccess();
+}
+
+// ─── STEP 1: ZONE ──────────────────────────────────────────────────
+function renderZoneSelect() {
+  const uniqueZones = [...new Map(zones.map(z => [z.name, z])).values()];
+  return `
+    <div class="p-5 slide-in">
+      <div class="text-center mb-6 pt-4">
+        <div class="w-14 h-14 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">R</div>
+        <h1 class="text-xl font-bold text-neutral-900">Nueva venta</h1>
+        <p class="text-sm text-neutral-500 mt-1">Paso 1: ¿Dónde está el cliente?</p>
+      </div>
+      <div class="space-y-2">
+        ${uniqueZones.map(z => `
+          <button onclick="selectZone('${z.zone_id}','${z.name}')" class="w-full text-left flex items-center gap-4 rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400 transition-all">
+            <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-lg">📍</div>
+            <div><p class="font-semibold text-neutral-900">${z.name}</p>
+            <p class="text-xs text-neutral-500">${zones.filter(t=>t.name===z.name).map(t=>t.technology).join(', ')}</p></div>
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function selectZone(id, name) {
+  selectedZone = { id, name };
+  const techs = [...new Set(zones.filter(z => z.name === name).map(z => z.technology_code))];
+  if (techs.length === 1) { selectedTech = techs[0]; loadPlans(); }
+  else { step = 2; render(); }
+}
+
+// ─── STEP 2: TECHNOLOGY ─────────────────────────────────────────────
+function renderTechSelect() {
+  const techs = [...new Set(zones.filter(z => z.name === selectedZone.name).map(z => ({ code: z.technology_code, name: z.technology })))];
+  return `
+    <div class="p-5 slide-in">
+      <div class="mb-6">
+        <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
+          <button onclick="step=1;render()" class="text-primary-500 hover:underline">← Zonas</button>
+          <span>/</span>
+          <span class="text-neutral-900 font-medium">${selectedZone.name}</span>
+        </div>
+        <h2 class="text-lg font-bold text-neutral-900">¿Qué tecnología?</h2>
+        <p class="text-sm text-neutral-500 mt-1">Selecciona la tecnología disponible en ${selectedZone.name}</p>
+      </div>
+      <div class="space-y-3">
+        ${techs.map(t => `
+          <button onclick="selectedTech='${t.code}';loadPlans()" class="w-full flex items-center gap-4 rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400">
+            <div class="w-12 h-12 rounded-xl ${t.code === 'GPON' ? 'bg-blue-100' : 'bg-amber-100'} flex items-center justify-center text-2xl">${t.code === 'GPON' ? '🔵' : '🟠'}</div>
+            <div><p class="font-semibold text-neutral-900">${t.name}</p><p class="text-xs text-neutral-500">${t.code === 'GPON' ? 'Fibra óptica de alta velocidad' : 'Conexión inalámbrica'}</p></div>
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── STEP 3: PLANS ──────────────────────────────────────────────────
+async function loadPlans() {
+  const p = await API.get(`/api/v2/catalog/plans?zone_id=${selectedZone.id}&technology_id=${zones.find(z=>z.technology_code===selectedTech)?.technology_id}`);
+  if (p) plans = p;
+  step = 3; render();
+}
+
+function renderPlans() {
+  return `
+    <div class="p-5 slide-in">
+      <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
+        <button onclick="step=2;render()" class="text-primary-500 hover:underline">← Tecnología</button>
+        <span>/</span>
+        <span>${selectedZone.name} · ${selectedTech}</span>
+      </div>
+      <h2 class="text-lg font-bold text-neutral-900 mb-1">Planes disponibles</h2>
+      <p class="text-sm text-neutral-500 mb-4">${plans.length} planes en ${selectedZone.name}</p>
+      <div class="space-y-3">
+        ${plans.map(p => `
+          <div onclick="selectedPlan=p;step=4;render()" class="rounded-xl border-2 border-neutral-200 p-4 card-hover hover:border-primary-400 cursor-pointer">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-bold text-neutral-900">${p.name}</h3>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-[10px] ${selectedTech === 'GPON' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'} px-2 py-0.5 rounded-full">${selectedTech}</span>
+                  <span class="text-[10px] bg-success-100 text-success-700 px-2 py-0.5 rounded-full">${selectedZone.name}</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-xl font-bold text-primary-600">$${(p.price||0).toLocaleString('es-CO')}</p>
+                <p class="text-[10px] text-neutral-400">/mes</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-neutral-600 mb-2">
+              <span>🚀 ${p.is_symmetric ? p.download_speed+' Mbps Simétricos' : p.download_speed+'/'+p.upload_speed+' Mbps'}</span>
+              <span>📺 TV Digital</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-success-600 font-medium">💰 Comisión: ~$${Math.round((p.price||0)*0.10).toLocaleString('es-CO')}</span>
+              <span class="text-neutral-400">⏱ 2-3 días</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── STEP 4: CLIENT ─────────────────────────────────────────────────
+function renderClientForm() {
+  return `
+    <div class="p-5 slide-in">
+      <div class="flex items-center gap-2 text-sm text-neutral-500 mb-4">
+        <button onclick="step=3;render()" class="text-primary-500 hover:underline">← Planes</button>
+        <span>/</span>
+        <span>${selectedPlan?.name}</span>
+      </div>
+      <div class="rounded-xl bg-primary-50 border border-primary-200 p-3 mb-4 text-sm">
+        <p class="font-medium text-primary-800">${selectedPlan?.name}</p>
+        <p class="text-primary-600">$${(selectedPlan?.price||0).toLocaleString('es-CO')}/mes · ${selectedTech}</p>
+      </div>
+      <h2 class="text-lg font-bold text-neutral-900 mb-4">Datos del cliente</h2>
+      <div class="space-y-3">
+        <input id="f-name" placeholder="Nombre completo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.name}">
+        <input id="f-doc" placeholder="Número de documento" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.doc}">
+        <div class="grid grid-cols-2 gap-3">
+          <input id="f-phone" placeholder="Teléfono" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.phone}">
+          <input id="f-email" placeholder="Correo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.email}">
+        </div>
+        <input id="f-address" placeholder="Dirección" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" value="${form.address}">
+        <div>
+          <p class="text-xs font-medium text-neutral-600 mb-2">Tipo de cliente</p>
+          <div class="flex gap-2">
+            <button onclick="clientType='RESIDENTIAL';render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='RESIDENTIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200 text-neutral-600'}">🏠 Residencial</button>
+            <button onclick="clientType='COMMERCIAL';render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='COMMERCIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200 text-neutral-600'}">🏢 Comercial</button>
+          </div>
+        </div>
+      </div>
+      <button onclick="saveClient()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600 transition-all">Continuar →</button>
+    </div>`;
+}
+
+function saveClient() {
+  form.name = document.getElementById('f-name')?.value || '';
+  form.doc = document.getElementById('f-doc')?.value || '';
+  form.phone = document.getElementById('f-phone')?.value || '';
+  form.email = document.getElementById('f-email')?.value || '';
+  form.address = document.getElementById('f-address')?.value || '';
+  if (!form.name || !form.phone) { alert('Nombre y teléfono requeridos'); return; }
+  step = 5; render();
+}
+
+// ─── STEP 5: DOCUMENTS ──────────────────────────────────────────────
+function renderDocs() {
+  return `
+    <div class="p-5 slide-in">
+      <h2 class="text-lg font-bold text-neutral-900 mb-4">Documentos requeridos</h2>
+      <p class="text-sm text-neutral-500 mb-4">Adjunta los documentos del cliente para completar la venta</p>
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300 transition-all">
+          <input type="checkbox" ${docs.cc ? 'checked' : ''} onchange="docs.cc=!docs.cc" class="w-5 h-5 accent-primary-500">
+          <div><p class="font-medium text-neutral-900">Copia de cédula</p><p class="text-xs text-neutral-500">Documento de identidad del cliente</p></div>
+        </label>
+        <label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300 transition-all">
+          <input type="checkbox" ${docs.recibo ? 'checked' : ''} onchange="docs.recibo=!docs.recibo" class="w-5 h-5 accent-primary-500">
+          <div><p class="font-medium text-neutral-900">Fotocopia recibo público</p><p class="text-xs text-neutral-500">Recibo de servicios públicos reciente</p></div>
+        </label>
+      </div>
+      <button onclick="step=6;render()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600">Revisar venta →</button>
+    </div>`;
+}
+
+// ─── STEP 6: CONFIRM ────────────────────────────────────────────────
+function renderConfirm() {
+  const price = selectedPlan?.price || 0;
+  const commission = Math.round(price * 0.10);
+  const iva = clientType === 'COMMERCIAL' ? Math.round(price * 0.19) : 0;
+  return `
+    <div class="p-5 slide-in">
+      <h2 class="text-lg font-bold text-neutral-900 mb-4">Confirmar venta</h2>
+      <div class="rounded-xl bg-white border-2 border-neutral-200 p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-neutral-900">${selectedPlan?.name}</h3>
+          <span class="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">${selectedTech}</span>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-neutral-500">Precio</span><span class="font-semibold">$${price.toLocaleString('es-CO')}/mes</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Velocidad</span><span>${selectedPlan?.download_speed} Mbps ${selectedPlan?.is_symmetric ? 'Simétricos' : ''}</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Zona</span><span>${selectedZone.name}</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Cliente</span><span>${form.name}</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Tipo</span><span>${clientType === 'RESIDENTIAL' ? 'Residencial (IVA 0%)' : 'Comercial (IVA 19%)'}</span></div>
+          <div class="h-px bg-neutral-100 my-2"></div>
+          <div class="flex justify-between text-success-600 font-medium"><span>💰 Comisión estimada</span><span>$${commission.toLocaleString('es-CO')}</span></div>
+        </div>
+      </div>
+      ${iva > 0 ? `<div class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 mb-4">IVA 19% aplicado: $${iva.toLocaleString('es-CO')}</div>` : ''}
+      <button onclick="submitSale()" class="w-full rounded-xl bg-success-500 text-white py-4 text-base font-semibold hover:bg-success-600 transition-all">✅ Registrar venta</button>
+    </div>`;
+}
+
+// ─── SUBMIT ─────────────────────────────────────────────────────────
+async function submitSale() {
+  const ref = await API.post('/api/v1/referrals', {
+    fullName: form.name, phone: form.phone, email: form.email,
+    address: form.address, planId: selectedPlan?.id, source: 'SALES_APP'
+  });
+  if (ref) { step = 99; render(); }
+  else { alert('Error al registrar la venta. Intenta de nuevo.'); }
+}
+
+// ─── SUCCESS ────────────────────────────────────────────────────────
+function renderSuccess() {
+  return `
+    <div class="p-5 text-center pt-20 slide-in">
+      <div class="text-6xl mb-4">🎉</div>
+      <h2 class="text-xl font-bold text-neutral-900 mb-2">¡Venta registrada!</h2>
+      <p class="text-neutral-500 mb-6">La venta fue registrada exitosamente</p>
+      <div class="rounded-xl bg-success-50 border border-success-200 p-4 mb-6 text-left">
+        <p class="font-medium text-success-800 mb-2">${selectedPlan?.name}</p>
+        <div class="text-sm text-success-700 space-y-1">
+          <p>📍 ${selectedZone.name}</p>
+          <p>👤 ${form.name}</p>
+          <p>💰 Comisión estimada: $${Math.round((selectedPlan?.price||0)*0.10).toLocaleString('es-CO')}</p>
+        </div>
+      </div>
+      <button onclick="location.reload()" class="w-full rounded-xl bg-primary-500 text-white py-3.5 text-base font-semibold hover:bg-primary-600">Nueva venta</button>
+    </div>`;
+}
+</script>
+</body>
+</html>

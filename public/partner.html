@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Referix — Partner</title><script src="https://cdn.tailwindcss.com"></script>
+<style>*{font-family:'Inter',sans-serif}.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}</style>
+</head>
+<body class="bg-neutral-50">
+<div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm"></div>
+<script>
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}}};
+let page='dashboard',refs=[];
+const refName='María García',refSales=12,refCommission=2450;
+
+async function init(){refs=await API.get('/api/v2/catalog/plans')||[];render()}
+function render(){
+  document.getElementById('app').innerHTML={
+    dashboard:renderDashboard(),
+    referrals:renderReferrals(),
+    commissions:renderCommissions(),
+    wallet:renderWallet(),
+    register:renderRegister()
+  }[page];
+}
+init();
+
+function renderDashboard(){return`
+  <div class="p-5 slide-in">
+    <div class="mb-6"><h1 class="text-xl font-bold">¡Hola, ${refName}! 👋</h1><p class="text-sm text-neutral-500">Tus ventas van muy bien</p></div>
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Ventas este mes</p><p class="text-2xl font-bold text-primary-600">${refSales}</p></div>
+      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Comisiones</p><p class="text-2xl font-bold text-success-600">$${refCommission.toLocaleString('es-CO')}</p></div>
+    </div>
+    <button onclick="page='register';render()" class="w-full rounded-xl bg-primary-500 text-white py-4 text-lg font-semibold shadow-lg mb-6 hover:bg-primary-600 active:scale-[0.98] transition-all">📝 Registrar venta</button>
+    <div class="space-y-3">
+      <h2 class="text-sm font-semibold text-neutral-700">Tus últimas ventas</h2>
+      ${['Pedro Martínez','Laura García','Carlos Ruiz'].map((n,i)=>`
+        <div class="rounded-xl bg-white border p-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-lg">👤</div>
+          <div class="flex-1"><p class="font-medium text-sm">${n}</p><p class="text-xs text-neutral-500">${['Instalación','Validación','Comisión lista'][i]}</p></div>
+          <span class="text-[10px] ${['bg-warning-100 text-warning-700','bg-primary-100 text-primary-700','bg-success-100 text-success-700'][i]} px-2 py-0.5 rounded-full">${['Progreso','Pendiente','Listo'][i]}</span>
+        </div>`).join('')}
+    </div>
+    <div class="mt-6 grid grid-cols-4 gap-1">
+      ${[{icon:'📝',label:'Venta',p:'register'},{icon:'📋',label:'Mis Ventas',p:'referrals'},{icon:'💰',label:'Comisiones',p:'commissions'},{icon:'👛',label:'Wallet',p:'wallet'}].map(b=>`
+        <button onclick="page='${b.p}';render()" class="flex flex-col items-center gap-1 py-2 ${page===b.p?'text-primary-600':'text-neutral-400'}"><span class="text-xl">${b.icon}</span><span class="text-[10px]">${b.label}</span></button>`).join('')}
+    </div>
+  </div>`;}
+function renderReferrals(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis ventas</h2><p class="text-neutral-500 text-sm">Tus ventas registradas aparecerán aquí</p></div>`;}
+function renderCommissions(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis comisiones</h2><p class="text-neutral-500 text-sm">Próximamente: detalle de comisiones</p></div>`;}
+function renderWallet(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mi wallet</h2><p class="text-3xl font-bold text-success-600">$${refCommission.toLocaleString('es-CO')}</p><p class="text-sm text-neutral-500 mt-1">Disponible para retirar</p></div>`;}
+function renderRegister(){return`
+  <div class="p-5 slide-in">
+    <button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button>
+    <h2 class="text-lg font-bold mb-4">Registrar una venta</h2>
+    <p class="text-sm text-neutral-500 mb-4">Próximamente: captura de prospectos. Por ahora, usa la <a href='/sales.html' class='text-primary-500 font-medium'>Sales App</a></p>
+  </div>`;}
+</script>
+</body>
+</html>
