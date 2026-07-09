@@ -2,745 +2,326 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Referix — Ventas</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config={theme:{extend:{colors:{primary:{50:'#EFF6FF',100:'#DBEAFE',500:'#0066FF',600:'#0052CC'},success:{500:'#10B981',600:'#059669'}}}}};
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-*{font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
-.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.card-hover{transition:all .2s}.card-hover:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.06)}
-.line-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#F8F9FA;color:#111827;line-height:1.5}
+#app{max-width:440px;margin:0 auto;min-height:100vh;background:#FFFFFF;position:relative;overflow-x:hidden}
+/* ── Spacing ── */
+.px-5{padding-left:20px;padding-right:20px}.py-4{padding-top:16px;padding-bottom:16px}.py-6{padding-top:24px;padding-bottom:24px}.py-10{padding-top:40px;padding-bottom:40px}.pb-20{padding-bottom:80px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-auto{margin-top:auto}
+/* ── Typography ── */
+.text-xs{font-size:12px;line-height:1.4;color:#6B7280}.text-sm{font-size:14px;line-height:1.5;color:#6B7280}
+.text-lg{font-size:18px;font-weight:700;color:#111827;line-height:1.3}.text-xl{font-size:22px;font-weight:700;line-height:1.3}
+.text-2xl{font-size:28px;font-weight:800;line-height:1.2}.text-3xl{font-size:34px;font-weight:800;line-height:1.1}
+.font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+.text-center{text-align:center}.text-right{text-align:right}.flex{display:flex}.flex-col{flex-direction:column}
+.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}
+.justify-between{justify-content:space-between}.flex-1{flex:1}.gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}
+.grid{display:grid}.grid-cols-2{grid-template-columns:1fr 1fr}.grid-cols-3{grid-template-columns:1fr 1fr 1fr}
+/* ── Colors ── */
+.primary{color:#0066FF}.primary-bg{background:#0066FF;color:#fff}
+.success{color:#059669}.success-bg{background:#059669;color:#fff}
+.warning{color:#D97706}.muted{color:#9CA3AF}.subtle{color:#6B7280}
+.bg-subtle{background:#F3F4F6}.bg-surface{background:#fff}.bg-premium{background:linear-gradient(135deg,#0066FF,#0052CC)}
+/* ── Buttons ── */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:#0066FF;color:#fff}.btn-primary:hover{background:#0052CC}
+.btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
+.btn-ghost{background:transparent;color:#0066FF;padding:8px}.btn-ghost:hover{background:#F3F4F6}
+.btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}.btn-outline:hover{background:#F9FAFB}
+/* ── Cards ── */
+.card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:20px;transition:all .2s;cursor:pointer}
+.card:hover{border-color:#D1D5DB;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+.card:active{transform:scale(0.99)}
+.card-selected{border-color:#0066FF;background:#F5F9FF;box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;gap:4px}
+.badge-gpon{background:#EFF6FF;color:#0066FF}.badge-tv{background:#FEF3C7;color:#D97706}
+.badge-sym{background:#ECFDF5;color:#059669}.badge-cere{background:#F3E8FF;color:#9333EA}
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.animate-fadeUp{animation:fadeUp .35s ease-out both}.animate-fadeIn{animation:fadeIn .25s ease-out both}
+.animate-pulse{animation:pulse 2s ease-in-out infinite}
+.delay-1{animation-delay:.05s}.delay-2{animation-delay:.1s}.delay-3{animation-delay:.15s}
+/* ── Inputs ── */
+input,select{width:100%;padding:14px 16px;border:1.5px solid #E5E7EB;border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;background:#fff}
+input:focus{border-color:#0066FF;box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+input::placeholder{color:#9CA3AF}
+/* ── Shadows ── */
+.shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.04)}.shadow-md{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+/* ── Divider ── */
+.divider{border:none;border-top:1px solid #F0F0F0;margin:16px 0}
+/* ── Misc ── */
+.rounded-full{border-radius:999px}.rounded-xl{border-radius:14px}.rounded-2xl{border-radius:16px}
+.w-full{width:100%}.h-full{height:100%}.block{display:block}.hidden{display:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+/* Scroll suave */
+html{scroll-behavior:smooth}
+/* Checkbox personalizado */
+.check-card{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px solid #E5E7EB;border-radius:12px;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.check-card:hover{border-color:#D1D5DB}.check-card.active{border-color:#0066FF;background:#F5F9FF}
+.check-card .check{width:22px;height:22px;border:2px solid #D1D5DB;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;flex-shrink:0}.check-card.active .check{background:#0066FF;border-color:#0066FF;color:#fff}
 </style>
 </head>
-<body class="bg-neutral-100">
-<div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm relative"></div>
+<body>
+<div id="app"></div>
 
 <script>
+// ─── API ──────────────────────────────────────────────────────────
 const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
-  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}},
-  async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});return(await r.json()).data}catch{return null}}};
-// ═══════════════════════════════════════════════════════════════════
-// CERE v2 — Customer Experience Recommendation Engine
-// ═══════════════════════════════════════════════════════════════════
-class CEREv2 {
-  // Demand weights per activity
-  demandWeights={
-    composition:{adult:5,child:3,teen:8,elderly:2},
-    device:{smartphones:1.5,tablets:3,smartTvs:10,computers:12,laptops:10,consoles:15,ipCameras:8,alexaGoogleHome:2,decoders:5,wifiPrinters:3,otherIot:2},
-    simultaneous:{smartphones:1.5,smartTvs:10,computers:12,laptops:10,consoles:15},
-    streaming:{sd:5,hd:8,fullHd:12,k4:20},
-    work:{vpn:8,videoCall:10},
-    education:{student:8},
-    gaming:{console:5,pc:8,latency:10},
-    cameras:{perCamera:8,recording24h:10,cloudUpload:5},
-    business:{employee:5,pos:10,invoicing:5,cameras:8,vpn:10,servers:15,wifi:8}
-  };
+  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}},
+  async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}}};
 
-  buildProfile(data){
-    return{
-      composition:data.composition||{adults:2,children:0,teens:0,elderly:0},
-      devices:data.devices||{smartphones:2,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},
-      simultaneous:data.simultaneous||{smartphones:2,smartTvs:1,computers:0,laptops:1,consoles:0},
-      streaming:data.streaming||{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},
-      remoteWork:data.remoteWork||{people:0,usesVpn:false,videoCalls:false,platforms:[]},
-      education:data.education||{virtualClasses:false,university:false,onlineCourses:false,students:0},
-      gaming:data.gaming||{platforms:[],frequentGames:false,priorityLatency:false},
-      cameras:data.cameras||{count:0,records24h:false,cloudUpload:false},
-      business:data.business||{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},
-      growth:data.growth||{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:false},
-      priority:data.priority||'ESTABILIDAD'
-    };
-  }
+// ─── State ────────────────────────────────────────────────────────
+let step='dashboard',zoneData=[],zoneList=[],plans=[],selectedPlan=null,selectedZone=null,coverResult=null;
+let clientType='RESIDENTIAL',formData={},docData={},userName='Carlos',userSales=18,userGoal=25,userComm=132000;
 
-  calculateDemandScore(profile){
-    let score=0;
-    const c=profile.composition;
-    score+=c.adults*this.demandWeights.composition.adult;
-    score+=c.children*this.demandWeights.composition.child;
-    score+=c.teens*this.demandWeights.composition.teen;
-    score+=c.elderly*this.demandWeights.composition.elderly;
-    Object.entries(profile.devices).forEach(([k,v])=>score+=v*(this.demandWeights.device[k]||1));
-    Object.entries(profile.simultaneous).forEach(([k,v])=>score+=v*(this.demandWeights.simultaneous[k]||1));
-    const q=profile.streaming.quality;
-    const qScore=q==='4K'?20:q==='FULL_HD'?15:q==='HD'?10:5;
-    if(profile.streaming.netflix||profile.streaming.disneyPlus||profile.streaming.primeVideo||profile.streaming.max)score+=qScore;
-    if(profile.streaming.youtube)score+=5;
-    if(profile.streaming.iptv)score+=8;
-    score+=profile.remoteWork.people*12;
-    if(profile.remoteWork.usesVpn)score+=8;
-    if(profile.remoteWork.videoCalls)score+=10;
-    score+=profile.education.students*8;
-    score+=profile.gaming.platforms.length*8;
-    if(profile.gaming.priorityLatency)score+=10;
-    score+=profile.cameras.count*8;
-    if(profile.cameras.records24h)score+=10*profile.cameras.count;
-    if(profile.cameras.cloudUpload)score+=5*profile.cameras.count;
-    if(profile.business.isBusiness){score+=profile.business.employees*5;if(profile.business.hasPos)score+=10;if(profile.business.electronicInvoicing)score+=5;if(profile.business.cameras)score+=8;if(profile.business.vpn)score+=10;if(profile.business.servers)score+=15;if(profile.business.clientWifi)score+=8;}
-    let growthScore=0;
-    if(profile.growth.moreTvs)growthScore+=15;
-    if(profile.growth.cameras)growthScore+=20;
-    if(profile.growth.remoteWork)growthScore+=15;
-    if(profile.growth.homeBusiness)growthScore+=25;
-    if(profile.growth.moreDevices)growthScore+=10;
-    score+=growthScore*0.5;
-    return Math.min(100,score);
-  }
-
-  demandLevel(score){if(score<=25)return'BAJA';if(score<=50)return'MEDIA';if(score<=75)return'ALTA';return'MUY_ALTA';}
-
-  evaluatePlan(profile,plan){
-    const demandScore=this.calculateDemandScore(profile);
-    const demandScore=this.calculateDemandScore(profile);
-    const speed=plan.download_speed||50;
-    const margin=Math.max(0,Math.round((1-demandScore/100)*100));
-    const safetyMargin=Math.round(((speed-demandScore)/speed)*100);
-    const pct=Math.min(100,Math.round(demandScore));
-    const usagePct=Math.min(100,Math.round((demandScore/speed)*100));
-    const compatibility=Math.max(5,Math.min(100,100-usagePct+15));
-    const risk=usagePct>=90?'MUY_ALTO':usagePct>=80?'ALTO':usagePct>=70?'MEDIO':usagePct>=50?'BAJO':'MUY_BAJO';
-    const lifeYears=usagePct<=40?5:usagePct<=55?4:usagePct<=70?3:usagePct<=85?2:1;
-    const recommended=margin>=25&&usagePct<=75&&risk!=='ALTO'&&risk!=='MUY_ALTO';
-    const exp=this.getExperienceName(speed,profile);
-    const trank=this.getTranquility(compatibility,risk);
-    const costPerPerson=this.getCostPerPerson(plan.price||0,profile);
-    const upgradeRisk=this.getUpgradeRisk(demandScore,speed);
-    const profileBenefits=this.getProfileSpecificBenefits(profile);
-    const reasons=[];
-    const warnings=[];
-    const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
-    const totalSimul=Object.values(profile.simultaneous).reduce((a,b)=>a+b,0);
-    if(totalDevices>0)reasons.push(`${totalDevices} dispositivos en el hogar`);
-    if(totalSimul>1)reasons.push(`${totalSimul} dispositivos simultáneos`);
-    if(profile.streaming.quality==='4K')reasons.push('Streaming 4K');
-    if(profile.remoteWork.people>0)reasons.push(`${profile.remoteWork.people} persona(s) en teletrabajo`);
-    if(profile.cameras.count>0)reasons.push(`${profile.cameras.count} cámara(s) IP`);
-    if(profile.gaming.platforms.length>0)reasons.push('Gaming online');
-    if(profile.education.students>0)reasons.push(`${profile.education.students} estudiante(s)`);
-    if(profile.growth.moreTvs||profile.growth.cameras||profile.growth.moreDevices)reasons.push('Plan con margen de crecimiento');
-    if(!recommended)warnings.push(`Riesgo de soporte: ${risk}. Ocupación estimada: ${usagePct}%.`);
-    if(usagePct<=30&&speed>=150)warnings.push('Un plan superior no aportará mejoras perceptibles para este perfil.');
-    return{planId:plan.id,planName:plan.name,price:plan.price||0,experienceName:exp.name,experienceIcon:exp.icon,downloadSpeed:speed,uploadSpeed:plan.upload_speed||speed,isSymmetric:!!plan.is_symmetric,technology:plan.technology_name||'',demandScore,compatibility,tranquility:trank,costPerPerson,costPerDay:Math.round((plan.price||0)/30),upgradeRisk,profileBenefits,demandLevel:this.demandLevel(demandScore),supportRisk:risk,safetyMargin:usagePct,estimatedLifeYears:lifeYears,recommended,reasons,warnings};
-  }
-
-  calculateRQI(evaluation){
-    let score=evaluation.compatibility;
-    if(evaluation.supportRisk==='MUY_BAJO')score+=10;
-    if(evaluation.supportRisk==='BAJO')score+=5;
-    if(evaluation.supportRisk==='ALTO')score-=15;
-    if(evaluation.supportRisk==='MUY_ALTO')score-=25;
-    if(evaluation.estimatedLifeYears>=4)score+=5;
-    if(evaluation.estimatedLifeYears<=1)score-=10;
-    if(evaluation.safetyMargin<=30)score-=10;
-    return Math.max(0,Math.min(100,score));
-  }
-
-  capacityLabel(speed){
-    if(speed>=200)return{people:'5+ personas',devices:'20+ dispositivos',streaming:'4 TV 4K simultáneo',work:'Teletrabajo + videollamadas + VPN',gaming:'Múltiples consolas',cameras:'8+ cámaras IP'};
-    if(speed>=100)return{people:'3-4 personas',devices:'Hasta 10 dispositivos',streaming:'2 TV 4K sin interrupciones',work:'Videollamadas y teletrabajo estables',gaming:'1 consola con baja latencia',cameras:'Hasta 4 cámaras IP'};
-    if(speed>=50)return{people:'2-3 personas',devices:'Hasta 6 dispositivos',streaming:'1 TV HD + música',work:'Teletrabajo básico',gaming:'Casual',cameras:'1-2 cámaras'};
-    return{people:'1-2 personas',devices:'Hasta 4 dispositivos',streaming:'Navegación y redes sociales',work:'Correo y mensajería',gaming:'No recomendado',cameras:'No recomendado'};
-  }
-
-  // Predefined profiles for quick selection
-  predefinedProfiles=[
-    {id:'solo',name:'Persona sola',icon:'🏠',desc:'1 persona, navegación y redes',data:{composition:{adults:1,children:0,teens:0,elderly:0},devices:{smartphones:1,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:1,smartTvs:1,computers:0,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:false},priority:'PRECIO'}},
-    {id:'familia-peq',name:'Familia pequeña',icon:'👨‍👩‍👧',desc:'2-3 personas, streaming y estudios',data:{composition:{adults:2,children:1,teens:0,elderly:0},devices:{smartphones:3,tablets:1,smartTvs:2,computers:0,laptops:2,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:2,smartTvs:1,computers:0,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:true,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:1,usesVpn:false,videoCalls:true,platforms:[]},education:{virtualClasses:true,university:false,onlineCourses:false,students:1},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
-    {id:'familia-grande',name:'Familia grande',icon:'👨‍👩‍👧‍👦',desc:'4+ personas, múltiples dispositivos',data:{composition:{adults:2,children:2,teens:1,elderly:0},devices:{smartphones:5,tablets:2,smartTvs:3,computers:1,laptops:2,consoles:1,ipCameras:2,alexaGoogleHome:1,decoders:1,wifiPrinters:0,otherIot:1},simultaneous:{smartphones:3,smartTvs:2,computers:1,laptops:1,consoles:1},streaming:{netflix:true,disneyPlus:true,primeVideo:true,max:false,youtube:true,iptv:false,quality:'4K'},remoteWork:{people:1,usesVpn:true,videoCalls:true,platforms:[]},education:{virtualClasses:true,university:false,onlineCourses:true,students:2},gaming:{platforms:['PS5','NINTENDO'],frequentGames:true,priorityLatency:true},cameras:{count:2,records24h:true,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:true,cameras:true,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
-    {id:'gamer',name:'Gamer',icon:'🎮',desc:'Gaming online, baja latencia',data:{composition:{adults:1,children:0,teens:0,elderly:0},devices:{smartphones:2,tablets:0,smartTvs:1,computers:1,laptops:1,consoles:2,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:1,smartTvs:1,computers:1,laptops:0,consoles:1},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'FULL_HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:['PS5','PC_GAMER'],frequentGames:true,priorityLatency:true},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'VELOCIDAD'}},
-    {id:'teletrabajo',name:'Teletrabajo',icon:'💻',desc:'Trabajo remoto, videollamadas, VPN',data:{composition:{adults:2,children:0,teens:0,elderly:0},devices:{smartphones:2,tablets:0,smartTvs:1,computers:2,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:1,otherIot:0},simultaneous:{smartphones:2,smartTvs:1,computers:1,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'FULL_HD'},remoteWork:{people:2,usesVpn:true,videoCalls:true,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:true,homeBusiness:false,moreDevices:false},priority:'ESTABILIDAD'}},
-    {id:'empresa',name:'Empresa',icon:'🏢',desc:'Varios empleados, sistemas críticos',data:{composition:{adults:3,children:0,teens:0,elderly:0},devices:{smartphones:5,tablets:0,smartTvs:0,computers:3,laptops:2,consoles:0,ipCameras:4,alexaGoogleHome:0,decoders:0,wifiPrinters:1,otherIot:0},simultaneous:{smartphones:3,smartTvs:0,computers:2,laptops:2,consoles:0},streaming:{netflix:false,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:4,records24h:true,cloudUpload:true},business:{isBusiness:true,employees:5,hasPos:true,electronicInvoicing:true,cameras:true,vpn:true,servers:true,clientWifi:true},growth:{moreTvs:false,cameras:true,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
-  ];
-
-  getExperienceName(speed,profile){
-    if(profile?.business?.isBusiness)return{name:'Oficina Conectada',icon:'🏢'};
-    if(speed>=200)return{name:'Hogar Total',icon:'🏠'};
-    if(speed>=100)return{name:'Hogar Conectado',icon:'👨‍👩‍👧‍👦'};
-    return{name:'Hogar Esencial',icon:'🏡'};
-  }
-
-  getTranquility(compatibility,risk){
-    if(compatibility>=90&&risk==='MUY_BAJO')return{stars:5,label:'Dormirás tranquilo',color:'text-success-500'};
-    if(compatibility>=80&&(risk==='MUY_BAJO'||risk==='BAJO'))return{stars:4,label:'Muy tranquilo',color:'text-success-500'};
-    if(compatibility>=70&&risk!=='ALTO')return{stars:3,label:'Tranquilo',color:'text-primary-500'};
-    if(compatibility>=50)return{stars:2,label:'Precaución',color:'text-warning-500'};
-    return{stars:1,label:'Riesgoso',color:'text-danger-500'};
-  }
-
-  getCostPerPerson(price,profile){
-    const total=profile.composition.adults+profile.composition.children+profile.composition.teens+profile.composition.elderly;
-    return total>0?Math.round(price/total):price;
-  }
-
-  getUpgradeRisk(demandScore,speed){
-    const usagePct=Math.min(100,Math.round((demandScore/speed)*100));
-    if(usagePct<=40)return{year1:5,year2:12};
-    if(usagePct<=55)return{year1:12,year2:28};
-    if(usagePct<=70)return{year1:25,year2:45};
-    if(usagePct<=85)return{year1:40,year2:65};
-    return{year1:60,year2:85};
-  }
-
-  getProfileSpecificBenefits(profile){
-    const benefits=[];
-    if(profile.streaming.netflix||profile.streaming.disneyPlus)benefits.push('Netflix, Disney+ y streaming');
-    if(profile.remoteWork.people>0)benefits.push('Teletrabajo y videollamadas');
-    if(profile.education.students>0)benefits.push('Clases virtuales y tareas');
-    if(profile.gaming.platforms.length>0)benefits.push('Gaming con baja latencia');
-    if(profile.cameras.count>0)benefits.push('Cámaras IP 24/7');
-    if(profile.devices.smartphones>3||profile.devices.smartTvs>1)benefits.push('Múltiples dispositivos simultáneos');
-    if(profile.business.isBusiness)benefits.push('Facturación electrónica, POS, VPN');
-    return benefits;
-  }
-
-  recommend(profile,plans){
-    const evaluated=plans.map(p=>this.evaluatePlan(profile,p));
-    evaluated.sort((a,b)=>b.compatibility-a.compatibility);
-    const recommended=evaluated.find(p=>p.recommended)||evaluated[0];
-    const economy=evaluated.filter(p=>p.planId!==recommended.planId&&p.price<recommended.price).sort((a,b)=>b.compatibility-a.compatibility)[0];
-    const premium=evaluated.filter(p=>p.planId!==recommended.planId&&p.price>recommended.price).sort((a,b)=>b.compatibility-a.compatibility)[0];
-    const alternatives=[economy,premium].filter(Boolean);
-    const riskBlocked=recommended.supportRisk==='ALTO'||recommended.supportRisk==='MUY_ALTO';
-    const oversell=evaluated.find(p=>p.safetyMargin<=25&&p.downloadSpeed>=150);
-    const oversellWarning=oversell&&recommended.downloadSpeed<150?null:oversell?'Una plan superior no aportará mejoras perceptibles para este perfil.':null;
-    const explanation=this.explain(profile,recommended);
-    const blockReason=riskBlocked?`Riesgo de soporte ${recommended.supportRisk}. Se requiere autorización para vender este plan.`:null;
-
-    // RQI
-    evaluated.forEach(e=>e.rqi=this.calculateRQI(e));
-    recommended.rqi=this.calculateRQI(recommended);
-
-    // Confidence
-    const confidence=recommended.compatibility>=85?96:recommended.compatibility>=70?85:recommended.compatibility>=50?70:50;
-
-    // Positive/negative explanations
-    let positiveExplain=null;
-    let negativeExplain=null;
-    if(recommended.supportRisk==='MUY_BAJO'||recommended.supportRisk==='BAJO'){
-      positiveExplain='Este plan funcionará excelente hoy y seguirá siendo adecuado si agregas más dispositivos en el futuro.';
-    } else if(recommended.supportRisk==='MEDIO'){
-      positiveExplain='Este plan funcionará bien hoy, pero podría quedarse corto si agregas otra Smart TV o aumentan el teletrabajo.';
-    }
-    if(!recommended.recommended){
-      negativeExplain='Riesgos esperados: buffering en horas pico, videollamadas inestables, posible upgrade en pocos meses.';
-    }
-
-    // Capacity labels with docs and install
-    const cap=this.capacityLabel(recommended.downloadSpeed);
-    cap.docs=['Copia de cédula','Fotocopia recibo público'];
-    cap.installTime='2 a 3 días hábiles';
-    cap.supportPriority='Clientes sin servicio: prioridad máxima. Resolución el mismo día.';
-
-    const profileBenefits=recommended.profileBenefits||[];
-    const economicComparison=economy?{
-      savings:recommended.price-economy.price,
-      riskIncrease:Math.round((economy.supportRisk==='MUY_ALTO'?90:economy.supportRisk==='ALTO'?70:economy.supportRisk==='MEDIO'?50:30)-30)
-    }:null;
-    const premiumComparison=premium?{
-      extraCost:premium.price-recommended.price,
-      riskReduction:Math.round(82-(recommended.supportRisk==='MUY_BAJO'?10:recommended.supportRisk==='BAJO'?25:40))
-    }:null;
-    return{recommended,economy,premium,alternatives,oversellWarning,explanation,positiveExplain,negativeExplain,riskBlocked,blockReason,confidence,capacity:cap,rqi:recommended.rqi,profileBenefits,economicComparison,premiumComparison};
-  }
-
-  explain(profile,plan){
-    const parts=[];
-    const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
-    const totalSimul=Object.values(profile.simultaneous).reduce((a,b)=>a+b,0);
-    if(totalDevices>0)parts.push(`${totalDevices} dispositivos en el hogar`);
-    if(totalSimul>1)parts.push(`${totalSimul} dispositivos simultáneos`);
-    const activities=[];
-    if(profile.streaming.netflix||profile.streaming.disneyPlus||profile.streaming.primeVideo)activities.push(`Streaming ${profile.streaming.quality}`);
-    if(profile.remoteWork.people>0)activities.push('teletrabajo');
-    if(profile.cameras.count>0)activities.push(`${profile.cameras.count} cámara(s) IP`);
-    if(profile.gaming.platforms.length>0)activities.push('gaming');
-    if(profile.education.students>0)activities.push('educación virtual');
-    if(activities.length>0)parts.push(activities.join(', '));
-    const lines=[];
-    lines.push(`• ${parts.join('\n  • ')}`);
-    lines.push(`Compatibilidad: ${plan.compatibility}%`);
-    lines.push(`Riesgo de soporte: ${plan.supportRisk}`);
-    lines.push(`Margen disponible: ${plan.safetyMargin}%`);
-    lines.push(`Vida útil estimada: ${plan.estimatedLifeYears} años`);
-    return `Recomendamos ${plan.planName} porque encontramos:\n${lines.join('\n')}`;
-  }
+// ─── Init ─────────────────────────────────────────────────────────
+async function init(){
+  zoneData=await API.get('/api/v2/catalog/zones')||[];
+  zoneList=[...new Map(zoneData.map(z=>[z.name,z])).values()];
+  render();
 }
-const cere=new CEREv2();
-let customerProfile=null;
-// ── State ─────────────────────────────────────────────────────────
-let view='dashboard',zoneList=[],zoneData=[],plans=[],selectedPlan=null,clientType='RESIDENTIAL',form={},docs={cc:false,recibo:false};
-let salespersonName='Carlos',salesCount=18,salesGoal=25,estimatedCommission=1320000;
+init();
 
-// ── Init ──────────────────────────────────────────────────────────
-(async()=>{zoneData=await API.get('/api/v2/catalog/zones')||[];zoneList=[...new Map(zoneData.map(z=>[z.name,z])).values()];render();})();
-
-// ── Router ─────────────────────────────────────────────────────────
+// ─── Router ──────────────────────────────────────────────────────
 function render(){
   const el=document.getElementById('app');
-  el.innerHTML={
-    dashboard:renderDashboard(),
-    coverage:renderCoverage(),
-    profile:renderProfile(),
-    plans:renderPlans(),
-    form:renderForm(),
-    docs:renderDocs(),
-    confirm:renderConfirm(),
-    success:renderSuccess(),
-    clientSearch:renderClientSearch()
-  }[view]||renderDashboard();
+  const views={dashboard:()=>renderDashboard(),coverage:()=>renderCoverage(),plans:async()=>{el.innerHTML='<div class="px-5 py-6"><p class="text-xs muted">Cargando planes...</p></div>';el.innerHTML=await renderPlans();},form:()=>renderForm(),docs:()=>renderDocs(),confirm:()=>renderConfirm(),success:()=>renderSuccess(),opportunity:()=>renderOpportunity()};
+  const viewFn=views[step]||renderDashboard;
+  const result=viewFn();
+  if(result instanceof Promise)result.then(function(html){if(html)el.innerHTML=html;});
+  else el.innerHTML=result;
 }
+function go(s){step=s;render();}
+function getComm(p){return Math.round((p||0)*0.1);}
 
-// ═══════════════════════════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════════════════════════
+// ─── DASHBOARD ──────────────────────────────────────────────────
 function renderDashboard(){
-  const opps=['Juan Pérez - Cotización','María García - Seguimiento','Carlos Ruiz - Instalación'];
-  return `<div class="p-5 slide-in">
+  const pct=Math.round((userSales/userGoal)*100);
+  return `<div class="px-5 py-6 animate-fadeUp">
     <div class="flex items-center gap-3 mb-6">
-      <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-xl font-bold text-primary-600">${salespersonName[0]}</div>
-      <div><h1 class="text-lg font-bold">Hola, ${salespersonName} 👋</h1><p class="text-sm text-neutral-500">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#0052CC);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${userName[0]}</div>
+      <div><p class="text-lg">Hola, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
     </div>
-    <div class="grid grid-cols-3 gap-2 mb-5">
-      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Ventas</p><p class="text-2xl font-bold text-primary-600">${salesCount}</p><p class="text-[10px] text-neutral-400">del mes</p></div>
-      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Meta</p><p class="text-2xl font-bold text-neutral-900">${salesGoal}</p><p class="text-[10px] text-neutral-400">${salesGoal-salesCount} restan</p></div>
-      <div class="rounded-xl bg-white border p-3 text-center"><p class="text-xs text-neutral-500">Comisión</p><p class="text-2xl font-bold text-success-600">$${(estimatedCommission/1000).toFixed(0)}K</p><p class="text-[10px] text-neutral-400">estimada</p></div>
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Ventas</p><p class="text-2xl primary">${userSales}</p><p class="text-xs muted">del mes</p></div>
+      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Meta</p><p class="text-2xl" style="color:#111827">${userGoal}</p><p class="text-xs muted">${userGoal-userSales} restan</p></div>
+      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Comisión</p><p class="text-2xl success">$${Math.round(userComm/1000)}K</p><p class="text-xs muted">estimada</p></div>
     </div>
-    <div class="h-2 bg-neutral-100 rounded-full mb-5 overflow-hidden"><div class="h-full bg-primary-500 rounded-full transition-all" style="width:${(salesCount/salesGoal*100)}%"></div></div>
-    <button onclick="initCoverage()" class="w-full rounded-xl bg-primary-500 text-white py-4 text-lg font-semibold shadow-lg mb-5 hover:bg-primary-600 active:scale-[0.98] transition-all">📝 Nueva venta</button>
-
-    ${/* Opportunidades */''}
-    <div class="mb-5"><h2 class="text-sm font-semibold text-neutral-700 mb-3">📋 Tus oportunidades</h2>
-      ${opps.map((o,i)=>`<div class="flex items-center gap-3 rounded-xl bg-white border p-3 mb-2 card-hover">
-        <div class="w-9 h-9 rounded-full ${['bg-warning-50','bg-primary-50','bg-success-50'][i]} flex items-center justify-center text-sm">👤</div>
-        <div class="flex-1"><p class="text-sm font-medium">${o.split(' - ')[0]}</p><p class="text-xs text-neutral-500">${o.split(' - ')[1]}</p></div>
-        <span class="text-[10px] ${['bg-warning-100 text-warning-700','bg-primary-100 text-primary-700','bg-success-100 text-success-700'][i]} px-2 py-0.5 rounded-full">${['Cotización','Contactar','Instalación'][i]}</span>
-      </div>`).join('')}
+    <div style="height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;margin-bottom:24px">
+      <div style="height:100%;background:linear-gradient(90deg,#0066FF,#3B82F6);border-radius:3px;width:${pct}%;transition:width .5s ease"></div>
     </div>
-
-    <div class="flex gap-2 mt-4">
-      <button onclick="view='clientSearch';render()" class="flex-1 rounded-xl bg-neutral-100 py-3 text-sm font-medium flex items-center justify-center gap-2">🔍 Buscar cliente</button>
-      <button onclick="initCoverage()" class="flex-1 rounded-xl bg-neutral-100 py-3 text-sm font-medium flex items-center justify-center gap-2">📍 Ver cobertura</button>
-    </div>
-
-    <div class="mt-6 text-xs text-neutral-400 border-t pt-4 flex justify-around">
-      <span class="text-primary-600 font-medium">📊 Dashboard</span>
-      <span class="text-neutral-400">📝 Vender</span>
-      <span class="text-neutral-400">💰 Comisiones</span>
-    </div>
+    <button class="btn btn-primary mb-4 shadow-md" onclick="go('coverage')" style="font-size:17px;padding:18px">📝 Nueva venta</button>
+    <button class="btn btn-outline mb-3" onclick="go('opportunity')">📋 Registrar oportunidad</button>
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// PROFILE - CERE v2 Customer Profile Builder
-// ═══════════════════════════════════════════════════════════════════
-let pdata={adults:2,children:0,teens:0,elderly:0,smartphones:2,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexa:0,decoders:0,printers:0,iot:0,simSmartphones:2,simTvs:1,simComputers:0,simLaptops:1,simConsoles:0,netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD',workPeople:0,workVpn:false,workCalls:false,students:0,gamingPS5:false,gamingXbox:false,gamingPC:false,gamingLatency:false,camCount:0,cam247:false,camCloud:false,biz:false,employees:0,pos:false,invoicing:false,bizCam:false,bizVpn:false,servers:false,clientWifi:false,growthTvs:false,growthCams:false,growthWork:false,growthBiz:false,growthDevices:false,priority:'ESTABILIDAD',profileStep:1};
-let profileViews=[{id:1,title:'Composición del hogar'},{id:2,title:'Dispositivos'},{id:3,title:'Uso simultáneo y streaming'},{id:4,title:'Teletrabajo, educación y gaming'},{id:5,title:'Negocios y crecimiento'}];
-
-function renderProfile(){
-  const s=pdata.profileStep;
-  if(s===0)return renderProfileQuickSelect();
-  return `<div class="p-5 slide-in">
-    <div class="flex items-center gap-1 mb-6">${['Zona','Perfil','Plan','Datos'].map((l,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${l}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-bold">Perfil del cliente</h2>
-      <span class="text-xs text-neutral-400">${s}/${profileViews.length}</span>
-    </div>
-    <div class="flex gap-1 mb-4">${profileViews.map((v,i)=>`<div class="h-1 flex-1 rounded-full ${i+1===s?'bg-primary-500':i+1<s?'bg-success-400':'bg-neutral-200'}"></div>`).join('')}</div>
-    <button onclick="pdata.profileStep=0;render()" class="text-xs text-primary-500 mb-3 flex items-center gap-1">← Usar perfil rápido</button>
-    ${s===1?renderHousehold():s===2?renderDevices():s===3?renderStreaming():s===4?renderWorkEducation():renderBusinessGrowth()}
-    <div class="flex gap-3 mt-6">
-      ${s>1?`<button onclick="pdata.profileStep--;render()" class="flex-1 rounded-xl border-2 border-neutral-300 py-3 font-medium text-sm">← Anterior</button>`:''}
-      <button onclick="${s<5?'pdata.profileStep++;render()':'applyProfile()'}" class="flex-1 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">${s<5?'Siguiente →':'Ver planes recomendados'}</button>
-    </div>
-  </div>`;
-}
-function renderProfileQuickSelect(){
-  return `<div class="p-5 slide-in">
-    <div class="flex items-center gap-1 mb-6">${['Zona','Perfil','Plan','Datos'].map((l,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${l}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
-    <h2 class="text-lg font-bold mb-1">¿Qué experiencia necesita el cliente?</h2>
-    <p class="text-sm text-neutral-500 mb-4">Selecciona el perfil que más se acerque</p>
-    <div class="grid grid-cols-2 gap-2">${cere.predefinedProfiles.map(p=>`<button onclick="applyPredefinedProfile('${p.id}')" class="rounded-xl border-2 border-neutral-200 p-4 text-left hover:border-primary-400 hover:bg-primary-50 transition-all card-hover">
-      <span class="text-2xl block mb-1">${p.icon}</span>
-      <h3 class="font-semibold text-sm text-neutral-900">${p.name}</h3>
-      <p class="text-[10px] text-neutral-500 mt-0.5">${p.desc}</p>
-    </button>`).join('')}</div>
-    <button onclick="pdata.profileStep=1;render()" class="w-full mt-4 rounded-xl border-2 border-dashed border-neutral-300 py-3 text-sm text-neutral-500 hover:border-primary-300">✏️ O crear perfil personalizado</button>
-  </div>`;
-}
-function applyPredefinedProfile(id){
-  const pp=cere.predefinedProfiles.find(p=>p.id===id);
-  if(!pp)return;
-  customerProfile=cere.buildProfile(pp.data);
-  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
-  loadPlans(selectedZone.id,techId);
-}
-function renderHousehold(){return`
-  <div class="space-y-4">
-    <p class="text-sm text-neutral-500 mb-4">¿Quiénes viven en el hogar?</p>
-    ${[['adults','Adultos'],['children','Niños'],['teens','Adolescentes'],['elderly','Adultos mayores']].map(([k,label])=>`<div class="flex items-center justify-between rounded-xl border px-4 py-3"><span class="text-sm">${label}</span>
-      <div class="flex items-center gap-3"><button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center font-medium">−</button><span class="w-6 text-center font-semibold">${pdata[k]}</span><button onclick="pdata.${k}++;render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center font-medium">+</button></div>
-    </div>`).join('')}
-  </div>`;}
-function renderDevices(){return`
-  <p class="text-sm text-neutral-500 mb-4">¿Cuántos dispositivos tienen?</p>
-  <div class="grid grid-cols-2 gap-2">${[['smartphones','📱 Celulares'],['tablets','📟 Tablets'],['smartTvs','📺 Smart TV'],['computers','🖥 Computadores'],['laptops','💻 Portátiles'],['consoles','🎮 Consolas'],['ipCameras','📷 Cámaras IP'],['alexa','🔊 Alexa/Google'],['decoders','📦 Decodificadores'],['printers','🖨 Impresoras'],['iot','🔌 Otros IoT']].map(([k,label])=>`<div class="flex items-center gap-1 border rounded-xl px-3 py-2"><span class="text-[10px] flex-1">${label}</span>
-    <button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">−</button>
-    <span class="w-4 text-center text-xs font-medium">${pdata[k]}</span>
-    <button onclick="pdata.${k}++;render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">+</button></div>`).join('')}
-  </div>`;}
-function renderStreaming(){return`
-  <div class="space-y-4">
-  <p class="text-sm text-neutral-500 mb-4">Consumo de contenido y simultaneidad</p>
-  <div><label class="text-xs font-medium block mb-1.5">¿Cuántos dispositivos funcionan al mismo tiempo?</label>
-    <div class="grid grid-cols-2 gap-2">${[['simSmartphones','📱 Celulares'],['simTvs','📺 TV'],['simComputers','🖥 PC'],['simLaptops','💻 Portátil'],['simConsoles','🎮 Consola']].map(([k,label])=>`<div class="flex items-center gap-1 border rounded-xl px-3 py-2"><span class="text-[10px] flex-1">${label}</span>
-      <button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">−</button>
-      <span class="w-4 text-center text-xs font-medium">${pdata[k]}</span>
-      <button onclick="pdata.${k}++;render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">+</button></div>`).join('')}
-    </div></div>
-  <div><label class="text-xs font-medium block mb-1.5">Calidad de streaming</label>
-    <div class="grid grid-cols-4 gap-1">${[['SD','SD'],['HD','HD'],['FULL_HD','Full HD'],['4K','4K']].map(([v,label])=>`<button onclick="pdata.quality='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${pdata.quality===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata.quality===v?'✓ ':''}${label}</button>`).join('')}
-    </div></div>
-  <div><label class="text-xs font-medium block mb-1.5">Plataformas</label>
-    <div class="grid grid-cols-3 gap-1">${[['netflix','Netflix'],['disneyPlus','Disney+'],['primeVideo','Prime'],['max','Max'],['youtube','YouTube'],['iptv','IPTV']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-[10px] border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
-    </div></div></div>`;}
-function renderWorkEducation(){return`
-  <div class="space-y-4">
-  <div><label class="text-xs font-medium block mb-1.5">💼 Teletrabajo</label>
-    <div class="grid grid-cols-2 gap-2">${[['workPeople','Personas que teletrabajan',['0','1','2','3']]].map(([k,label,opts])=>`<div class="col-span-2 flex items-center justify-between rounded-xl border px-4 py-2"><span class="text-sm">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-xs border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`).join('')}
-    ${[['workVpn','Usa VPN'],['workCalls','Videollamadas frecuentes']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="w-full text-left rounded-xl border-2 px-4 py-2 text-sm ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
-  </div>
-  <div><label class="text-xs font-medium block mb-1.5">🎓 Educación virtual</label>
-    ${[['students','Estudiantes en casa',['0','1','2','3']]].map(([k,label,opts])=>`<div class="flex items-center justify-between rounded-xl border px-4 py-2"><span class="text-sm">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-xs border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`).join('')}
-  </div>
-  <div><label class="text-xs font-medium block mb-1.5">🎮 Gaming</label>
-    <div class="grid grid-cols-2 gap-1">${[['gamingPS5','PS5'],['gamingXbox','Xbox'],['gamingPC','PC Gamer'],['gamingLatency','Prioriza latencia']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
-  </div>
-  <div><label class="text-xs font-medium block mb-1.5">📷 Cámaras de seguridad</label>
-    <div class="flex items-center gap-2 rounded-xl border px-4 py-2"><span class="text-sm flex-1">Cantidad</span>
-      <button onclick="pdata.camCount=Math.max(0,pdata.camCount-1);render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">−</button>
-      <span class="w-6 text-center font-semibold">${pdata.camCount}</span>
-      <button onclick="pdata.camCount++;render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">+</button>
-    </div>
-    ${pdata.camCount>0?`<div class="grid grid-cols-2 gap-1 mt-2">${[['cam247','Grabación 24/7'],['camCloud','Suben a la nube']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}</div>`:''}
-  </div></div>`;}
-function renderBusinessGrowth(){return`
-  <div class="space-y-4">
-  <div><label class="text-xs font-medium block mb-1.5">🏢 ¿Es un negocio?</label>
-    <div class="grid grid-cols-2 gap-2">${[['biz','Sí','business-fields'],['!biz','No']].map(([k,label])=>`<button onclick="pdata.biz=${k==='biz'};render()" class="py-3 rounded-xl text-sm border-2 ${pdata.biz===true?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${label}</button>`).join('')}
-    </div></div>
-  ${pdata.biz?`<div class="grid grid-cols-2 gap-1">${[['employees','Empleados',['1','2','3','5','10']],['pos','Tiene POS'],['invoicing','Facturación electrónica'],['bizCam','Cámaras'],['bizVpn','VPN'],['servers','Servidores'],['clientWifi','WiFi clientes']].map(([k,label,opts])=>opts?`<div class="col-span-2 flex items-center justify-between border rounded-xl px-4 py-2"><span class="text-xs">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-[10px] border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`:`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
-  </div>`:''}
-  ${!pdata.biz?`<div><label class="text-xs font-medium block mb-1.5">📈 Crecimiento futuro</label>
-    <div class="grid grid-cols-2 gap-1">${[['growthTvs','Más televisores'],['growthCams','Cámaras'],['growthWork','Teletrabajo'],['growthBiz','Negocio en casa'],['growthDevices','Más dispositivos']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
-    </div></div>`:''}
-  <div><label class="text-xs font-medium block mb-1.5">⭐ Prioridad</label>
-    <div class="grid grid-cols-3 gap-1">${[['ESTABILIDAD','Estabilidad'],['VELOCIDAD','Velocidad'],['PRECIO','Precio']].map(([v,label])=>`<button onclick="pdata.priority='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${pdata.priority===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata.priority===v?'✓ ':''}${label}</button>`).join('')}
-    </div></div>
-  </div>`;}
-function applyProfile(){
-  customerProfile=cere.buildProfile({
-    composition:{adults:pdata.adults,children:pdata.children,teens:pdata.teens,elderly:pdata.elderly},
-    devices:{smartphones:pdata.smartphones,tablets:pdata.tablets,smartTvs:pdata.smartTvs,computers:pdata.computers,laptops:pdata.laptops,consoles:pdata.consoles,ipCameras:pdata.ipCameras,alexaGoogleHome:pdata.alexa,decoders:pdata.decoders,wifiPrinters:pdata.printers,otherIot:pdata.iot},
-    simultaneous:{smartphones:pdata.simSmartphones,smartTvs:pdata.simTvs,computers:pdata.simComputers,laptops:pdata.simLaptops,consoles:pdata.simConsoles},
-    streaming:{netflix:pdata.netflix,disneyPlus:pdata.disneyPlus,primeVideo:pdata.primeVideo,max:pdata.max,youtube:pdata.youtube,iptv:pdata.iptv,quality:pdata.quality},
-    remoteWork:{people:pdata.workPeople,usesVpn:pdata.workVpn,videoCalls:pdata.workCalls,platforms:[]},
-    education:{virtualClasses:pdata.students>0,university:false,onlineCourses:false,students:pdata.students},
-    gaming:{platforms:[...pdata.gamingPS5?'PS5':[],...pdata.gamingXbox?'XBOX':[],...pdata.gamingPC?'PC_GAMER':[]],frequentGames:true,priorityLatency:pdata.gamingLatency},
-    cameras:{count:pdata.camCount,records24h:pdata.cam247,cloudUpload:pdata.camCloud},
-    business:{isBusiness:pdata.biz,employees:pdata.employees,hasPos:pdata.pos,electronicInvoicing:pdata.invoicing,cameras:pdata.bizCam,vpn:pdata.bizVpn,servers:pdata.servers,clientWifi:pdata.clientWifi},
-    growth:{moreTvs:pdata.growthTvs,cameras:pdata.growthCams,remoteWork:pdata.growthWork,homeBusiness:pdata.growthBiz,moreDevices:pdata.growthDevices},
-    priority:pdata.priority
-  });
-  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
-  loadPlans(selectedZone.id,techId);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// COVERAGE - Auto-detect technology from address
-// ═══════════════════════════════════════════════════════════════════
-let selectedZone=null,coverResult=null;
-function initCoverage(){selectedZone=null;coverResult=null;view='coverage';render();}
-function selectCoverageZone(id,name){selectedZone={id,name};coverResult=null;view='coverage';render();}
-async function checkCoverage(){
-  const addr=document.getElementById('cov-addr')?.value||'';
-  if(!addr||!selectedZone) return;
-  coverResult={loading:true};view='coverage';render();
-  const techs=zoneData.filter(z=>z.name===selectedZone.name);
-  const covTech=techs[0]?.technology_code||'GPON';
-  const covName=techs[0]?.technology||'Fibra Óptica';
-  // Try API first, fallback to zone data
-  try{
-    const r=await fetch(`${API_BASE||'https://referix-api.reto-diario.workers.dev'}/api/v1/coverage/check`,{method:'POST',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},body:JSON.stringify({address:addr,latitude:0,longitude:0})});
-    if(r.ok){const d=await r.json();if(d.data){coverResult={available:d.data.available,technology:d.data.technology||covTech,technologyName:d.data.technologyName||covName,zoneName:selectedZone.name};view='coverage';render();return;}}
-  }catch(e){}
-  // Fallback: continuar sin datos de cobertura
-  coverResult={available:true,technology:covTech,technologyName:covName,zoneName:selectedZone.name};
-  view='coverage';render();
-}
-function continueToProfile(){
-  view='profile';render();
-}
-function continueToPlans(){
-  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
-  loadPlans(selectedZone.id,techId);
-}
-
+// ─── COVERAGE ────────────────────────────────────────────────────
 function renderCoverage(){
-  const steps=['Zona','Dirección','Cobertura','Plan'];
-  const stepIdx=selectedZone?coverResult?coverResult.loading?2:3:1:0;
-  return `<div class="p-5 slide-in">
-    <div class="flex items-center gap-1 mb-6">${steps.map((s,i)=>`<div class="flex items-center gap-1 ${i>0?'ml-1':''}"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i<stepIdx?'bg-success-500 text-white':i===stepIdx?'bg-primary-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<stepIdx?'✓':i+1}</div><span class="text-[10px] ${i===stepIdx?'text-primary-600 font-medium':'text-neutral-400'}">${s}</span>${i<steps.length-1?'<div class="w-4 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
-    <h2 class="text-lg font-bold mb-1">¿Dónde está el cliente?</h2>
-    <p class="text-sm text-neutral-500 mb-5">Ingresa la dirección para verificar cobertura automáticamente</p>
-    <div class="mb-4"><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Municipio</label>
-      <div class="grid grid-cols-2 gap-2">${zoneList.map(z=>`<button onclick="selectCoverageZone('${z.zone_id}','${z.name}')" class="rounded-xl border-2 py-3 text-sm text-center transition-all ${selectedZone?.name===z.name?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200 hover:border-primary-300'}">📍 ${z.name}</button>`).join('')}
-    </div></div>
-    ${selectedZone?`<div class="mb-4"><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Dirección</label><input id="cov-addr" placeholder="Ej: Cra 5 #10-20, ${selectedZone.name}" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm"></div>
-    <button onclick="checkCoverage()" class="w-full rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Verificar cobertura</button>`:''}
-    ${coverResult?.loading?`<div class="text-center py-8 text-neutral-400">Verificando cobertura...</div>`:''}
-    ${coverResult?.available?`<div class="mt-4 rounded-xl bg-success-50 border border-success-200 p-4">
-      <p class="font-semibold text-success-700 mb-2">✅ Cobertura disponible</p>
-      <p class="text-sm text-success-600">Tecnología: ${coverResult.technologyName} (${coverResult.technology})</p>
-      <p class="text-sm text-success-600">Zona: ${coverResult.zoneName}</p>
-      <button onclick="continueToProfile()" class="w-full mt-4 rounded-xl bg-success-500 text-white py-3 font-semibold hover:bg-success-600">Continuar →</button>
-    </div>`:coverResult&&!coverResult.loading?`<div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
-      <p class="font-semibold text-amber-700 mb-1">📋 Cobertura pendiente de validación</p>
-      <p class="text-sm text-amber-600">Operaciones confirmará la cobertura antes de la instalación. Mientras tanto, puedes continuar con el registro de la venta.</p>
-      <button onclick="continueToProfile()" class="w-full mt-4 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">Continuar de todas formas →</button>
-    </div>`:''}
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('dashboard')">← Volver</button>
+    <p class="text-lg mb-2">¿Dónde está el cliente?</p>
+    <p class="text-sm mb-6">Elige el municipio para ver la cobertura disponible</p>
+    <div class="grid grid-cols-2 gap-2 mb-6">${zoneList.map((z,i)=>`<div class="card animate-fadeUp delay-${(i%3)+1}" onclick="selectedZone={id:'${z.zone_id}',name:'${z.name}'};coverResult={available:true,msg:'Cobertura GPON disponible'};go('plans')" style="text-align:center;padding:16px;border-color:${selectedZone?.name===z.name?'#0066FF':'#F0F0F0'}">📍<br><span style="font-weight:600;font-size:13px">${z.name}</span></div>`).join('')}</div>
+    ${selectedZone?`<p class="text-xs muted text-center">✅ Cobertura GPON disponible en ${selectedZone.name}</p>`:''}
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// PLANS - With badges, recommendations, benefits
-// ═══════════════════════════════════════════════════════════════════
-async function loadPlans(zoneId,techId){
-  const p=await API.get(`/api/v2/catalog/plans?zone_id=${zoneId}&technology_id=${techId}`);
-  if(p)plans=p;
-  selectedPlan=null;view='plans';render();
+// ─── PLANS (Premium) ─────────────────────────────────────────────
+function selectPlan(idx){
+  const display=getDisplayPlans();
+  if(display[idx]){selectedPlan=display[idx];go('form');}
 }
-
-function selectPlan(plan){
-  selectedPlan=plan;
-  setTimeout(()=>{if(view==='form'||view==='docs'||view==='confirm')return;selectedPlan=null;render();},1200000);
-  view='form';render();
+function getDisplayPlans(){
+  return plans.length?plans:[
+    {name:'MegaUltra 50',price:49990,download_speed:50,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
+    {name:'MegaUltra 60',price:59990,download_speed:60,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
+    {name:'MegaUltra 80',price:69990,download_speed:80,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi"]'},
+    {name:'MegaUltra 100',price:79990,download_speed:100,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi"]'},
+    {name:'MegaUltra 200',price:99990,download_speed:200,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte Prioritario"]'},
+    {name:'MegaUltra 400',price:149990,download_speed:400,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte VIP"]'},
+  ];
 }
-
-function renderPlans(){
-  if(!customerProfile)return'<div class="p-5">Error: perfil no encontrado</div>';
-  const result=cere.recommend(customerProfile,plans);
-  return `<div class="p-5 slide-in">
-    <button onclick="continueToProfile()" class="text-primary-500 text-sm mb-4 flex items-center gap-1">← Perfil del cliente</button>
-    <div class="flex items-center justify-between mb-1">
-      <h2 class="text-lg font-bold">Planes recomendados</h2>
-      <span class="text-[10px] bg-success-100 text-success-700 px-2 py-0.5 rounded-full">${coverResult?.zoneName||''}</span>
-    </div>
-    <p class="text-sm text-neutral-500 mb-4">Basado en el perfil del cliente, estos son los planes ideales</p>
-
-    ${result.explanation?`<div class="rounded-xl bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800 mb-4 whitespace-pre-line">💡 ${result.explanation}</div>`:''}
-    ${result.oversellWarning?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700 mb-4">💡 ${result.oversellWarning}</div>`:''}
-    ${result.riskBlocked?`<div class="rounded-xl bg-danger-50 border border-danger-200 p-3 text-sm text-danger-700 mb-4">🚫 ${result.blockReason}</div>`:''}
-
-    <div class="space-y-4">
-      ${result.recommended?`<div class="rounded-xl bg-white border-2 ${result.recommended.supportRisk==='MUY_BAJO'||result.recommended.supportRisk==='BAJO'?'border-primary-400':'border-danger-400'} p-4 card-hover">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⭐ RECOMENDADO</span>
-            <span class="text-[10px] ${result.recommended.supportRisk==='MUY_BAJO'?'bg-success-100 text-success-700':result.recommended.supportRisk==='BAJO'?'bg-primary-100 text-primary-700':result.recommended.supportRisk==='MEDIO'?'bg-warning-100 text-warning-700':'bg-danger-100 text-danger-700'} px-2 py-0.5 rounded-full">${result.recommended.supportRisk}</span>
-          </div>
-          <span class="text-xs font-semibold text-primary-600">${result.recommended.compatibility}%</span>
+async function renderPlans(){
+  if(!plans.length&&selectedZone){
+    const fetched=await API.get(`/api/v2/catalog/plans?zone_id=${selectedZone.id}&technology_id=tech-gpon`);
+    if(fetched&&fetched.length)plans=fetched;
+  }
+  const display=getDisplayPlans();
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('coverage')">← Municipios</button>
+    <p class="text-lg mb-1">Planes en ${selectedZone?.name||'Fresno'}</p>
+    <p class="text-sm mb-6">GPON · Fibra Óptica Simétrica · INTERPLAY</p>
+    <div class="flex flex-col gap-4">${display.map(function(plan,idx){
+      let ben=[];
+      try{ben=JSON.parse(plan.benefits||'[]');}catch(e){}
+      const hasTv=ben.some(function(b){return b.toLowerCase().includes('tv');});
+      const comm=getComm(plan.price);
+      return `<div class="card animate-fadeUp delay-${(idx%3)+1}" onclick="selectPlan(${idx})" style="padding:24px">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="badge badge-gpon">🔵 GPON</span>
+          ${plan.download_speed>=100?'<span class="badge badge-sym">⚡ Simétrico</span>':''}
+          ${hasTv?'<span class="badge badge-tv">🟢 TV GRATIS</span>':''}
         </div>
-        <div class="flex justify-between items-start">
-          <div><h3 class="font-bold text-neutral-900 text-lg">${result.recommended.planName}</h3></div>
-          <div class="text-right"><p class="text-2xl font-bold text-primary-600">$${(result.recommended.price||0).toLocaleString('es-CO')}</p><p class="text-[10px] text-neutral-400">/mes</p></div>
+        <div class="flex justify-between items-start mb-3">
+          <div><p class="text-lg" style="margin-bottom:2px">${plan.name}</p>
+            <p class="text-xs muted">${plan.download_speed} Mbps Simétricos · Fibra Óptica</p></div>
+          <div class="text-right"><p class="text-2xl primary">$${(plan.price||0).toLocaleString('es-CO')}</p><p class="text-xs muted">/mes</p></div>
         </div>
-        ${result.recommended.reasons.length>0?`<div class="flex flex-wrap gap-1 my-2">${result.recommended.reasons.map(r=>`<span class="text-[10px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">${r}</span>`).join('')}</div>`:''}
-        <div class="grid grid-cols-2 gap-1 text-xs text-neutral-600 mt-2">
-          <span>🚀 ${result.recommended.downloadSpeed} Mbps ${result.recommended.isSymmetric?'Simétricos':''}</span>
-          <span>📺 TV Digital</span>
-          <span>📡 Router WiFi</span>
-          <span>⏱ 2-3 días</span>
+        <hr class="divider">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          ${plan.download_speed<=50?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">👤 1-2 personas</span>':''}
+          ${plan.download_speed>=100&&plan.download_speed<200?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">👨‍👩‍👧 3-4 personas</span>':''}
+          ${plan.download_speed>=200?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">👨‍👩‍👧‍👦 4+ personas</span>':''}
+          ${plan.download_speed>=100?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">📱 10+ dispositivos</span>':''}
+          ${plan.download_speed>=200?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">🎬 Streaming 4K</span>':''}
+          ${plan.download_speed>=100?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">💻 Teletrabajo</span>':''}
+          ${plan.download_speed>=200?'<span class="text-xs" style="background:#F3F4F6;padding:4px 10px;border-radius:6px">🎮 Gaming</span>':''}
         </div>
-        <div class="grid grid-cols-3 gap-2 mt-3">
-          <div class="rounded-lg bg-success-50 p-2 text-center"><span class="block text-xs font-bold text-success-600">${result.recommended.compatibility}%</span><span class="text-[8px] text-success-500">Compatibilidad</span></div>
-          <div class="rounded-lg bg-primary-50 p-2 text-center"><span class="block text-xs font-bold text-primary-600">${result.recommended.safetyMargin}%</span><span class="text-[8px] text-primary-500">Ocupación</span></div>
-          <div class="rounded-lg bg-amber-50 p-2 text-center"><span class="block text-xs font-bold text-amber-600">${result.recommended.estimatedLifeYears} años</span><span class="text-[8px] text-amber-500">Vida útil</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+          <span class="text-xs" style="color:#374151">✓ ${plan.download_speed} Mbps Simétricos</span>
+          <span class="text-xs" style="color:#374151">✓ Internet Ilimitado</span>
+          <span class="text-xs" style="color:${hasTv?'#059669':'#6B7280'}">${hasTv?'✓ TV Digital HD GRATIS':'📺 TV no incluida'}</span>
+          <span class="text-xs" style="color:#374151">✓ Router WiFi</span>
         </div>
-        <div class="flex items-center justify-between mt-3 p-2 rounded-lg bg-success-50">
-          <span class="text-xs text-success-700 font-medium">💰 Comisión: $${Math.round((result.recommended.price||0)*0.10).toLocaleString('es-CO')}</span>
-          <span class="text-[10px] text-success-600">Riesgo: ${result.recommended.supportRisk}</span>
+        <hr class="divider">
+        <div class="flex items-center justify-between">
+          <span class="text-xs success font-semibold">💰 Comisión: $${comm.toLocaleString('es-CO')}</span>
+          <span class="text-xs muted">⏱ 2-3 días</span>
         </div>
-        ${!result.riskBlocked?`<button onclick="selectPlan(plans.find(p=>p.id==='${result.recommended.planId}'))" class="w-full mt-3 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">Seleccionar plan</button>`:`<div class="mt-3 rounded-xl bg-danger-50 border border-danger-200 p-3 text-xs text-danger-700">Para vender este plan se requiere justificación escrita.</div>`}
-      </div>`:''}
-
-      ${result.alternatives.map(p=>{
-        const isRisky=p.riskLevel==='RIESGOSO'||p.riskLevel==='NO_RECOMENDADO';
-        return `<div onclick="${isRisky?'':`selectPlan(plans.find(pl=>pl.id==='${p.id}'))`}" class="rounded-xl bg-white border-2 p-4 card-hover ${isRisky?'opacity-70 border-neutral-200 cursor-not-allowed':'border-neutral-200 cursor-pointer hover:border-primary-300'}">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold text-neutral-900">${p.name}</h3>
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] px-2 py-0.5 rounded-full ${p.riskLevel==='EXCELENTE'?'bg-success-100 text-success-700':p.riskLevel==='BUENO'?'bg-primary-100 text-primary-700':p.riskLevel==='ACEPTABLE'?'bg-warning-100 text-warning-700':'bg-danger-100 text-danger-700'}">${p.riskLevel}</span>
-              <span class="text-[10px] text-neutral-400">${p.compatibility}%</span>
-            </div>
-          </div>
-          <div class="flex items-baseline gap-1"><span class="text-xl font-bold text-neutral-800">$${(p.price||0).toLocaleString('es-CO')}</span><span class="text-xs text-neutral-400">/mes</span></div>
-          <div class="text-xs text-neutral-500 mt-1">🚀 ${p.download_speed} Mbps</div>
-          ${isRisky?`<div class="text-[10px] text-danger-600 mt-1">⚠ No recomendado para este perfil. Riesgo de lentitud y reclamos.</div>`:''}
-          ${!isRisky?`<div class="flex items-center justify-between mt-2 p-1.5 rounded-lg bg-success-50"><span class="text-xs text-success-700">💰 $${Math.round((p.price||0)*0.10).toLocaleString('es-CO')}</span><span class="text-[10px] text-success-600">${p.demandPercent}% ocupación</span></div>`:''}
-        </div>`;
-      }).join('')}
-
-      ${plans.filter(p=>!result.recommended||p.id!==result.recommended.id).slice(result.alternatives.length).map(p=>{
-        const compat=cere.calculateDemand(customerProfile);
-        const pct=Math.min(100,Math.round(compat/(p.download_speed||50)*100));
-        const risk=pct>85?'NO_RECOMENDADO':pct>75?'RIESGOSO':'ACEPTABLE';
-        return `<div onclick="selectPlan(plans.find(pl=>pl.id==='${p.id}'))" class="rounded-xl bg-white border-2 border-neutral-200 p-3 card-hover cursor-pointer opacity-60">
-          <div class="flex justify-between items-center"><h3 class="font-semibold text-sm text-neutral-900">${p.name}</h3><span class="text-[10px] text-neutral-400">$${(p.price||0).toLocaleString('es-CO')}/mes</span></div>
-          <div class="text-xs text-neutral-400 mt-1">🚀 ${p.download_speed} Mbps · Ocupación estimada: ${pct}%</div>
-          <div class="text-[10px] text-danger-500 mt-0.5">⚠ No recomendado · Riesgo: ${risk}</div>
-        </div>`;
-      }).join('')}
-    </div>
+      </div>`;
+    }).join('')}</div>
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// FORM - Smart form with conditional fields
-// ═══════════════════════════════════════════════════════════════════
+// ─── FORM ─────────────────────────────────────────────────────────
 function renderForm(){
-  const price=selectedPlan?.price||0;
-  const commission=Math.round(price*0.10);
-  return `<div class="p-5 slide-in">
-    <button onclick="view='plans';render()" class="text-primary-500 text-sm mb-4">← Planes</button>
-    <div class="rounded-xl bg-primary-50 border border-primary-200 p-3 mb-4 flex items-center justify-between">
-      <div><p class="font-semibold text-primary-800 text-sm">${selectedPlan?.name}</p><p class="text-xs text-primary-600">$${price.toLocaleString('es-CO')}/mes</p></div>
-      <span class="text-[10px] bg-white text-primary-600 px-2 py-1 rounded-full font-medium">Reservado 20 min</span>
-    </div>
-    <h2 class="text-lg font-bold mb-4">Datos del cliente</h2>
-    <div class="space-y-3">
-      <input id="sf-name" placeholder="Nombre completo" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-      <input id="sf-phone" placeholder="Teléfono" type="tel" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-      <div class="grid grid-cols-2 gap-3">
-        <input id="sf-doc" placeholder="Documento" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-        <input id="sf-email" placeholder="Correo" type="email" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-      </div>
-      <input id="sf-address" placeholder="Dirección" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-    </div>
-    <div class="mt-4"><p class="text-xs font-medium text-neutral-600 mb-2">Tipo de cliente</p>
-      <div class="flex gap-2">
-        <button onclick="clientType='RESIDENTIAL';document.getElementById('commercial-fields').classList.add('hidden');render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='RESIDENTIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">🏠 Hogar<br><span class="text-[10px] font-normal">IVA 0%</span></button>
-        <button onclick="clientType='COMMERCIAL';document.getElementById('commercial-fields')?.classList.remove('hidden');render()" class="flex-1 rounded-xl border-2 py-3 text-sm font-medium transition-all ${clientType==='COMMERCIAL'?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">🏢 Empresa<br><span class="text-[10px] font-normal">IVA 19%</span></button>
+  if(!selectedPlan)return go('plans');
+  const comm=getComm(selectedPlan.price);
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('plans')">← Planes</button>
+    <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:16px;padding:20px;margin-bottom:24px">
+      <p class="font-bold text-lg" style="color:#003DA6">${selectedPlan.name}</p>
+      <div class="flex items-center justify-between mt-2">
+        <span class="text-sm" style="color:#0052CC">$${(selectedPlan.price||0).toLocaleString('es-CO')}/mes</span>
+        <span class="text-sm success font-semibold">💰 $${comm.toLocaleString('es-CO')}</span>
       </div>
     </div>
-    <div id="commercial-fields" class="mt-3 space-y-3 ${clientType==='COMMERCIAL'?'':'hidden'}">
-      <input id="sf-nit" placeholder="NIT" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-      <input id="sf-business" placeholder="Razón social" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+    <p class="text-lg mb-4">Datos del cliente</p>
+    <input id="f-name" placeholder="Nombre completo" class="mb-3">
+    <input id="f-phone" placeholder="Teléfono" type="tel" class="mb-3">
+    <div class="grid grid-cols-2 gap-3 mb-3"><input id="f-doc" placeholder="Documento"><input id="f-email" placeholder="Correo"></div>
+    <input id="f-addr" placeholder="Dirección" class="mb-4">
+    <p class="text-xs font-semibold" style="margin-bottom:8px">Tipo de cliente</p>
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="check-card ${clientType==='RESIDENTIAL'?'active':''}" onclick="clientType='RESIDENTIAL';render()">
+        <div class="check">${clientType==='RESIDENTIAL'?'✓':''}</div>
+        <div><p class="text-sm font-medium" style="color:#111827">Hogar</p><p class="text-xs muted">IVA 0%</p></div>
+      </div>
+      <div class="check-card ${clientType==='COMMERCIAL'?'active':''}" onclick="clientType='COMMERCIAL';render()">
+        <div class="check">${clientType==='COMMERCIAL'?'✓':''}</div>
+        <div><p class="text-sm font-medium" style="color:#111827">Empresa</p><p class="text-xs muted">IVA 19%</p></div>
+      </div>
     </div>
-    <button onclick="saveClientForm()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Continuar →</button>
+    <button class="btn btn-primary" onclick="saveClient()">Continuar →</button>
   </div>`;
 }
-function saveClientForm(){
-  const name=document.getElementById('sf-name')?.value;
-  const phone=document.getElementById('sf-phone')?.value;
-  if(!name||!phone){alert('Nombre y teléfono requeridos');return;}
-  form={name,phone,doc:document.getElementById('sf-doc')?.value,email:document.getElementById('sf-email')?.value,address:document.getElementById('sf-address')?.value,nit:document.getElementById('sf-nit')?.value,businessName:document.getElementById('sf-business')?.value};
-  view='docs';render();
+function saveClient(){
+  formData={name:document.getElementById('f-name')?.value||'Cliente',phone:document.getElementById('f-phone')?.value||'',doc:document.getElementById('f-doc')?.value||'',email:document.getElementById('f-email')?.value||'',address:document.getElementById('f-addr')?.value||''};
+  go('docs');
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// DOCS
-// ═══════════════════════════════════════════════════════════════════
+// ── DOCS ──────────────────────────────────────────────────────────
 function renderDocs(){
-  const docsList=clientType==='COMMERCIAL'?['Cédula','NIT','Cámara de Comercio','Recibo público']:['Cédula','Recibo público'];
-  return `<div class="p-5 slide-in">
-    <button onclick="view='form';render()" class="text-primary-500 text-sm mb-4">← Datos</button>
-    <h2 class="text-lg font-bold mb-4">Documentos</h2>
-    <p class="text-sm text-neutral-500 mb-4">Confirma los documentos del cliente</p>
-    <div class="space-y-3">${docsList.map(d=>`<label class="flex items-center gap-3 rounded-xl border-2 border-neutral-200 p-4 cursor-pointer hover:border-primary-300"><input type="checkbox" onchange="toggleDoc('${d}')" class="w-5 h-5 accent-primary-500"><span class="text-sm">${d}</span></label>`).join('')}
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('form')">← Datos</button>
+    <p class="text-lg mb-2">Documentos requeridos</p>
+    <p class="text-sm mb-6">Confirma los documentos del cliente para continuar</p>
+    <div class="check-card ${docData.cc?'active':''}" onclick="docData.cc=!docData.cc;render()">
+      <div class="check">${docData.cc?'✓':''}</div>
+      <div><p class="text-sm font-medium" style="color:#111827">Copia de cédula</p><p class="text-xs muted">Documento de identidad</p></div>
     </div>
-    <button onclick="view='confirm';render()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Revisar venta →</button>
+    <div class="check-card ${docData.recibo?'active':''}" onclick="docData.recibo=!docData.recibo;render()">
+      <div class="check">${docData.recibo?'✓':''}</div>
+      <div><p class="text-sm font-medium" style="color:#111827">Fotocopia recibo público</p><p class="text-xs muted">Servicio público reciente</p></div>
+    </div>
+    <button class="btn btn-primary mt-6" onclick="go('confirm')">Revisar venta →</button>
   </div>`;
 }
-function toggleDoc(d){docs[d]=!docs[d];}
 
-// ═══════════════════════════════════════════════════════════════════
-// CONFIRM - Summary card
-// ═══════════════════════════════════════════════════════════════════
+// ── CONFIRM ──────────────────────────────────────────────────────
 function renderConfirm(){
-  const price=selectedPlan?.price||0,commission=Math.round(price*0.10),iva=clientType==='COMMERCIAL'?Math.round(price*0.19):0;
-  return `<div class="p-5 slide-in">
-    <button onclick="view='docs';render()" class="text-primary-500 text-sm mb-4">← Documentos</button>
-    <h2 class="text-lg font-bold mb-4">Confirmar venta</h2>
-    <div class="rounded-xl bg-white border-2 border-neutral-200 p-4 mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-lg">${selectedPlan?.name}</h3>
-        <span class="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">${coverResult?.zoneName||''}</span>
+  if(!selectedPlan)return go('plans');
+  const price=selectedPlan.price||0,comm=getComm(price),iva=clientType==='COMMERCIAL'?Math.round(price*0.19):0;
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('docs')">← Documentos</button>
+    <p class="text-lg mb-4">Confirmar venta</p>
+    <div class="card shadow-sm" style="cursor:default;padding:24px">
+      <div class="flex justify-between items-start mb-3">
+        <div><p class="font-bold" style="font-size:17px">${selectedPlan.name}</p><p class="text-xs muted">${selectedZone?.name||'Fresno'} · GPON</p></div>
+        <p class="text-xl primary font-bold">$${price.toLocaleString('es-CO')}<span style="font-size:12px;color:#9CA3AF;font-weight:400">/mes</span></p>
       </div>
-      <div class="space-y-2 text-sm border-b pb-3 mb-3">
-        <div class="flex justify-between"><span class="text-neutral-500">Cliente</span><span class="font-medium">${form.name}</span></div>
-        <div class="flex justify-between"><span class="text-neutral-500">Teléfono</span><span>${form.phone}</span></div>
-        ${form.doc?`<div class="flex justify-between"><span class="text-neutral-500">Documento</span><span>${form.doc}</span></div>`:''}
-        ${form.address?`<div class="flex justify-between"><span class="text-neutral-500">Dirección</span><span class="text-right text-xs">${form.address}</span></div>`:''}
-        <div class="flex justify-between"><span class="text-neutral-500">Tipo</span><span>${clientType==='RESIDENTIAL'?'Residencial':'Comercial'}</span></div>
+      <hr class="divider">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:12px">
+        <span class="text-xs muted">Cliente</span><span class="text-xs font-medium" style="text-align:right">${formData.name||'Cliente'}</span>
+        <span class="text-xs muted">Tipo</span><span class="text-xs font-medium" style="text-align:right">${clientType==='RESIDENTIAL'?'Residencial':'Comercial'}</span>
+        <span class="text-xs muted">Instalación</span><span class="text-xs font-medium" style="text-align:right">2-3 días hábiles</span>
+        ${formData.phone?`<span class="text-xs muted">Teléfono</span><span class="text-xs font-medium" style="text-align:right">${formData.phone}</span>`:''}
       </div>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between"><span class="text-neutral-500">Plan</span><span class="font-semibold">${selectedPlan?.name}</span></div>
-        <div class="flex justify-between"><span class="text-neutral-500">Precio</span><span class="font-semibold">$${price.toLocaleString('es-CO')}/mes</span></div>
-        ${iva>0?`<div class="flex justify-between"><span class="text-neutral-500">IVA 19%</span><span>$${iva.toLocaleString('es-CO')}</span></div>`:''}
-        <div class="flex justify-between"><span class="text-neutral-500">Instalación</span><span>2-3 días hábiles</span></div>
-        <div class="h-px bg-neutral-100 my-2"></div>
-        <div class="flex justify-between text-success-600 font-semibold"><span>💰 Comisión estimada</span><span>$${commission.toLocaleString('es-CO')}</span></div>
+      <hr class="divider">
+      <div class="flex items-center justify-between">
+        <span class="text-sm success font-semibold">💰 Comisión</span>
+        <span class="text-sm success font-bold">$${comm.toLocaleString('es-CO')}</span>
       </div>
     </div>
-    <button onclick="submitSale()" class="w-full rounded-xl bg-success-500 text-white py-4 text-lg font-semibold hover:bg-success-600">✅ Registrar venta</button>
+    ${iva>0?`<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-top:12px;font-size:13px;color:#92400E">IVA 19% aplicado: $${iva.toLocaleString('es-CO')}</div>`:''}
+    <button class="btn btn-success mt-6 shadow-md" onclick="submitSale()" style="font-size:17px">✅ Registrar venta</button>
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// SUBMIT
-// ═══════════════════════════════════════════════════════════════════
+// ── SUBMIT ───────────────────────────────────────────────────────
 async function submitSale(){
-  const ref=await API.post('/api/v1/referrals',{fullName:form.name,phone:form.phone,email:form.email||'',address:form.address||'',planId:selectedPlan?.id,source:'SALES_APP'});
-  if(ref){salesCount++;estimatedCommission+=Math.round((selectedPlan?.price||0)*0.10);view='success';render();}
-  else alert('Error al registrar. Intenta de nuevo.');
+  await API.post('/api/v1/referrals',{fullName:formData.name,phone:formData.phone,email:formData.email,address:formData.address,planId:selectedPlan?.id,source:'SALES_APP'});
+  userSales++;userComm+=getComm(selectedPlan?.price||0);
+  go('success');
 }
-
 function renderSuccess(){
-  const price=selectedPlan?.price||0,commission=Math.round(price*0.10);
-  return `<div class="p-5 text-center pt-16 slide-in">
-    <div class="text-6xl mb-4">🎉</div>
-    <h2 class="text-xl font-bold mb-2">¡Venta registrada!</h2>
-    <p class="text-neutral-500 mb-6">La venta fue registrada exitosamente</p>
-    <div class="rounded-xl bg-success-50 border p-4 mb-6 text-left">
-      <p class="font-semibold text-success-800 mb-2">${selectedPlan?.name}</p>
-      <div class="text-sm text-success-700 space-y-1">
-        <p>📍 ${coverResult?.zoneName||''}</p>
-        <p>👤 ${form.name}</p>
-        <p>💰 Comisión: $${commission.toLocaleString('es-CO')}</p>
-        <p>📋 Pendiente: validación de documentos</p>
-      </div>
+  const comm=getComm(selectedPlan?.price||0);
+  return `<div class="px-5 py-10 text-center animate-fadeUp">
+    <div style="font-size:72px;margin-bottom:16px">🎉</div>
+    <p class="text-xl mb-2">¡Venta registrada!</p>
+    <p class="text-sm muted mb-6">La venta fue registrada exitosamente en INTERPLAY</p>
+    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+      <p class="font-bold success" style="font-size:17px">${selectedPlan?.name}</p>
+      <p class="text-sm" style="color:#047857;margin-top:4px">📍 ${selectedZone?.name||'Fresno'} · GPON</p>
+      <p class="text-sm" style="color:#047857">💰 Comisión: $${comm.toLocaleString('es-CO')}</p>
+      <p class="text-xs muted" style="margin-top:4px">📋 Pendiente: validación de documentos</p>
     </div>
-    <div class="flex gap-3">
-      <button onclick="initCoverage()" class="flex-1 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Nueva venta</button>
-      <button onclick="view='dashboard';render()" class="flex-1 rounded-xl border-2 border-neutral-300 py-3.5 font-medium">Ir al inicio</button>
-    </div>
+    <button class="btn btn-primary" onclick="resetAll()">Nueva venta</button>
+    <button class="btn btn-ghost mt-3" onclick="go('dashboard')">Ir al inicio</button>
   </div>`;
 }
+function resetAll(){selectedPlan=null;selectedZone=null;formData={};docData={};go('coverage');}
 
-// ═══════════════════════════════════════════════════════════════════
-// CLIENT SEARCH
-// ═══════════════════════════════════════════════════════════════════
-function renderClientSearch(){
-  return `<div class="p-5 slide-in">
-    <button onclick="view='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button>
-    <h2 class="text-lg font-bold mb-4">Buscar cliente</h2>
-    <input id="search-q" placeholder="Nombre, teléfono o documento..." class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm mb-4" oninput="searchClients()">
-    <div id="search-results" class="text-sm text-neutral-500 text-center py-8">Escribe para buscar clientes existentes</div>
+// ── OPPORTUNITY ──────────────────────────────────────────────────
+function renderOpportunity(){
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('dashboard')">← Volver</button>
+    <p class="text-lg mb-2">Registrar oportunidad</p>
+    <p class="text-sm muted mb-6">El cliente no compró hoy. ¿Cuál fue el motivo?</p>
+    <div class="grid grid-cols-2 gap-2 mb-6">${['Precio','Comparando','Lo pensará','Sin documentos','Sin cobertura','Esperando pago','Hablar con familia','Otro'].map(function(m){return`<div class="card" onclick="selectedReason='${m}';render()" style="text-align:center;padding:14px;border-color:${selectedReason===m?'#0066FF':'#F0F0F0'}">${m}</div>`;}).join('')}</div>
+    <button class="btn btn-success" onclick="resetAll()">✅ Registrar</button>
   </div>`;
 }
+let selectedReason='';
 </script>
 </body>
 </html>
