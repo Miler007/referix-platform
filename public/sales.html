@@ -23,10 +23,65 @@ tailwind.config={theme:{extend:{colors:{primary:{50:'#EFF6FF',100:'#DBEAFE',500:
 const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
   async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}},
   async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});return(await r.json()).data}catch{return null}}};
+// ═══════════════════════════════════════════════════════════════════
+// CERE — Customer Experience Recommendation Engine
+// ═══════════════════════════════════════════════════════════════════
+const DEVICE_WEIGHTS={smartphones:1.5,smartTvs:8,computers:10,laptops:8,tablets:4,consoles:12,ipCameras:6,dvrNvr:15,wifiPrinters:2,smartSpeakers:1.5,iotDevices:1};
+const USAGE_WEIGHTS={socialMedia:5,browsing:3,music:3,streamingHD:8,streaming4K:15,netflix:10,disneyPlus:10,primeVideo:10,youtube:5,twitch:8,remoteWork:15,virtualClasses:12,videoCalls:10,gaming:20,largeDownloads:25,cloudBackups:12,securityCameras:8};
+
+class CERE {
+  buildProfile(data){return{householdSize:data.householdSize||2,devices:data.devices||{smartphones:2,smartTvs:1,computers:0,laptops:1,tablets:0,consoles:0,ipCameras:0,dvrNvr:0,wifiPrinters:0,smartSpeakers:0,iotDevices:0},usage:data.usage||{socialMedia:true,browsing:true,streamingHD:true,remoteWork:false,gaming:false},simultaneity:data.simultaneity||2,priority:data.priority||'ESTABILIDAD'}}
+
+  calculateDemand(profile){
+    let total=0;
+    Object.entries(profile.devices).forEach(([k,v])=>{total+=v*(DEVICE_WEIGHTS[k]||1)});
+    Object.entries(profile.usage).forEach(([k,v])=>{if(v)total+=USAGE_WEIGHTS[k]||0});
+    total+=profile.householdSize*5+profile.simultaneity*10;
+    return total;
+  }
+
+  demandLevel(totalSpeed){
+    if(!totalSpeed||totalSpeed<=0)return'MUY_ALTA';
+    const pct=Math.min(100,Math.round((this.lastDemand||50)/totalSpeed*100));
+    if(pct<=60)return{level:'EXCELENTE',pct};
+    if(pct<=75)return{level:'BUENO',pct};
+    if(pct<=85)return{level:'ACEPTABLE',pct};
+    if(pct<=90)return{level:'RIESGOSO',pct};
+    return{level:'NO_RECOMENDADO',pct};
+  }
+
+  recommend(profile,plans){
+    this.lastDemand=this.calculateDemand(profile);
+    const scored=plans.map(p=>{
+      const speed=p.download_speed||50;
+      const dl=this.demandLevel(speed);
+      const compat=Math.max(5,Math.min(100,Math.round(100-(this.lastDemand/speed*100)*0.8)));
+      const riskCompat=compat;
+      return{...p,compatibility:compat,riskLevel:dl.level,demandPercent:dl.pct,demandIndex:dl.pct<=60?'BAJA':dl.pct<=75?'MEDIA':dl.pct<=85?'ALTA':'MUY_ALTA',recommended:compat>=75&&dl.level!=='NO_RECOMENDADO'&&dl.level!=='RIESGOSO'};
+    });
+    scored.sort((a,b)=>b.compatibility-a.compatibility);
+    const best=scored[0];
+    const explanation=this.explain(profile,best,scored);
+    const warnings=scored.filter(p=>!p.recommended).map(p=>`⚠ No recomendamos ${p.name}. Riesgo: ${p.riskLevel}.`);
+    return{recommended:best,alternatives:scored.slice(1,3),explanation,warnings};
+  }
+
+  explain(profile,plan,all){
+    const parts=[];
+    const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
+    if(totalDevices>0)parts.push(`${totalDevices} dispositivos conectados`);
+    if(profile.simultaneity>1)parts.push(`${profile.simultaneity} personas usan Internet al mismo tiempo`);
+    const activeUsage=Object.entries(profile.usage).filter(([k,v])=>v).map(([k])=>({socialMedia:'redes sociales',streamingHD:'streaming HD',streaming4K:'streaming 4K',remoteWork:'teletrabajo',gaming:'gaming',videoCalls:'videollamadas',virtualClasses:'clases virtuales'}[k]||k)).filter(Boolean);
+    if(activeUsage.length>0)parts.push(`uso frecuente de ${activeUsage.join(', ')}`);
+    parts.push(`compatibilidad del ${plan?.compatibility||'?'}%`);
+    return`Recomendamos ${plan?.name||'este plan'} porque tiene ${parts.join(', ')}.${plan?.riskLevel==='EXCELENTE'?' Este plan ofrece el mejor equilibrio entre estabilidad, rendimiento y crecimiento.':plan?.riskLevel==='BUENO'?' Este plan tiene capacidad suficiente para el hogar.':''}`;
+  }
+}
+const cere=new CERE();
+let customerProfile=null;
 // ── State ─────────────────────────────────────────────────────────
 let view='dashboard',zoneList=[],zoneData=[],plans=[],selectedPlan=null,clientType='RESIDENTIAL',form={},docs={cc:false,recibo:false};
 let salespersonName='Carlos',salesCount=18,salesGoal=25,estimatedCommission=1320000;
-const DEVICE_RECOMMENDATIONS={'50':{max:5,label:'Hasta 5 dispositivos','ideal':'Navegación y redes'},'100':{max:10,label:'Hasta 10 dispositivos','ideal':'Streaming 4K y teletrabajo'},'200':{max:20,label:'Más de 20 dispositivos','ideal':'Hogar inteligente y gaming'}};
 
 // ── Init ──────────────────────────────────────────────────────────
 (async()=>{zoneData=await API.get('/api/v2/catalog/zones')||[];zoneList=[...new Map(zoneData.map(z=>[z.name,z])).values()];render();})();
@@ -37,6 +92,7 @@ function render(){
   el.innerHTML={
     dashboard:renderDashboard(),
     coverage:renderCoverage(),
+    profile:renderProfile(),
     plans:renderPlans(),
     form:renderForm(),
     docs:renderDocs(),
@@ -87,6 +143,48 @@ function renderDashboard(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// PROFILE - CERE Customer Profile
+// ═══════════════════════════════════════════════════════════════════
+let cereData={householdSize:2,simultaneity:2,smartphones:2,smartTvs:1,laptops:1,priority:'ESTABILIDAD',streamingHD:true,remoteWork:false,gaming:false,videoCalls:false,virtualClasses:false,socialMedia:true,browsing:true};
+function renderProfile(){
+  return `<div class="p-5 slide-in">
+    <div class="flex items-center gap-2 mb-6">${['Zona','Perfil','Plan','Datos'].map((s,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${s}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
+    <h2 class="text-lg font-bold mb-1">Perfil del cliente</h2>
+    <p class="text-sm text-neutral-500 mb-4">Ayúdanos a recomendar el mejor plan</p>
+    <div class="space-y-4">
+      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">👥 ¿Cuántas personas viven en el hogar?</label>
+        <div class="grid grid-cols-5 gap-1">${[1,2,3,4,5].map(n=>`<button onclick="cereData.householdSize=${n};render()" class="py-2 rounded-lg text-sm border-2 ${cereData.householdSize===n?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${n}</button>`).join('')}</div>
+      </div>
+      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">📱 ¿Cuántas personas usan Internet al mismo tiempo?</label>
+        <div class="grid grid-cols-4 gap-1">${[1,2,3,4].map(n=>`<button onclick="cereData.simultaneity=${n};render()" class="py-2 rounded-lg text-sm border-2 ${cereData.simultaneity===n?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${n}</button>`).join('')}</div>
+      </div>
+      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">Dispositivos conectados</label>
+        <div class="grid grid-cols-2 gap-2">${[['smartphones','📱 Celulares'],['smartTvs','📺 Smart TV'],['laptops','💻 Portátiles'],['computers','🖥 Computadores'],['tablets','📟 Tablets'],['consoles','🎮 Consolas'],['ipCameras','📷 Cámaras'],['smartSpeakers','🔊 Alexa/Google']].map(([k,label])=>`<div class="flex items-center gap-2 border rounded-xl px-3 py-2"><span class="text-xs flex-1">${label}</span>
+        <button onclick="cereData.${k}=Math.max(0,(cereData.${k}||0)-1);render()" class="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium">−</button>
+        <span class="w-5 text-center text-sm font-medium">${cereData[k]||0}</span>
+        <button onclick="cereData.${k}=(cereData.${k}||0)+1;render()" class="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium">+</button></div>`).join('')}
+      </div>
+      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">🎯 ¿Qué usan principalmente?</label>
+        <div class="grid grid-cols-2 gap-2">${[['socialMedia','Redes sociales'],['streamingHD','Streaming HD'],['remoteWork','Teletrabajo'],['gaming','Videojuegos'],['videoCalls','Videollamadas'],['virtualClasses','Clases virtuales']].map(([k,label])=>`<button onclick="cereData.${k}=!cereData.${k};render()" class="py-2 rounded-lg text-xs border-2 transition-all ${cereData[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200 text-neutral-600'}">${cereData[k]?'✓ ':''}${label}</button>`).join('')}
+      </div>
+      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">⭐ Prioridad del cliente</label>
+        <div class="grid grid-cols-3 gap-2">${[['ESTABILIDAD','Confiabilidad'],['VELOCIDAD','Velocidad'],['PRECIO','Precio']].map(([v,label])=>`<button onclick="cereData.priority='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${cereData.priority===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${cereData.priority===v?'✓ ':''}${label}</button>`).join('')}
+      </div>
+    </div>
+    <button onclick="applyProfile()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Ver planes recomendados →</button>
+  </div>`;
+}
+function applyProfile(){
+  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
+  customerProfile=cere.buildProfile({
+    householdSize:cereData.householdSize,simultaneity:cereData.simultaneity,
+    devices:{smartphones:cereData.smartphones||0,smartTvs:cereData.smartTvs||0,computers:cereData.computers||0,laptops:cereData.laptops||0,tablets:cereData.tablets||0,consoles:cereData.consoles||0,ipCameras:cereData.ipCameras||0,dvrNvr:0,wifiPrinters:0,smartSpeakers:cereData.smartSpeakers||0,iotDevices:0},
+    usage:{socialMedia:cereData.socialMedia,browsing:cereData.browsing,streamingHD:cereData.streamingHD,remoteWork:cereData.remoteWork,gaming:cereData.gaming,videoCalls:cereData.videoCalls,virtualClasses:cereData.virtualClasses}
+  });
+  loadPlans(selectedZone.id,techId);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // COVERAGE - Auto-detect technology from address
 // ═══════════════════════════════════════════════════════════════════
 let selectedZone=null,coverResult=null;
@@ -102,6 +200,9 @@ async function checkCoverage(){
     coverResult={available:true,technology:techs[0]?.technology_code||'GPON',technologyName:techs[0]?.technology||'Fibra Óptica',zoneName:selectedZone.name};
     view='coverage';render();
   },800);
+}
+function continueToProfile(){
+  view='profile';render();
 }
 function continueToPlans(){
   const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
@@ -125,7 +226,7 @@ function renderCoverage(){
       <p class="font-semibold text-success-700 mb-2">✅ Cobertura disponible</p>
       <p class="text-sm text-success-600">Tecnología: ${coverResult.technologyName} (${coverResult.technology})</p>
       <p class="text-sm text-success-600">Zona: ${coverResult.zoneName}</p>
-      <button onclick="continueToPlans()" class="w-full mt-4 rounded-xl bg-success-500 text-white py-3 font-semibold hover:bg-success-600">Ver planes disponibles →</button>
+      <button onclick="continueToProfile()" class="w-full mt-4 rounded-xl bg-success-500 text-white py-3 font-semibold hover:bg-success-600">Continuar →</button>
     </div>`:coverResult&&!coverResult.loading&&!coverResult.available?`<div class="mt-4 rounded-xl bg-danger-50 border border-danger-200 p-4">
       <p class="font-semibold text-danger-700">❌ Sin cobertura</p><p class="text-sm text-danger-600 mt-1">No hay cobertura disponible en esta dirección</p></div>`:''}
   </div>`;
@@ -140,50 +241,77 @@ async function loadPlans(zoneId,techId){
   selectedPlan=null;view='plans';render();
 }
 
-function getRecommendation(plan){
-  const speed=plan.download_speed||50;
-  const rec=DEVICE_RECOMMENDATIONS[String(speed)]||DEVICE_RECOMMENDATIONS['100'];
-  if(speed>=200)return{badge:'⭐ RECOMENDADO',color:'bg-amber-100 text-amber-700',desc:rec.ideal};
-  if(speed>=100)return{badge:'🔥 Popular',color:'bg-primary-100 text-primary-700',desc:rec.ideal};
-  return{badge:'💰 Económico',color:'bg-success-100 text-success-700',desc:rec.ideal};
-}
-
 function selectPlan(plan){
   selectedPlan=plan;
-  // Reserve plan for 20 minutes
   setTimeout(()=>{if(view==='form'||view==='docs'||view==='confirm')return;selectedPlan=null;render();},1200000);
   view='form';render();
 }
 
 function renderPlans(){
+  if(!customerProfile)return'<div class="p-5">Error: perfil no encontrado</div>';
+  const result=cere.recommend(customerProfile,plans);
   return `<div class="p-5 slide-in">
-    <button onclick="initCoverage()" class="text-primary-500 text-sm mb-4 flex items-center gap-1">← Cambiar dirección</button>
-    <h2 class="text-lg font-bold mb-1">Planes en ${coverResult?.zoneName||''}</h2>
-    <p class="text-sm text-neutral-500 mb-4">${coverResult?.technologyName||''} · Elige el plan ideal para tu cliente</p>
+    <button onclick="continueToProfile()" class="text-primary-500 text-sm mb-4 flex items-center gap-1">← Perfil del cliente</button>
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="text-lg font-bold">Planes recomendados</h2>
+      <span class="text-[10px] bg-success-100 text-success-700 px-2 py-0.5 rounded-full">${coverResult?.zoneName||''}</span>
+    </div>
+    <p class="text-sm text-neutral-500 mb-4">Basado en el perfil del cliente, estos son los planes ideales</p>
+
+    ${result.explanation?`<div class="rounded-xl bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800 mb-4">💡 ${result.explanation}</div>`:''}
+    ${result.warnings.length>0?`<div class="rounded-xl bg-danger-50 border border-danger-200 p-3 text-sm text-danger-700 mb-4">${result.warnings.join('<br>')}</div>`:''}
+
     <div class="space-y-4">
-      ${plans.map(p=>{
-        const rec=getRecommendation(p);
-        const commission=Math.round((p.price||0)*0.10);
-        return `<div onclick="selectPlan(${plans.indexOf(p)})" class="rounded-xl bg-white border-2 p-4 card-hover cursor-pointer ${p.download_speed>=100?'border-primary-200':'border-neutral-200'}">
-          <div class="flex justify-between items-start mb-2">
-            <div><h3 class="font-bold text-neutral-900 text-lg">${p.name}</h3></div>
-            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full ${rec.color}">${rec.badge}</span>
+      ${result.recommended?`<div class="rounded-xl bg-white border-2 border-primary-400 p-4 card-hover">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⭐ RECOMENDADO</span>
+            <span class="text-[10px] ${result.recommended.riskLevel==='EXCELENTE'?'bg-success-100 text-success-700':result.recommended.riskLevel==='BUENO'?'bg-primary-100 text-primary-700':'bg-warning-100 text-warning-700'} px-2 py-0.5 rounded-full">${result.recommended.riskLevel}</span>
           </div>
-          <div class="flex items-baseline gap-1 mb-3">
-            <span class="text-3xl font-bold text-primary-600">$${(p.price||0).toLocaleString('es-CO')}</span>
-            <span class="text-sm text-neutral-400">/mes</span>
+          <span class="text-xs font-semibold text-primary-600">${result.recommended.compatibility}% compatibilidad</span>
+        </div>
+        <div class="flex justify-between items-start">
+          <div><h3 class="font-bold text-neutral-900 text-lg">${result.recommended.name}</h3></div>
+          <div class="text-right"><p class="text-2xl font-bold text-primary-600">$${(result.recommended.price||0).toLocaleString('es-CO')}</p><p class="text-[10px] text-neutral-400">/mes</p></div>
+        </div>
+        <div class="grid grid-cols-2 gap-1 text-xs text-neutral-600 mt-2">
+          <span>🚀 ${result.recommended.download_speed} Mbps ${result.recommended.is_symmetric?'Simétricos':''}</span>
+          <span>📺 TV Digital</span>
+          <span>📡 Router WiFi</span>
+          <span>⏱ 2-3 días</span>
+        </div>
+        <div class="flex items-center justify-between mt-3 p-2 rounded-lg bg-success-50">
+          <span class="text-xs text-success-700 font-medium">💰 Comisión: $${Math.round((result.recommended.price||0)*0.10).toLocaleString('es-CO')}</span>
+          <span class="text-[10px] text-success-600">Ocupación estimada: ${result.recommended.demandPercent}%</span>
+        </div>
+        <button onclick="selectPlan(plans.find(p=>p.id==='${result.recommended.id}'))" class="w-full mt-3 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">Seleccionar plan</button>
+      </div>`:''}
+
+      ${result.alternatives.map(p=>{
+        const isRisky=p.riskLevel==='RIESGOSO'||p.riskLevel==='NO_RECOMENDADO';
+        return `<div onclick="${isRisky?'':`selectPlan(plans.find(pl=>pl.id==='${p.id}'))`}" class="rounded-xl bg-white border-2 p-4 card-hover ${isRisky?'opacity-70 border-neutral-200 cursor-not-allowed':'border-neutral-200 cursor-pointer hover:border-primary-300'}">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-semibold text-neutral-900">${p.name}</h3>
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] px-2 py-0.5 rounded-full ${p.riskLevel==='EXCELENTE'?'bg-success-100 text-success-700':p.riskLevel==='BUENO'?'bg-primary-100 text-primary-700':p.riskLevel==='ACEPTABLE'?'bg-warning-100 text-warning-700':'bg-danger-100 text-danger-700'}">${p.riskLevel}</span>
+              <span class="text-[10px] text-neutral-400">${p.compatibility}%</span>
+            </div>
           </div>
-          <p class="text-xs text-neutral-600 mb-3 line-clamp">${rec.desc}</p>
-          <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
-            <div class="flex items-center gap-1.5"><span>🚀</span><span>${p.download_speed} Mbps ${p.is_symmetric?'Simétricos':''}</span></div>
-            <div class="flex items-center gap-1.5"><span>📺</span><span>TV Digital</span></div>
-            <div class="flex items-center gap-1.5"><span>📡</span><span>Router WiFi</span></div>
-            <div class="flex items-center gap-1.5"><span>⏱</span><span>2-3 días</span></div>
-          </div>
-          <div class="flex items-center justify-between p-2 rounded-lg bg-success-50">
-            <span class="text-xs text-success-700">💰 Comisión: $${commission.toLocaleString('es-CO')}</span>
-            <span class="text-[10px] text-success-600">${p.download_speed>=100?'✓ Recomendado para tus dispositivos':''}</span>
-          </div>
+          <div class="flex items-baseline gap-1"><span class="text-xl font-bold text-neutral-800">$${(p.price||0).toLocaleString('es-CO')}</span><span class="text-xs text-neutral-400">/mes</span></div>
+          <div class="text-xs text-neutral-500 mt-1">🚀 ${p.download_speed} Mbps</div>
+          ${isRisky?`<div class="text-[10px] text-danger-600 mt-1">⚠ No recomendado para este perfil. Riesgo de lentitud y reclamos.</div>`:''}
+          ${!isRisky?`<div class="flex items-center justify-between mt-2 p-1.5 rounded-lg bg-success-50"><span class="text-xs text-success-700">💰 $${Math.round((p.price||0)*0.10).toLocaleString('es-CO')}</span><span class="text-[10px] text-success-600">${p.demandPercent}% ocupación</span></div>`:''}
+        </div>`;
+      }).join('')}
+
+      ${plans.filter(p=>!result.recommended||p.id!==result.recommended.id).slice(result.alternatives.length).map(p=>{
+        const compat=cere.calculateDemand(customerProfile);
+        const pct=Math.min(100,Math.round(compat/(p.download_speed||50)*100));
+        const risk=pct>85?'NO_RECOMENDADO':pct>75?'RIESGOSO':'ACEPTABLE';
+        return `<div onclick="selectPlan(plans.find(pl=>pl.id==='${p.id}'))" class="rounded-xl bg-white border-2 border-neutral-200 p-3 card-hover cursor-pointer opacity-60">
+          <div class="flex justify-between items-center"><h3 class="font-semibold text-sm text-neutral-900">${p.name}</h3><span class="text-[10px] text-neutral-400">$${(p.price||0).toLocaleString('es-CO')}/mes</span></div>
+          <div class="text-xs text-neutral-400 mt-1">🚀 ${p.download_speed} Mbps · Ocupación estimada: ${pct}%</div>
+          <div class="text-[10px] text-danger-500 mt-0.5">⚠ No recomendado · Riesgo: ${risk}</div>
         </div>`;
       }).join('')}
     </div>
