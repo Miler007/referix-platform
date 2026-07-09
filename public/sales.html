@@ -107,48 +107,79 @@ function getComm(p){return Math.round((p||0)*0.1);}
 function renderDashboard(){
   const pct=Math.round((userSales/userGoal)*100);
   const restan=userGoal-userSales;
-  const ctxSales=userSales>0?`Vas ${userSales>=15?'12% por encima':'bien'} del promedio.`:'Comienza a vender para ver tu progreso.';
+  const hora=new Date().getHours();
+  const saludo=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
+  const pronostico=Math.min(userGoal,Math.round(userSales/17*30))||0;
+  const probMeta=Math.min(100,Math.round((userSales/userGoal)*100+15))||0;
   return `<div class="px-5 py-6 animate-fadeUp">
-    <div class="flex items-center gap-3 mb-6">
+    <!-- Saludo inteligente -->
+    <div class="flex items-center gap-3 mb-4">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#0052CC);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${userName[0]}</div>
-      <div><p class="text-lg">Hola, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      <div><p class="text-lg">${saludo}, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
     </div>
 
-    <!-- Contexto principal -->
+    <!-- Contexto + Inteligencia -->
     <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;padding:20px;margin-bottom:20px">
-      <p style="font-size:15px;color:#003DA6;font-weight:500">${userSales>0?`Hoy llevas <strong>${userSales} ventas</strong>. ${ctxSales}`:'<strong>Aún no hay ventas hoy.</strong> Cuando registres tu primera venta, tu progreso aparecerá aquí.'}</p>
-      ${restan>0?`<p style="font-size:13px;color:#0052CC;margin-top:4px">Te faltan <strong>${restan}</strong> para alcanzar la meta de ${userGoal}.</p>`:userSales>=userGoal?`<p style="font-size:13px;color:#059669;margin-top:4px">🎉 ¡Meta alcanzada!</p>`:''}
+      ${userSales>0?`<p style="font-size:15px;color:#003DA6;font-weight:500">Hoy ayudaste a conectar a <strong>${userSales} nuevos hogares</strong>. ${userSales>=15?'Excelente ritmo, sigue así.':'Vas bien, sigue así.'}</p>
+      <p style="font-size:13px;color:#0052CC;margin-top:8px">📈 Proyección: <strong>${pronostico} clientes</strong> este mes (${probMeta}% de cumplir la meta)</p>`:`<p style="font-size:15px;color:#003DA6;font-weight:500"><strong>Aún no hay ventas hoy.</strong> Cuando registres tu primera venta, tu progreso aparecerá aquí.</p>`}
+      ${restan>0&&userSales>0?`<p style="font-size:13px;color:#0052CC;margin-top:4px">Te faltan <strong>${restan}</strong> hogares para alcanzar tu meta de ${userGoal}.</p>`:''}
+      ${userSales>=userGoal?`<p style="font-size:15px;color:#059669;font-weight:600;margin-top:4px">🎉 ¡Meta alcanzada! Has conectado a ${userSales} hogares este mes.</p>`:''}
     </div>
 
-    <div class="grid grid-cols-3 gap-3 mb-6">
-      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Ventas</p><p class="text-2xl primary">${userSales}</p><p class="text-xs muted">del mes</p></div>
-      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Meta</p><p class="text-2xl" style="color:#111827">${userGoal}</p><p class="text-xs muted">${restan>0?restan+' restan':'✅'}</p></div>
-      <div class="card shadow-sm" style="cursor:default"><p class="text-xs muted">Comisión</p><p class="text-2xl success">$${Math.round(userComm/1000)}K</p><p class="text-xs muted">estimada</p></div>
+    <!-- Solo 3 KPIs -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="card shadow-sm" style="cursor:default;padding:16px"><p class="text-xs muted">Hogares conectados</p><p class="text-2xl primary">${userSales}</p><p class="text-xs muted">este mes</p></div>
+      <div class="card shadow-sm" style="cursor:default;padding:16px"><p class="text-xs muted">Meta</p><p class="text-2xl" style="color:#111827">${userGoal}</p><p class="text-xs muted">${restan>0?restan+' restan':'✅ Cumplida'}</p></div>
+      <div class="card shadow-sm" style="cursor:default;padding:16px"><p class="text-xs muted">Comisión</p><p class="text-2xl success">$${Math.round(userComm/1000)}K</p><p class="text-xs muted">estimada</p></div>
     </div>
 
-    <div style="height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;margin-bottom:24px">
+    <!-- Barra de progreso -->
+    <div style="height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;margin-bottom:20px">
       <div style="height:100%;background:linear-gradient(90deg,#0066FF,#3B82F6);border-radius:3px;width:${pct}%;transition:width .5s ease"></div>
     </div>
 
-    <!-- Live Activity -->
-    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:20px">
-      <p style="font-size:14px;font-weight:600;margin-bottom:12px">⚡ Actividad reciente</p>
-      <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #F3F4F6">
-        <span style="font-size:10px;color:#9CA3AF;flex-shrink:0">Hace 2 min</span>
-        <span style="font-size:13px">📝 Venta registrada en <strong>Fresno</strong></span>
+    <!-- Ranking -->
+    <p style="font-size:12px;color:#9CA3AF;margin-bottom:16px">🏆 Ranking: #3 de 18 asesores · ${probMeta}% probabilidad de cumplir meta</p>
+
+    <!-- Lo que debes hacer hoy -->
+    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
+      <p style="font-size:14px;font-weight:600;margin-bottom:10px">📋 Hoy deberías</p>
+      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
+        <span style="font-size:12px">📞</span><span style="font-size:13px">Llamar a <strong>3 oportunidades</strong> pendientes</span>
       </div>
-      <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #F3F4F6">
-        <span style="font-size:10px;color:#9CA3AF;flex-shrink:0">Hace 6 min</span>
-        <span style="font-size:13px">✅ Instalación confirmada en <strong>Lérida</strong></span>
+      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
+        <span style="font-size:12px">📋</span><span style="font-size:13px">Confirmar <strong>2 instalaciones</strong> programadas</span>
       </div>
-      <div style="display:flex;gap:12px;padding:8px 0">
-        <span style="font-size:10px;color:#9CA3AF;flex-shrink:0">Hace 10 min</span>
-        <span style="font-size:13px">💰 Comisión liberada <strong>$6.000</strong></span>
+      <div style="display:flex;gap:10px;padding:8px 0">
+        <span style="font-size:12px">💰</span><span style="font-size:13px">Tienes <strong>1 comisión</strong> lista para pago</span>
       </div>
     </div>
 
-    <button class="btn btn-primary mb-3 shadow-md" onclick="go('coverage')" style="font-size:17px;padding:18px">📝 Nueva venta</button>
-    <button class="btn btn-outline" onclick="go('opportunity')">📋 Registrar oportunidad</button>
+    <!-- Actividad reciente con contexto -->
+    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
+      <p style="font-size:14px;font-weight:600;margin-bottom:10px">⚡ Actividad reciente</p>
+      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
+        <span style="color:#059669">🟢</span>
+        <div><p style="font-size:13px;font-weight:500">Venta registrada</p><p style="font-size:12px;color:#6B7280">Juan Pérez · MegaUltra 100 · Fresno · 💰 $6.000</p><p style="font-size:10px;color:#9CA3AF">Hace 2 minutos</p></div>
+      </div>
+      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
+        <span style="color:#D97706">🟠</span>
+        <div><p style="font-size:13px;font-weight:500">Instalación programada</p><p style="font-size:12px;color:#6B7280">Laura García · Mañana 8:00 AM · Lérida</p><p style="font-size:10px;color:#9CA3AF">Hace 6 minutos</p></div>
+      </div>
+      <div style="display:flex;gap:10px;padding:8px 0">
+        <span style="color:#DC2626">🔴</span>
+        <div><p style="font-size:13px;font-weight:500">Cliente canceló</p><p style="font-size:12px;color:#6B7280">Carlos Ruiz · Motivo: Precio</p><p style="font-size:10px;color:#9CA3AF">Hace 10 minutos</p></div>
+      </div>
+    </div>
+
+    <!-- Botón principal dominante -->
+    <button class="btn btn-primary mb-3 shadow-md" onclick="go('coverage')" style="font-size:18px;padding:20px;border-radius:14px">+ NUEVA VENTA</button>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 gap-2">
+      <button class="btn btn-outline" onclick="window.location='/customer360.html'" style="padding:14px;font-size:13px">👤 Buscar cliente</button>
+      <button class="btn btn-outline" onclick="go('opportunity')" style="padding:14px;font-size:13px">📋 Oportunidad</button>
+    </div>
   </div>`;
 }
 
@@ -322,19 +353,29 @@ async function submitSale(){
   go('success');
 }
 function renderSuccess(){
-  const comm=getComm(selectedPlan?.price||0);
-  return `<div class="px-5 py-10 text-center animate-fadeUp">
-    <div style="font-size:72px;margin-bottom:16px">🎉</div>
-    <p class="text-xl mb-2">¡Venta registrada!</p>
-    <p class="text-sm muted mb-6">La venta fue registrada exitosamente en INTERPLAY</p>
-    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
-      <p class="font-bold success" style="font-size:17px">${selectedPlan?.name}</p>
-      <p class="text-sm" style="color:#047857;margin-top:4px">📍 ${selectedZone?.name||'Fresno'} · GPON</p>
-      <p class="text-sm" style="color:#047857">💰 Comisión: $${comm.toLocaleString('es-CO')}</p>
-      <p class="text-xs muted" style="margin-top:4px">📋 Pendiente: validación de documentos</p>
+  const comm=getCommission(selectedPlan?.price||0);
+  userComm+=comm;
+  return `<div class="px-5 py-8 text-center animate-fadeUp">
+    <div style="font-size:72px;margin-bottom:12px">🎉</div>
+    <p class="text-xl mb-2">¡Un hogar más conectado!</p>
+    <p class="text-sm muted mb-6">${selectedPlan?.name} · ${selectedZone?.name||'Fresno'}</p>
+    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:16px;padding:20px;margin-bottom:24px;text-align:left">
+      <p style="font-size:14px;font-weight:600;color:#059669">Resumen</p>
+      <div style="display:flex;justify-content:space-between;margin-top:8px">
+        <span style="font-size:13px;color:#047857">Cliente:</span><span style="font-size:13px;font-weight:500;color:#047857">${formData.name||'Cliente'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:13px;color:#047857">Plan:</span><span style="font-size:13px;font-weight:500;color:#047857">${selectedPlan?.name} · $${(selectedPlan?.price||0).toLocaleString('es-CO')}/mes</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:13px;color:#059669;font-weight:600">💰 Comisión:</span><span style="font-size:13px;font-weight:600;color:#059669">$${comm.toLocaleString('es-CO')}</span>
+      </div>
+      <p style="font-size:11px;color:#047857;margin-top:8px">📋 Pendiente: validación de documentos</p>
     </div>
-    <button class="btn btn-primary" onclick="resetAll()">Nueva venta</button>
-    <button class="btn btn-ghost mt-3" onclick="go('dashboard')">Ir al inicio</button>
+    <div class="grid grid-cols-2 gap-3">
+      <button class="btn btn-primary" onclick="resetAll()" style="padding:16px;font-size:15px">📝 Nueva venta</button>
+      <button class="btn btn-outline" onclick="go('dashboard')" style="padding:16px;font-size:15px">🏠 Ir al inicio</button>
+    </div>
   </div>`;
 }
 function resetAll(){selectedPlan=null;selectedZone=null;formData={};docData={};go('coverage');}
