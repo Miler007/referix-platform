@@ -105,56 +105,62 @@ function getComm(p){return Math.round((p||0)*0.1);}
 
 // ─── DASHBOARD ──────────────────────────────────────────────────
 function renderDashboard(){
-  const restan=userGoal-userSales;
   const hora=new Date().getHours();
   const saludo=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
-  const clientesAtendidos=userSales+3;
+  const momento=hora<9?'temprano':hora<12?'media mañana':hora<14?'mediodía':hora<17?'tarde':'final de la tarde';
+  const completado=Math.min(100,Math.round((userSales/userGoal)*70+15));
+  const healthClients=[
+    {name:'María Rodríguez',health:96,label:'Alta probabilidad',color:'#059669',bg:'#ECFDF5',action:'📞 Llamar',prio:'🔴'},
+    {name:'Pedro Martínez',health:65,label:'Necesita seguimiento',color:'#D97706',bg:'#FFFBEB',action:'📋 Documentos',prio:'🟠'},
+    {name:'Carlos Ruiz',health:30,label:'Riesgo de perder',color:'#DC2626',bg:'#FEF2F2',action:'📍 Visitar',prio:'🟡'},
+  ];
   return `<div class="px-5 py-6 animate-fadeUp">
-    <!-- Saludo + resumen humano -->
+    <!-- Saludo según momento del día -->
     <div class="flex items-center gap-3 mb-4">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#0052CC);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${userName[0]}</div>
-      <div><p class="text-lg">${saludo}, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      <div><p class="text-lg">${saludo}, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})} · ${hora<12?'🌤️ Mañana':hora<18?'☀️ Tarde':'🌙 Noche'}</p></div>
     </div>
 
-    <!-- Hoy tienes (agenda, no KPIs) -->
-    <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;padding:20px;margin-bottom:20px">
-      <p style="font-size:15px;color:#003DA6;font-weight:500">Hoy has atendido a <strong>${clientesAtendidos} clientes</strong>.</p>
-      <div style="margin-top:12px">
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="color:#059669">🟢</span><span style="font-size:13px;color:#0052CC"><strong>3 clientes</strong> para visitar</span></div>
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="color:#D97706">🟡</span><span style="font-size:13px;color:#0052CC"><strong>2 cotizaciones</strong> pendientes</span></div>
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="color:#DC2626">🔴</span><span style="font-size:13px;color:#0052CC"><strong>1 cliente</strong> espera documentos</span></div>
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span style="color:#3B82F6">🔵</span><span style="font-size:13px;color:#0052CC"><strong>4 seguimientos</strong> programados</span></div>
-      </div>
+    <!-- Agenda inteligente con prioridad -->
+    <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;padding:20px;margin-bottom:16px">
+      <p style="font-size:15px;color:#003DA6;font-weight:500">${momento==='temprano'?'Comienza tu jornada con energía 💪':momento==='media mañana'?'Sigue así, llevas buen ritmo 📈':momento==='mediodía'?'Buen ritmo, aprovecha la tarde 🚀':momento==='tarde'?'Aún hay tiempo para más ventas ⏳':'Antes de terminar, revisa estos seguimientos 📋'}</p>
+      <p style="font-size:13px;color:#0052CC;margin-top:6px">Has completado el <strong>${completado}%</strong> de tu jornada · ${userSales} clientes conectados este mes</p>
     </div>
 
-    <!-- Una acción principal: ATENDER CLIENTE -->
+    <!-- Prioridad inteligente -->
+    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
+      <p style="font-size:14px;font-weight:600;margin-bottom:10px">📋 Prioridades del día</p>
+      ${healthClients.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F3F4F6;cursor:pointer">
+        <div style="width:36px;height:36px;border-radius:50%;background:${c.bg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${c.color}">${c.name[0]}</div>
+        <div style="flex:1"><p style="font-size:13px;font-weight:500">${c.name} <span style="font-size:10px;color:${c.color};font-weight:600">${c.prio} ${c.health}/100</span></p><p style="font-size:11px;color:#6B7280">${c.label}</p></div>
+        <span style="font-size:12px;font-weight:500;color:#0066FF">${c.action}</span>
+      </div>`).join('')}
+    </div>
+
+    <!-- Una acción principal -->
     <button class="btn btn-primary mb-4 shadow-md" onclick="go('coverage')" style="font-size:19px;padding:22px;border-radius:16px">🙋 Atender cliente</button>
 
-    <!-- Próximas acciones (Next Best Action) -->
-    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
-      <p style="font-size:14px;font-weight:600;margin-bottom:10px">📋 Próximas acciones</p>
-      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
-        <span style="font-size:12px">📞</span><div><p style="font-size:13px;font-weight:500">Llamar a María García</p><p style="font-size:11px;color:#6B7280">Cotización enviada · Seguimiento día 3</p></div>
-      </div>
-      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6">
-        <span style="font-size:12px">📋</span><div><p style="font-size:13px;font-weight:500">Confirmar documentos de Pedro Martínez</p><p style="font-size:11px;color:#6B7280">Venta lista · Falta cédula</p></div>
-      </div>
-      <div style="display:flex;gap:10px;padding:8px 0">
-        <span style="font-size:12px">📍</span><div><p style="font-size:13px;font-weight:500">Visitar a Carlos Ruiz</p><p style="font-size:11px;color:#6B7280">Interesado en MegaUltra 200 · Lérida</p></div>
-      </div>
+    <!-- Center de Inteligencia Comercial -->
+    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:14px;padding:14px;margin-bottom:16px">
+      <p style="font-size:12px;font-weight:600;color:#059669">💡 Inteligencia Comercial</p>
+      <p style="font-size:12px;color:#047857;margin-top:4px">Esta semana MegaUltra 100 creció 18% en Fresno. El 72% de familias de 4 personas eligen este plan.</p>
     </div>
 
-    <!-- Resumen rápido -->
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <div style="flex:1;background:#F3F4F6;border-radius:10px;padding:12px;text-align:center"><p style="font-size:18px;font-weight:700;color:#0066FF">${userSales}</p><p style="font-size:10px;color:#6B7280">Ventas hoy</p></div>
-      <div style="flex:1;background:#F3F4F6;border-radius:10px;padding:12px;text-align:center"><p style="font-size:18px;font-weight:700;color:#111827">$${Math.round(userComm/1000)}K</p><p style="font-size:10px;color:#6B7280">Comisiones</p></div>
-      <div style="flex:1;background:#F3F4F6;border-radius:10px;padding:12px;text-align:center"><p style="font-size:18px;font-weight:700;color:#059669">${restan>0?restan:'✅'}</p><p style="font-size:10px;color:#6B7280">Meta</p></div>
+    <!-- Timeline rápido -->
+    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
+      <p style="font-size:14px;font-weight:600;margin-bottom:8px">⚡ Hoy</p>
+      <div style="border-left:2px solid #E5E7EB;padding-left:12px;margin-left:4px">
+        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:12</span><p style="font-size:12px;margin-top:2px">María Rodríguez — Interesada en fibra 🏠</p></div>
+        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:18</span><p style="font-size:12px;margin-top:2px">CERE recomendó MegaUltra 100 ✅</p></div>
+        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:22</span><p style="font-size:12px;margin-top:2px">Cotización enviada 📄</p></div>
+        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">11:40</span><p style="font-size:12px;margin-top:2px">Cliente solicita tiempo 🕐</p></div>
+      </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-2 gap-2">
+      <button class="btn btn-outline" onclick="go('coverage')" style="padding:14px;font-size:13px">🙋 Atender cliente</button>
       <button class="btn btn-outline" onclick="window.location='/customer360.html'" style="padding:14px;font-size:13px">👤 Buscar cliente</button>
-      <button class="btn btn-outline" onclick="go('opportunity')" style="padding:14px;font-size:13px">📋 Nueva oportunidad</button>
     </div>
   </div>`;
 }
@@ -179,10 +185,12 @@ function getDisplayPlans(){
   return plans.length?plans:[
     {name:'MegaUltra 50',price:49990,download_speed:50,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
     {name:'MegaUltra 60',price:59990,download_speed:60,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
-    {name:'MegaUltra 80',price:69990,download_speed:80,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi"]'},
+    {name:'MegaUltra 80',price:69990,download_speed:80,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
     {name:'MegaUltra 100',price:79990,download_speed:100,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi"]'},
     {name:'MegaUltra 200',price:99990,download_speed:200,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte Prioritario"]'},
     {name:'MegaUltra 400',price:149990,download_speed:400,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte VIP"]'},
+    {name:'Plan Rural 10',price:24990,download_speed:10,is_symmetric:0,benefits:'["Internet Ilimitado","Antena Radio Enlace","Router WiFi"]'},
+    {name:'Plan Rural 20',price:34990,download_speed:20,is_symmetric:0,benefits:'["Internet Ilimitado","Antena Radio Enlace","Router WiFi"]'},
   ];
 }
 async function renderPlans(){
