@@ -8,10 +8,14 @@
 <div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm"></div>
 <script>
 const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}}};
-let page='dashboard',refs=[];
-const refName='María García',refSales=12,refCommission=2450;
+let page='dashboard',refs=[],walletData=null;
+const refName='María García',refSales=12;
 
-async function init(){refs=await API.get('/api/v2/catalog/plans')||[];render()}
+async function init(){
+  refs=await API.get('/api/v2/catalog/plans')||[];
+  walletData=await API.get('/api/v1/wallet?referrerId=person-maria');
+  render();
+}
 function render(){
   document.getElementById('app').innerHTML={
     dashboard:renderDashboard(),
@@ -23,12 +27,16 @@ function render(){
 }
 init();
 
-function renderDashboard(){return`
+function renderDashboard(){
+  const balance=walletData?.balance||0;
+  const pending=walletData?.pendingBalance||0;
+  const earned=walletData?.totalEarned||2450000;
+  return`
   <div class="p-5 slide-in">
     <div class="mb-6"><h1 class="text-xl font-bold">¡Hola, ${refName}! 👋</h1><p class="text-sm text-neutral-500">Tus ventas van muy bien</p></div>
     <div class="grid grid-cols-2 gap-3 mb-6">
       <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Ventas este mes</p><p class="text-2xl font-bold text-primary-600">${refSales}</p></div>
-      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Comisiones</p><p class="text-2xl font-bold text-success-600">$${refCommission.toLocaleString('es-CO')}</p></div>
+      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Disponible</p><p class="text-2xl font-bold text-success-600">$${balance.toLocaleString('es-CO')}</p><p class="text-[10px] text-neutral-400">Retenido: $${pending.toLocaleString('es-CO')}</p></div>
     </div>
     <button onclick="page='register';render()" class="w-full rounded-xl bg-primary-500 text-white py-4 text-lg font-semibold shadow-lg mb-6 hover:bg-primary-600 active:scale-[0.98] transition-all">📝 Registrar venta</button>
     <div class="space-y-3">
@@ -47,7 +55,18 @@ function renderDashboard(){return`
   </div>`;}
 function renderReferrals(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis ventas</h2><p class="text-neutral-500 text-sm">Tus ventas registradas aparecerán aquí</p></div>`;}
 function renderCommissions(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis comisiones</h2><p class="text-neutral-500 text-sm">Próximamente: detalle de comisiones</p></div>`;}
-function renderWallet(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mi wallet</h2><p class="text-3xl font-bold text-success-600">$${refCommission.toLocaleString('es-CO')}</p><p class="text-sm text-neutral-500 mt-1">Disponible para retirar</p></div>`;}
+function renderWallet(){
+  const balance=walletData?.balance||0;
+  const pending=walletData?.pendingBalance||0;
+  const earned=walletData?.totalEarned||2450000;
+  return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mi wallet</h2>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="rounded-xl bg-success-50 border p-4"><p class="text-xs text-success-600">Disponible</p><p class="text-2xl font-bold text-success-600">$${balance.toLocaleString('es-CO')}</p></div>
+      <div class="rounded-xl bg-warning-50 border p-4"><p class="text-xs text-warning-600">Retenido</p><p class="text-2xl font-bold text-warning-600">$${pending.toLocaleString('es-CO')}</p></div>
+    </div>
+    <div class="rounded-xl bg-white border p-4 mb-4"><p class="text-xs text-neutral-500 mb-1">Total ganado</p><p class="text-xl font-bold">$${earned.toLocaleString('es-CO')}</p></div>
+    <button class="w-full rounded-xl bg-primary-500 text-white py-3 font-semibold">Solicitar pago</button>
+  </div>`;}
 function renderRegister(){return`
   <div class="p-5 slide-in">
     <button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button>

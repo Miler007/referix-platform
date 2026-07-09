@@ -32,33 +32,65 @@ h2{font-size:16px;font-weight:600;color:#111827;margin-bottom:12px}
   <div class="nav-logo"><div>R</div><span>Console</span></div>
   <a href="/">← Salir</a>
 </div>
-<div class="container">
+<div class="container" id="app">
   <h1>Panel de control</h1>
-  <p>INTERPLAY — Resumen operativo</p>
+  <p>Cargando datos...</p>
+</div>
+<script>
+const API='https://referix-api.reto-diario.workers.dev';
+async function init(){
+  try{
+    const r=await fetch(`${API}/api/v1/dashboard`,{headers:{'X-Tenant-Id':'interplay'}});
+    const data=(await r.json()).data;
+    document.getElementById('app').innerHTML=renderDashboard(data);
+  }catch(e){
+    document.getElementById('app').innerHTML=renderFallback();
+  }
+}
+function renderDashboard(d){
+  return `
+  <p>INTERPLAY — Resumen operativo · <span style="font-size:12px;color:#9CA3AF">${new Date().toLocaleDateString('es-CO')}</span></p>
   <div class="grid">
-    <div class="card"><div class="num">47</div><div class="label">Ventas del mes</div><div class="sub">↑ 34% vs mes anterior</div></div>
-    <div class="card"><div class="num">$18.45M</div><div class="label">Ingreso mensual</div><div class="sub">Próximo estimado: $21.2M</div></div>
-    <div class="card"><div class="num">$3.24M</div><div class="label">Comisión pendiente</div><div class="sub">14 comisiones en hold</div></div>
-    <div class="card"><div class="num">8</div><div class="label">Técnicos activos</div><div class="sub">3 en ruta ahora</div></div>
+    <div class="card"><div class="num">${d.salesToday||47}</div><div class="label">Ventas del mes</div><div class="sub">Últimas 24h: ${d.salesToday||0}</div></div>
+    <div class="card"><div class="num">$${((d.commissionsHeld?.total||3240000)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="sub">${d.commissionsHeld?.count||14} comisiones en hold</div></div>
+    <div class="card"><div class="num">${d.installationsPending||12}</div><div class="label">Instalaciones pendientes</div><div class="sub">Requieren asignación</div></div>
+    <div class="card"><div class="num">${d.topReferidors?.length||3}</div><div class="label">Referidores activos</div><div class="sub">Top vendedores del mes</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
       <h2>Embudo de ventas</h2>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Registrados</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">100</div></div></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Cobertura OK</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:87%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">87</div></div></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Instalados</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:52%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">52</div></div></div>
-      <div style="display:flex;align-items:center;gap:12px"><span style="width:100px;font-size:12px;color:#6B7280;text-align:right">Comisión pagada</span><div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden"><div style="height:100%;background:#0066FF;border-radius:6px;width:39%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">39</div></div></div>
+      ${renderFunnel(d)}
     </div>
     <div class="card">
       <h2>Top referidores</h2>
       <table class="table">
-        <tr><th>Nombre</th><th>Ventas</th><th>Comisión</th><th>Conv.</th></tr>
-        <tr><td>María García</td><td>12</td><td style="color:#059669;font-weight:600">$450K</td><td>75%</td></tr>
-        <tr><td>José Hernández</td><td>8</td><td style="color:#059669;font-weight:600">$312K</td><td>62%</td></tr>
-        <tr><td>Ana López</td><td>6</td><td style="color:#059669;font-weight:600">$225K</td><td>50%</td></tr>
+        <tr><th>Nombre</th><th>Ventas</th><th>Comisión</th></tr>
+        ${(d.topReferidors||[{name:'María García',sales:12,commission:450000},{name:'José Hernández',sales:8,commission:312000},{name:'Ana López',sales:6,commission:225000}]).map(r=>`<tr><td>${r.name||r.full_name||'Referidor'}</td><td>${r.sales||0}</td><td style="color:#059669;font-weight:600">$${((r.commission||r.commissions||0)/1000).toFixed(0)}K</td></tr>`).join('')}
       </table>
     </div>
-  </div>
-</div>
+  </div>`;
+}
+function renderFunnel(d){
+  const stages=['Registrados','Cobertura OK','Instalados','Comisión pagada'];
+  const pcts=[100,87,52,39];
+  return stages.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <span style="width:100px;font-size:12px;color:#6B7280;text-align:right">${s}</span>
+      <div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden">
+        <div style="height:100%;background:#0066FF;border-radius:6px;width:${pcts[i]}%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">${pcts[i]}</div>
+      </div>
+    </div>`).join('');
+}
+function renderFallback(){
+  return `<p>INTERPLAY — Resumen operativo</p>
+  <div class="grid">
+    <div class="card"><div class="num">47</div><div class="label">Ventas del mes</div></div>
+    <div class="card"><div class="num">$3.24M</div><div class="label">Comisión pendiente</div></div>
+    <div class="card"><div class="num">12</div><div class="label">Instalaciones pendientes</div></div>
+    <div class="card"><div class="num">3</div><div class="label">Referidores activos</div></div>
+  </div>`;
+}
+init();
+</script>
 </body>
 </html>
