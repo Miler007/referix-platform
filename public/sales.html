@@ -24,60 +24,137 @@ const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-
   async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}},
   async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});return(await r.json()).data}catch{return null}}};
 // ═══════════════════════════════════════════════════════════════════
-// CERE — Customer Experience Recommendation Engine
+// CERE v2 — Customer Experience Recommendation Engine
 // ═══════════════════════════════════════════════════════════════════
-const DEVICE_WEIGHTS={smartphones:1.5,smartTvs:8,computers:10,laptops:8,tablets:4,consoles:12,ipCameras:6,dvrNvr:15,wifiPrinters:2,smartSpeakers:1.5,iotDevices:1};
-const USAGE_WEIGHTS={socialMedia:5,browsing:3,music:3,streamingHD:8,streaming4K:15,netflix:10,disneyPlus:10,primeVideo:10,youtube:5,twitch:8,remoteWork:15,virtualClasses:12,videoCalls:10,gaming:20,largeDownloads:25,cloudBackups:12,securityCameras:8};
+class CEREv2 {
+  // Demand weights per activity
+  demandWeights={
+    composition:{adult:5,child:3,teen:8,elderly:2},
+    device:{smartphones:1.5,tablets:3,smartTvs:10,computers:12,laptops:10,consoles:15,ipCameras:8,alexaGoogleHome:2,decoders:5,wifiPrinters:3,otherIot:2},
+    simultaneous:{smartphones:1.5,smartTvs:10,computers:12,laptops:10,consoles:15},
+    streaming:{sd:5,hd:8,fullHd:12,k4:20},
+    work:{vpn:8,videoCall:10},
+    education:{student:8},
+    gaming:{console:5,pc:8,latency:10},
+    cameras:{perCamera:8,recording24h:10,cloudUpload:5},
+    business:{employee:5,pos:10,invoicing:5,cameras:8,vpn:10,servers:15,wifi:8}
+  };
 
-class CERE {
-  buildProfile(data){return{householdSize:data.householdSize||2,devices:data.devices||{smartphones:2,smartTvs:1,computers:0,laptops:1,tablets:0,consoles:0,ipCameras:0,dvrNvr:0,wifiPrinters:0,smartSpeakers:0,iotDevices:0},usage:data.usage||{socialMedia:true,browsing:true,streamingHD:true,remoteWork:false,gaming:false},simultaneity:data.simultaneity||2,priority:data.priority||'ESTABILIDAD'}}
-
-  calculateDemand(profile){
-    let total=0;
-    Object.entries(profile.devices).forEach(([k,v])=>{total+=v*(DEVICE_WEIGHTS[k]||1)});
-    Object.entries(profile.usage).forEach(([k,v])=>{if(v)total+=USAGE_WEIGHTS[k]||0});
-    total+=profile.householdSize*5+profile.simultaneity*10;
-    return total;
+  buildProfile(data){
+    return{
+      composition:data.composition||{adults:2,children:0,teens:0,elderly:0},
+      devices:data.devices||{smartphones:2,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},
+      simultaneous:data.simultaneous||{smartphones:2,smartTvs:1,computers:0,laptops:1,consoles:0},
+      streaming:data.streaming||{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},
+      remoteWork:data.remoteWork||{people:0,usesVpn:false,videoCalls:false,platforms:[]},
+      education:data.education||{virtualClasses:false,university:false,onlineCourses:false,students:0},
+      gaming:data.gaming||{platforms:[],frequentGames:false,priorityLatency:false},
+      cameras:data.cameras||{count:0,records24h:false,cloudUpload:false},
+      business:data.business||{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},
+      growth:data.growth||{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:false},
+      priority:data.priority||'ESTABILIDAD'
+    };
   }
 
-  demandLevel(totalSpeed){
-    if(!totalSpeed||totalSpeed<=0)return'MUY_ALTA';
-    const pct=Math.min(100,Math.round((this.lastDemand||50)/totalSpeed*100));
-    if(pct<=60)return{level:'EXCELENTE',pct};
-    if(pct<=75)return{level:'BUENO',pct};
-    if(pct<=85)return{level:'ACEPTABLE',pct};
-    if(pct<=90)return{level:'RIESGOSO',pct};
-    return{level:'NO_RECOMENDADO',pct};
+  calculateDemandScore(profile){
+    let score=0;
+    const c=profile.composition;
+    score+=c.adults*this.demandWeights.composition.adult;
+    score+=c.children*this.demandWeights.composition.child;
+    score+=c.teens*this.demandWeights.composition.teen;
+    score+=c.elderly*this.demandWeights.composition.elderly;
+    Object.entries(profile.devices).forEach(([k,v])=>score+=v*(this.demandWeights.device[k]||1));
+    Object.entries(profile.simultaneous).forEach(([k,v])=>score+=v*(this.demandWeights.simultaneous[k]||1));
+    const q=profile.streaming.quality;
+    const qScore=q==='4K'?20:q==='FULL_HD'?15:q==='HD'?10:5;
+    if(profile.streaming.netflix||profile.streaming.disneyPlus||profile.streaming.primeVideo||profile.streaming.max)score+=qScore;
+    if(profile.streaming.youtube)score+=5;
+    if(profile.streaming.iptv)score+=8;
+    score+=profile.remoteWork.people*12;
+    if(profile.remoteWork.usesVpn)score+=8;
+    if(profile.remoteWork.videoCalls)score+=10;
+    score+=profile.education.students*8;
+    score+=profile.gaming.platforms.length*8;
+    if(profile.gaming.priorityLatency)score+=10;
+    score+=profile.cameras.count*8;
+    if(profile.cameras.records24h)score+=10*profile.cameras.count;
+    if(profile.cameras.cloudUpload)score+=5*profile.cameras.count;
+    if(profile.business.isBusiness){score+=profile.business.employees*5;if(profile.business.hasPos)score+=10;if(profile.business.electronicInvoicing)score+=5;if(profile.business.cameras)score+=8;if(profile.business.vpn)score+=10;if(profile.business.servers)score+=15;if(profile.business.clientWifi)score+=8;}
+    let growthScore=0;
+    if(profile.growth.moreTvs)growthScore+=15;
+    if(profile.growth.cameras)growthScore+=20;
+    if(profile.growth.remoteWork)growthScore+=15;
+    if(profile.growth.homeBusiness)growthScore+=25;
+    if(profile.growth.moreDevices)growthScore+=10;
+    score+=growthScore*0.5;
+    return Math.min(100,score);
+  }
+
+  demandLevel(score){if(score<=25)return'BAJA';if(score<=50)return'MEDIA';if(score<=75)return'ALTA';return'MUY_ALTA';}
+
+  evaluatePlan(profile,plan){
+    const demandScore=this.calculateDemandScore(profile);
+    const speed=plan.download_speed||50;
+    const margin=Math.max(0,Math.round((1-demandScore/100)*100));
+    const safetyMargin=Math.round(((speed-demandScore)/speed)*100);
+    const pct=Math.min(100,Math.round(demandScore));
+    const usagePct=Math.min(100,Math.round((demandScore/speed)*100));
+    const compatibility=Math.max(5,Math.min(100,100-usagePct+15));
+    const risk=usagePct>=90?'MUY_ALTO':usagePct>=80?'ALTO':usagePct>=70?'MEDIO':usagePct>=50?'BAJO':'MUY_BAJO';
+    const lifeYears=usagePct<=40?5:usagePct<=55?4:usagePct<=70?3:usagePct<=85?2:1;
+    const recommended=margin>=25&&usagePct<=75&&risk!=='ALTO'&&risk!=='MUY_ALTO';
+    const reasons=[];
+    const warnings=[];
+    const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
+    const totalSimul=Object.values(profile.simultaneous).reduce((a,b)=>a+b,0);
+    if(totalDevices>0)reasons.push(`${totalDevices} dispositivos en el hogar`);
+    if(totalSimul>1)reasons.push(`${totalSimul} dispositivos simultáneos`);
+    if(profile.streaming.quality==='4K')reasons.push('Streaming 4K');
+    if(profile.remoteWork.people>0)reasons.push(`${profile.remoteWork.people} persona(s) en teletrabajo`);
+    if(profile.cameras.count>0)reasons.push(`${profile.cameras.count} cámara(s) IP`);
+    if(profile.gaming.platforms.length>0)reasons.push('Gaming online');
+    if(profile.education.students>0)reasons.push(`${profile.education.students} estudiante(s)`);
+    if(profile.growth.moreTvs||profile.growth.cameras||profile.growth.moreDevices)reasons.push('Plan con margen de crecimiento');
+    if(!recommended)warnings.push(`Riesgo de soporte: ${risk}. Ocupación estimada: ${usagePct}%.`);
+    if(usagePct<=30&&speed>=150)warnings.push('Un plan superior no aportará mejoras perceptibles para este perfil.');
+    return{planId:plan.id,planName:plan.name,price:plan.price||0,downloadSpeed:speed,uploadSpeed:plan.upload_speed||speed,isSymmetric:!!plan.is_symmetric,technology:plan.technology_name||'',demandScore,compatibility,demandLevel:this.demandLevel(demandScore),supportRisk:risk,safetyMargin:usagePct,estimatedLifeYears:lifeYears,recommended,reasons,warnings};
   }
 
   recommend(profile,plans){
-    this.lastDemand=this.calculateDemand(profile);
-    const scored=plans.map(p=>{
-      const speed=p.download_speed||50;
-      const dl=this.demandLevel(speed);
-      const compat=Math.max(5,Math.min(100,Math.round(100-(this.lastDemand/speed*100)*0.8)));
-      const riskCompat=compat;
-      return{...p,compatibility:compat,riskLevel:dl.level,demandPercent:dl.pct,demandIndex:dl.pct<=60?'BAJA':dl.pct<=75?'MEDIA':dl.pct<=85?'ALTA':'MUY_ALTA',recommended:compat>=75&&dl.level!=='NO_RECOMENDADO'&&dl.level!=='RIESGOSO'};
-    });
-    scored.sort((a,b)=>b.compatibility-a.compatibility);
-    const best=scored[0];
-    const explanation=this.explain(profile,best,scored);
-    const warnings=scored.filter(p=>!p.recommended).map(p=>`⚠ No recomendamos ${p.name}. Riesgo: ${p.riskLevel}.`);
-    return{recommended:best,alternatives:scored.slice(1,3),explanation,warnings};
+    const evaluated=plans.map(p=>this.evaluatePlan(profile,p));
+    evaluated.sort((a,b)=>b.compatibility-a.compatibility);
+    const recommended=evaluated.find(p=>p.recommended)||evaluated[0];
+    const alternatives=evaluated.filter(p=>p.planId!==recommended.planId&&!p.warnings.some(w=>w.includes('Riesgo'))).slice(0,2);
+    const riskBlocked=recommended.supportRisk==='ALTO'||recommended.supportRisk==='MUY_ALTO';
+    const oversell=evaluated.find(p=>p.safetyMargin<=30&&p.downloadSpeed>=150);
+    const oversellWarning=oversell&&recommended.downloadSpeed<150?null:oversell?'Un plan superior no aportará mejoras perceptibles para este perfil.':null;
+    const explanation=this.explain(profile,recommended);
+    const blockReason=riskBlocked?`Riesgo de soporte ${recommended.supportRisk}. Se requiere autorización.`:null;
+    return{recommended,alternatives,oversellWarning,explanation,riskBlocked,blockReason};
   }
 
-  explain(profile,plan,all){
+  explain(profile,plan){
     const parts=[];
     const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
-    if(totalDevices>0)parts.push(`${totalDevices} dispositivos conectados`);
-    if(profile.simultaneity>1)parts.push(`${profile.simultaneity} personas usan Internet al mismo tiempo`);
-    const activeUsage=Object.entries(profile.usage).filter(([k,v])=>v).map(([k])=>({socialMedia:'redes sociales',streamingHD:'streaming HD',streaming4K:'streaming 4K',remoteWork:'teletrabajo',gaming:'gaming',videoCalls:'videollamadas',virtualClasses:'clases virtuales'}[k]||k)).filter(Boolean);
-    if(activeUsage.length>0)parts.push(`uso frecuente de ${activeUsage.join(', ')}`);
-    parts.push(`compatibilidad del ${plan?.compatibility||'?'}%`);
-    return`Recomendamos ${plan?.name||'este plan'} porque tiene ${parts.join(', ')}.${plan?.riskLevel==='EXCELENTE'?' Este plan ofrece el mejor equilibrio entre estabilidad, rendimiento y crecimiento.':plan?.riskLevel==='BUENO'?' Este plan tiene capacidad suficiente para el hogar.':''}`;
+    const totalSimul=Object.values(profile.simultaneous).reduce((a,b)=>a+b,0);
+    if(totalDevices>0)parts.push(`${totalDevices} dispositivos en el hogar`);
+    if(totalSimul>1)parts.push(`${totalSimul} dispositivos simultáneos`);
+    const activities=[];
+    if(profile.streaming.netflix||profile.streaming.disneyPlus||profile.streaming.primeVideo)activities.push(`Streaming ${profile.streaming.quality}`);
+    if(profile.remoteWork.people>0)activities.push('teletrabajo');
+    if(profile.cameras.count>0)activities.push(`${profile.cameras.count} cámara(s) IP`);
+    if(profile.gaming.platforms.length>0)activities.push('gaming');
+    if(profile.education.students>0)activities.push('educación virtual');
+    if(activities.length>0)parts.push(activities.join(', '));
+    const lines=[`• ${parts.join('\n  • ')}`];
+    lines.push(`Compatibilidad: ${plan.compatibility}%`);
+    lines.push(`Riesgo de soporte: ${plan.supportRisk}`);
+    lines.push(`Margen disponible: ${plan.safetyMargin}%`);
+    lines.push(`Vida útil estimada: ${plan.estimatedLifeYears} años`);
+    return `Recomendamos ${plan.planName} porque encontramos:\n${lines.join('\n')}`;
   }
 }
-const cere=new CERE();
+const cere=new CEREv2();
 let customerProfile=null;
 // ── State ─────────────────────────────────────────────────────────
 let view='dashboard',zoneList=[],zoneData=[],plans=[],selectedPlan=null,clientType='RESIDENTIAL',form={},docs={cc:false,recibo:false};
@@ -143,44 +220,105 @@ function renderDashboard(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// PROFILE - CERE Customer Profile
+// PROFILE - CERE v2 Customer Profile Builder
 // ═══════════════════════════════════════════════════════════════════
-let cereData={householdSize:2,simultaneity:2,smartphones:2,smartTvs:1,laptops:1,priority:'ESTABILIDAD',streamingHD:true,remoteWork:false,gaming:false,videoCalls:false,virtualClasses:false,socialMedia:true,browsing:true};
+let pdata={adults:2,children:0,teens:0,elderly:0,smartphones:2,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexa:0,decoders:0,printers:0,iot:0,simSmartphones:2,simTvs:1,simComputers:0,simLaptops:1,simConsoles:0,netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD',workPeople:0,workVpn:false,workCalls:false,students:0,gamingPS5:false,gamingXbox:false,gamingPC:false,gamingLatency:false,camCount:0,cam247:false,camCloud:false,biz:false,employees:0,pos:false,invoicing:false,bizCam:false,bizVpn:false,servers:false,clientWifi:false,growthTvs:false,growthCams:false,growthWork:false,growthBiz:false,growthDevices:false,priority:'ESTABILIDAD',profileStep:1};
+let profileViews=[{id:1,title:'Composición del hogar'},{id:2,title:'Dispositivos'},{id:3,title:'Uso simultáneo y streaming'},{id:4,title:'Teletrabajo, educación y gaming'},{id:5,title:'Negocios y crecimiento'}];
+
 function renderProfile(){
+  const s=pdata.profileStep;
   return `<div class="p-5 slide-in">
-    <div class="flex items-center gap-2 mb-6">${['Zona','Perfil','Plan','Datos'].map((s,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${s}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
-    <h2 class="text-lg font-bold mb-1">Perfil del cliente</h2>
-    <p class="text-sm text-neutral-500 mb-4">Ayúdanos a recomendar el mejor plan</p>
-    <div class="space-y-4">
-      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">👥 ¿Cuántas personas viven en el hogar?</label>
-        <div class="grid grid-cols-5 gap-1">${[1,2,3,4,5].map(n=>`<button onclick="cereData.householdSize=${n};render()" class="py-2 rounded-lg text-sm border-2 ${cereData.householdSize===n?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${n}</button>`).join('')}</div>
-      </div>
-      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">📱 ¿Cuántas personas usan Internet al mismo tiempo?</label>
-        <div class="grid grid-cols-4 gap-1">${[1,2,3,4].map(n=>`<button onclick="cereData.simultaneity=${n};render()" class="py-2 rounded-lg text-sm border-2 ${cereData.simultaneity===n?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${n}</button>`).join('')}</div>
-      </div>
-      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">Dispositivos conectados</label>
-        <div class="grid grid-cols-2 gap-2">${[['smartphones','📱 Celulares'],['smartTvs','📺 Smart TV'],['laptops','💻 Portátiles'],['computers','🖥 Computadores'],['tablets','📟 Tablets'],['consoles','🎮 Consolas'],['ipCameras','📷 Cámaras'],['smartSpeakers','🔊 Alexa/Google']].map(([k,label])=>`<div class="flex items-center gap-2 border rounded-xl px-3 py-2"><span class="text-xs flex-1">${label}</span>
-        <button onclick="cereData.${k}=Math.max(0,(cereData.${k}||0)-1);render()" class="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium">−</button>
-        <span class="w-5 text-center text-sm font-medium">${cereData[k]||0}</span>
-        <button onclick="cereData.${k}=(cereData.${k}||0)+1;render()" class="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium">+</button></div>`).join('')}
-      </div>
-      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">🎯 ¿Qué usan principalmente?</label>
-        <div class="grid grid-cols-2 gap-2">${[['socialMedia','Redes sociales'],['streamingHD','Streaming HD'],['remoteWork','Teletrabajo'],['gaming','Videojuegos'],['videoCalls','Videollamadas'],['virtualClasses','Clases virtuales']].map(([k,label])=>`<button onclick="cereData.${k}=!cereData.${k};render()" class="py-2 rounded-lg text-xs border-2 transition-all ${cereData[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200 text-neutral-600'}">${cereData[k]?'✓ ':''}${label}</button>`).join('')}
-      </div>
-      <div><label class="text-xs font-medium text-neutral-600 block mb-1.5">⭐ Prioridad del cliente</label>
-        <div class="grid grid-cols-3 gap-2">${[['ESTABILIDAD','Confiabilidad'],['VELOCIDAD','Velocidad'],['PRECIO','Precio']].map(([v,label])=>`<button onclick="cereData.priority='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${cereData.priority===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${cereData.priority===v?'✓ ':''}${label}</button>`).join('')}
-      </div>
+    <div class="flex items-center gap-1 mb-6">${['Zona','Perfil','Plan','Datos'].map((l,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${l}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">Perfil del cliente</h2>
+      <span class="text-xs text-neutral-400">${s}/${profileViews.length}</span>
     </div>
-    <button onclick="applyProfile()" class="w-full mt-6 rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Ver planes recomendados →</button>
+    <div class="flex gap-1 mb-4">${profileViews.map((v,i)=>`<div class="h-1 flex-1 rounded-full ${i+1===s?'bg-primary-500':i+1<s?'bg-success-400':'bg-neutral-200'}"></div>`).join('')}</div>
+    ${s===1?renderHousehold():s===2?renderDevices():s===3?renderStreaming():s===4?renderWorkEducation():renderBusinessGrowth()}
+    <div class="flex gap-3 mt-6">
+      ${s>1?`<button onclick="pdata.profileStep--;render()" class="flex-1 rounded-xl border-2 border-neutral-300 py-3 font-medium text-sm">← Anterior</button>`:''}
+      <button onclick="${s<5?'pdata.profileStep++;render()':'applyProfile()'}" class="flex-1 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">${s<5?'Siguiente →':'Ver planes recomendados'}</button>
+    </div>
   </div>`;
 }
+function renderHousehold(){return`
+  <div class="space-y-4">
+    <p class="text-sm text-neutral-500 mb-4">¿Quiénes viven en el hogar?</p>
+    ${[['adults','Adultos'],['children','Niños'],['teens','Adolescentes'],['elderly','Adultos mayores']].map(([k,label])=>`<div class="flex items-center justify-between rounded-xl border px-4 py-3"><span class="text-sm">${label}</span>
+      <div class="flex items-center gap-3"><button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center font-medium">−</button><span class="w-6 text-center font-semibold">${pdata[k]}</span><button onclick="pdata.${k}++;render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center font-medium">+</button></div>
+    </div>`).join('')}
+  </div>`;}
+function renderDevices(){return`
+  <p class="text-sm text-neutral-500 mb-4">¿Cuántos dispositivos tienen?</p>
+  <div class="grid grid-cols-2 gap-2">${[['smartphones','📱 Celulares'],['tablets','📟 Tablets'],['smartTvs','📺 Smart TV'],['computers','🖥 Computadores'],['laptops','💻 Portátiles'],['consoles','🎮 Consolas'],['ipCameras','📷 Cámaras IP'],['alexa','🔊 Alexa/Google'],['decoders','📦 Decodificadores'],['printers','🖨 Impresoras'],['iot','🔌 Otros IoT']].map(([k,label])=>`<div class="flex items-center gap-1 border rounded-xl px-3 py-2"><span class="text-[10px] flex-1">${label}</span>
+    <button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">−</button>
+    <span class="w-4 text-center text-xs font-medium">${pdata[k]}</span>
+    <button onclick="pdata.${k}++;render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">+</button></div>`).join('')}
+  </div>`;}
+function renderStreaming(){return`
+  <div class="space-y-4">
+  <p class="text-sm text-neutral-500 mb-4">Consumo de contenido y simultaneidad</p>
+  <div><label class="text-xs font-medium block mb-1.5">¿Cuántos dispositivos funcionan al mismo tiempo?</label>
+    <div class="grid grid-cols-2 gap-2">${[['simSmartphones','📱 Celulares'],['simTvs','📺 TV'],['simComputers','🖥 PC'],['simLaptops','💻 Portátil'],['simConsoles','🎮 Consola']].map(([k,label])=>`<div class="flex items-center gap-1 border rounded-xl px-3 py-2"><span class="text-[10px] flex-1">${label}</span>
+      <button onclick="pdata.${k}=Math.max(0,pdata.${k}-1);render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">−</button>
+      <span class="w-4 text-center text-xs font-medium">${pdata[k]}</span>
+      <button onclick="pdata.${k}++;render()" class="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs">+</button></div>`).join('')}
+    </div></div>
+  <div><label class="text-xs font-medium block mb-1.5">Calidad de streaming</label>
+    <div class="grid grid-cols-4 gap-1">${[['SD','SD'],['HD','HD'],['FULL_HD','Full HD'],['4K','4K']].map(([v,label])=>`<button onclick="pdata.quality='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${pdata.quality===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata.quality===v?'✓ ':''}${label}</button>`).join('')}
+    </div></div>
+  <div><label class="text-xs font-medium block mb-1.5">Plataformas</label>
+    <div class="grid grid-cols-3 gap-1">${[['netflix','Netflix'],['disneyPlus','Disney+'],['primeVideo','Prime'],['max','Max'],['youtube','YouTube'],['iptv','IPTV']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-[10px] border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
+    </div></div></div>`;}
+function renderWorkEducation(){return`
+  <div class="space-y-4">
+  <div><label class="text-xs font-medium block mb-1.5">💼 Teletrabajo</label>
+    <div class="grid grid-cols-2 gap-2">${[['workPeople','Personas que teletrabajan',['0','1','2','3']]].map(([k,label,opts])=>`<div class="col-span-2 flex items-center justify-between rounded-xl border px-4 py-2"><span class="text-sm">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-xs border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`).join('')}
+    ${[['workVpn','Usa VPN'],['workCalls','Videollamadas frecuentes']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="w-full text-left rounded-xl border-2 px-4 py-2 text-sm ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
+  </div>
+  <div><label class="text-xs font-medium block mb-1.5">🎓 Educación virtual</label>
+    ${[['students','Estudiantes en casa',['0','1','2','3']]].map(([k,label,opts])=>`<div class="flex items-center justify-between rounded-xl border px-4 py-2"><span class="text-sm">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-xs border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50 text-primary-700':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`).join('')}
+  </div>
+  <div><label class="text-xs font-medium block mb-1.5">🎮 Gaming</label>
+    <div class="grid grid-cols-2 gap-1">${[['gamingPS5','PS5'],['gamingXbox','Xbox'],['gamingPC','PC Gamer'],['gamingLatency','Prioriza latencia']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
+  </div>
+  <div><label class="text-xs font-medium block mb-1.5">📷 Cámaras de seguridad</label>
+    <div class="flex items-center gap-2 rounded-xl border px-4 py-2"><span class="text-sm flex-1">Cantidad</span>
+      <button onclick="pdata.camCount=Math.max(0,pdata.camCount-1);render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">−</button>
+      <span class="w-6 text-center font-semibold">${pdata.camCount}</span>
+      <button onclick="pdata.camCount++;render()" class="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">+</button>
+    </div>
+    ${pdata.camCount>0?`<div class="grid grid-cols-2 gap-1 mt-2">${[['cam247','Grabación 24/7'],['camCloud','Suben a la nube']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}</div>`:''}
+  </div></div>`;}
+function renderBusinessGrowth(){return`
+  <div class="space-y-4">
+  <div><label class="text-xs font-medium block mb-1.5">🏢 ¿Es un negocio?</label>
+    <div class="grid grid-cols-2 gap-2">${[['biz','Sí','business-fields'],['!biz','No']].map(([k,label])=>`<button onclick="pdata.biz=${k==='biz'};render()" class="py-3 rounded-xl text-sm border-2 ${pdata.biz===true?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${label}</button>`).join('')}
+    </div></div>
+  ${pdata.biz?`<div class="grid grid-cols-2 gap-1">${[['employees','Empleados',['1','2','3','5','10']],['pos','Tiene POS'],['invoicing','Facturación electrónica'],['bizCam','Cámaras'],['bizVpn','VPN'],['servers','Servidores'],['clientWifi','WiFi clientes']].map(([k,label,opts])=>opts?`<div class="col-span-2 flex items-center justify-between border rounded-xl px-4 py-2"><span class="text-xs">${label}</span><div class="flex gap-1">${opts.map(o=>`<button onclick="pdata.${k}=${o};render()" class="w-8 h-8 rounded-lg text-[10px] border-2 ${pdata[k]==o?'border-primary-500 bg-primary-50':'border-neutral-200'}">${o}</button>`).join('')}</div></div>`:`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
+  </div>`:''}
+  ${!pdata.biz?`<div><label class="text-xs font-medium block mb-1.5">📈 Crecimiento futuro</label>
+    <div class="grid grid-cols-2 gap-1">${[['growthTvs','Más televisores'],['growthCams','Cámaras'],['growthWork','Teletrabajo'],['growthBiz','Negocio en casa'],['growthDevices','Más dispositivos']].map(([k,label])=>`<button onclick="pdata.${k}=!pdata.${k};render()" class="py-2 rounded-lg text-xs border-2 ${pdata[k]?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata[k]?'✓ ':''}${label}</button>`).join('')}
+    </div></div>`:''}
+  <div><label class="text-xs font-medium block mb-1.5">⭐ Prioridad</label>
+    <div class="grid grid-cols-3 gap-1">${[['ESTABILIDAD','Estabilidad'],['VELOCIDAD','Velocidad'],['PRECIO','Precio']].map(([v,label])=>`<button onclick="pdata.priority='${v}';render()" class="py-2 rounded-lg text-xs border-2 ${pdata.priority===v?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-neutral-200'}">${pdata.priority===v?'✓ ':''}${label}</button>`).join('')}
+    </div></div>
+  </div>`;}
 function applyProfile(){
-  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
   customerProfile=cere.buildProfile({
-    householdSize:cereData.householdSize,simultaneity:cereData.simultaneity,
-    devices:{smartphones:cereData.smartphones||0,smartTvs:cereData.smartTvs||0,computers:cereData.computers||0,laptops:cereData.laptops||0,tablets:cereData.tablets||0,consoles:cereData.consoles||0,ipCameras:cereData.ipCameras||0,dvrNvr:0,wifiPrinters:0,smartSpeakers:cereData.smartSpeakers||0,iotDevices:0},
-    usage:{socialMedia:cereData.socialMedia,browsing:cereData.browsing,streamingHD:cereData.streamingHD,remoteWork:cereData.remoteWork,gaming:cereData.gaming,videoCalls:cereData.videoCalls,virtualClasses:cereData.virtualClasses}
+    composition:{adults:pdata.adults,children:pdata.children,teens:pdata.teens,elderly:pdata.elderly},
+    devices:{smartphones:pdata.smartphones,tablets:pdata.tablets,smartTvs:pdata.smartTvs,computers:pdata.computers,laptops:pdata.laptops,consoles:pdata.consoles,ipCameras:pdata.ipCameras,alexaGoogleHome:pdata.alexa,decoders:pdata.decoders,wifiPrinters:pdata.printers,otherIot:pdata.iot},
+    simultaneous:{smartphones:pdata.simSmartphones,smartTvs:pdata.simTvs,computers:pdata.simComputers,laptops:pdata.simLaptops,consoles:pdata.simConsoles},
+    streaming:{netflix:pdata.netflix,disneyPlus:pdata.disneyPlus,primeVideo:pdata.primeVideo,max:pdata.max,youtube:pdata.youtube,iptv:pdata.iptv,quality:pdata.quality},
+    remoteWork:{people:pdata.workPeople,usesVpn:pdata.workVpn,videoCalls:pdata.workCalls,platforms:[]},
+    education:{virtualClasses:pdata.students>0,university:false,onlineCourses:false,students:pdata.students},
+    gaming:{platforms:[...pdata.gamingPS5?'PS5':[],...pdata.gamingXbox?'XBOX':[],...pdata.gamingPC?'PC_GAMER':[]],frequentGames:true,priorityLatency:pdata.gamingLatency},
+    cameras:{count:pdata.camCount,records24h:pdata.cam247,cloudUpload:pdata.camCloud},
+    business:{isBusiness:pdata.biz,employees:pdata.employees,hasPos:pdata.pos,electronicInvoicing:pdata.invoicing,cameras:pdata.bizCam,vpn:pdata.bizVpn,servers:pdata.servers,clientWifi:pdata.clientWifi},
+    growth:{moreTvs:pdata.growthTvs,cameras:pdata.growthCams,remoteWork:pdata.growthWork,homeBusiness:pdata.growthBiz,moreDevices:pdata.growthDevices},
+    priority:pdata.priority
   });
+  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
   loadPlans(selectedZone.id,techId);
 }
 
@@ -258,33 +396,40 @@ function renderPlans(){
     </div>
     <p class="text-sm text-neutral-500 mb-4">Basado en el perfil del cliente, estos son los planes ideales</p>
 
-    ${result.explanation?`<div class="rounded-xl bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800 mb-4">💡 ${result.explanation}</div>`:''}
-    ${result.warnings.length>0?`<div class="rounded-xl bg-danger-50 border border-danger-200 p-3 text-sm text-danger-700 mb-4">${result.warnings.join('<br>')}</div>`:''}
+    ${result.explanation?`<div class="rounded-xl bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800 mb-4 whitespace-pre-line">💡 ${result.explanation}</div>`:''}
+    ${result.oversellWarning?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700 mb-4">💡 ${result.oversellWarning}</div>`:''}
+    ${result.riskBlocked?`<div class="rounded-xl bg-danger-50 border border-danger-200 p-3 text-sm text-danger-700 mb-4">🚫 ${result.blockReason}</div>`:''}
 
     <div class="space-y-4">
-      ${result.recommended?`<div class="rounded-xl bg-white border-2 border-primary-400 p-4 card-hover">
+      ${result.recommended?`<div class="rounded-xl bg-white border-2 ${result.recommended.supportRisk==='MUY_BAJO'||result.recommended.supportRisk==='BAJO'?'border-primary-400':'border-danger-400'} p-4 card-hover">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⭐ RECOMENDADO</span>
-            <span class="text-[10px] ${result.recommended.riskLevel==='EXCELENTE'?'bg-success-100 text-success-700':result.recommended.riskLevel==='BUENO'?'bg-primary-100 text-primary-700':'bg-warning-100 text-warning-700'} px-2 py-0.5 rounded-full">${result.recommended.riskLevel}</span>
+            <span class="text-[10px] ${result.recommended.supportRisk==='MUY_BAJO'?'bg-success-100 text-success-700':result.recommended.supportRisk==='BAJO'?'bg-primary-100 text-primary-700':result.recommended.supportRisk==='MEDIO'?'bg-warning-100 text-warning-700':'bg-danger-100 text-danger-700'} px-2 py-0.5 rounded-full">${result.recommended.supportRisk}</span>
           </div>
-          <span class="text-xs font-semibold text-primary-600">${result.recommended.compatibility}% compatibilidad</span>
+          <span class="text-xs font-semibold text-primary-600">${result.recommended.compatibility}%</span>
         </div>
         <div class="flex justify-between items-start">
-          <div><h3 class="font-bold text-neutral-900 text-lg">${result.recommended.name}</h3></div>
+          <div><h3 class="font-bold text-neutral-900 text-lg">${result.recommended.planName}</h3></div>
           <div class="text-right"><p class="text-2xl font-bold text-primary-600">$${(result.recommended.price||0).toLocaleString('es-CO')}</p><p class="text-[10px] text-neutral-400">/mes</p></div>
         </div>
+        ${result.recommended.reasons.length>0?`<div class="flex flex-wrap gap-1 my-2">${result.recommended.reasons.map(r=>`<span class="text-[10px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">${r}</span>`).join('')}</div>`:''}
         <div class="grid grid-cols-2 gap-1 text-xs text-neutral-600 mt-2">
-          <span>🚀 ${result.recommended.download_speed} Mbps ${result.recommended.is_symmetric?'Simétricos':''}</span>
+          <span>🚀 ${result.recommended.downloadSpeed} Mbps ${result.recommended.isSymmetric?'Simétricos':''}</span>
           <span>📺 TV Digital</span>
           <span>📡 Router WiFi</span>
           <span>⏱ 2-3 días</span>
         </div>
+        <div class="grid grid-cols-3 gap-2 mt-3">
+          <div class="rounded-lg bg-success-50 p-2 text-center"><span class="block text-xs font-bold text-success-600">${result.recommended.compatibility}%</span><span class="text-[8px] text-success-500">Compatibilidad</span></div>
+          <div class="rounded-lg bg-primary-50 p-2 text-center"><span class="block text-xs font-bold text-primary-600">${result.recommended.safetyMargin}%</span><span class="text-[8px] text-primary-500">Ocupación</span></div>
+          <div class="rounded-lg bg-amber-50 p-2 text-center"><span class="block text-xs font-bold text-amber-600">${result.recommended.estimatedLifeYears} años</span><span class="text-[8px] text-amber-500">Vida útil</span></div>
+        </div>
         <div class="flex items-center justify-between mt-3 p-2 rounded-lg bg-success-50">
           <span class="text-xs text-success-700 font-medium">💰 Comisión: $${Math.round((result.recommended.price||0)*0.10).toLocaleString('es-CO')}</span>
-          <span class="text-[10px] text-success-600">Ocupación estimada: ${result.recommended.demandPercent}%</span>
+          <span class="text-[10px] text-success-600">Riesgo: ${result.recommended.supportRisk}</span>
         </div>
-        <button onclick="selectPlan(plans.find(p=>p.id==='${result.recommended.id}'))" class="w-full mt-3 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">Seleccionar plan</button>
+        ${!result.riskBlocked?`<button onclick="selectPlan(plans.find(p=>p.id==='${result.recommended.planId}'))" class="w-full mt-3 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">Seleccionar plan</button>`:`<div class="mt-3 rounded-xl bg-danger-50 border border-danger-200 p-3 text-xs text-danger-700">Para vender este plan se requiere justificación escrita.</div>`}
       </div>`:''}
 
       ${result.alternatives.map(p=>{
