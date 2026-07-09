@@ -185,30 +185,135 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return success({ ...wallet, transactions: (transactions as any)?.results ?? [] });
     }
 
-    // ─── COMMERCIAL CATALOG ─────────────────────────────────────────
-    if (path === '/api/v1/catalog/zones' && method === 'GET') {
-      const zones = await env.REFERIX_DB.prepare('SELECT DISTINCT name, technology FROM coverage_zones WHERE tenant_id = ? AND active = 1 ORDER BY name').bind(tenantId).all();
+    // ─── COMMERCIAL CATALOG v2 (REF-INT-001) ──────────────────────
+    if (path === '/api/v2/catalog/zones' && method === 'GET') {
+      const zones = await env.REFERIX_DB.prepare('SELECT cz.id as zone_id, cz.name, t.name as technology, t.code as technology_code, t.id as technology_id FROM coverage_zones cz JOIN technologies t ON t.code = cz.technology WHERE cz.tenant_id = ? AND cz.active = 1 ORDER BY cz.name, t.name').bind(tenantId).all();
       return success((zones as any)?.results ?? []);
     }
 
-    if (path === '/api/v1/catalog/plans' && method === 'GET') {
-      const { zone, technology } = params;
-      let query = 'SELECT * FROM plans WHERE tenant_id = ? AND active = 1';
+    if (path === '/api/v2/catalog/technologies' && method === 'GET') {
+      const techs = await env.REFERIX_DB.prepare('SELECT * FROM technologies WHERE tenant_id = ? AND active = 1').bind(tenantId).all();
+      return success((techs as any)?.results ?? []);
+    }
+
+    if (path === '/api/v2/catalog/client-types' && method === 'GET') {
+      const types = await env.REFERIX_DB.prepare('SELECT * FROM client_types WHERE tenant_id = ? AND active = 1').bind(tenantId).all();
+      return success((types as any)?.results ?? []);
+    }
+
+    if (path === '/api/v2/catalog/plans' && method === 'GET') {
+      const { zone_id, technology_id, category_id, client_type_id } = params;
+      let query = 'SELECT cp.*, cz.name as zone_name, t.name as technology_name FROM catalog_plans cp JOIN coverage_zones cz ON cz.id = cp.zone_id JOIN technologies t ON t.id = cp.technology_id WHERE cp.tenant_id = ? AND cp.status = "PUBLISHED"';
       const binds: any[] = [tenantId];
-      if (zone) { query += ' AND id LIKE ?'; binds.push(`plan-${zone.toLowerCase().replace(/\s/g, '-')}%`); }
-      if (technology) { query += ' AND technology = ?'; binds.push(technology); }
-      query += ' ORDER BY price ASC';
+      if (zone_id) { query += ' AND cp.zone_id = ?'; binds.push(zone_id); }
+      if (technology_id) { query += ' AND cp.technology_id = ?'; binds.push(technology_id); }
+      if (category_id) { query += ' AND cp.category_id = ?'; binds.push(category_id); }
+      query += ' ORDER BY cp.price ASC';
       const plans = await env.REFERIX_DB.prepare(query).bind(...binds).all();
       return success((plans as any)?.results ?? []);
     }
 
-    if (path === '/api/v1/catalog/plan-detail' && method === 'GET') {
-      const { planId } = params;
-      if (!planId) return error('VALIDATION', 'planId requerido');
-      const plan = await env.REFERIX_DB.prepare('SELECT * FROM plans WHERE id = ? AND tenant_id = ?').bind(planId, tenantId).first();
+    if (path === '/api/v2/catalog/plan-detail' && method === 'GET') {
+      const { plan_id } = params;
+      if (!plan_id) return error('VALIDATION', 'plan_id requerido');
+      const plan = await env.REFERIX_DB.prepare('SELECT cp.*, cz.name as zone_name, t.name as technology_name, cc.name as category_name FROM catalog_plans cp JOIN coverage_zones cz ON cz.id = cp.zone_id JOIN technologies t ON t.id = cp.technology_id LEFT JOIN commercial_categories cc ON cc.id = cp.category_id WHERE cp.id = ? AND cp.tenant_id = ?').bind(plan_id, tenantId).first();
       if (!plan) return error('NOT_FOUND', 'Plan no encontrado');
-      const zones = await env.REFERIX_DB.prepare('SELECT name FROM coverage_zones WHERE tenant_id = ? AND technology = ? AND active = 1').bind(tenantId, (plan as any).technology).all();
-      return success({ ...plan, availableZones: (zones as any)?.results ?? [] });
+      const services = await env.REFERIX_DB.prepare('SELECT * FROM plan_services WHERE plan_id = ? AND active = 1').bind(plan_id).all();
+      const equipment = await env.REFERIX_DB.prepare('SELECT * FROM plan_equipment WHERE plan_id = ? AND active = 1').bind(plan_id).all();
+      const documents = await env.REFERIX_DB.prepare('SELECT * FROM plan_documents WHERE plan_id = ? AND active = 1').bind(plan_id).all();
+      const commissions = await env.REFERIX_DB.prepare('SELECT pc.*, ct.name as client_type_name FROM plan_commissions pc LEFT JOIN client_types ct ON ct.id = pc.client_type_id WHERE pc.plan_id = ? AND pc.active = 1').bind(plan_id).all();
+      return success({
+        ...plan,
+        services: (services as any)?.results ?? [],
+        equipment: (equipment as any)?.results ?? [],
+        documents: (documents as any)?.results ?? [],
+        commissions: (commissions as any)?.results ?? [],
+      });
+    }
+
+    // ─── COMMERCIAL ENGINE ────────────────────────────────────────────
+    if (path === '/api/v2/engine/offers' && method === 'GET') {
+      const { zone_id, technology_id } = params;
+      let query = `SELECT co.*, cp.name as plan_name, cp.price, cp.download_speed, cp.upload_speed, cp.is_symmetric, cp.benefits as plan_benefits, cp.installation_days_min, cp.installation_days_max, cz.name as zone_name FROM commercial_offers co JOIN catalog_plans cp ON cp.id = co.plan_id JOIN offer_availability oa ON oa.offer_id = co.id JOIN coverage_zones cz ON cz.id = oa.zone_id WHERE co.tenant_id = ? AND co.status = 'PUBLISHED' AND oa.status = 'AVAILABLE'`;
+      const binds: any[] = [tenantId];
+      if (zone_id) { query += ' AND oa.zone_id = ?'; binds.push(zone_id); }
+      if (technology_id) { query += ' AND cp.technology_id = ?'; binds.push(technology_id); }
+      query += ' GROUP BY co.id ORDER BY cp.price ASC';
+      const offers = await env.REFERIX_DB.prepare(query).bind(...binds).all();
+      return success((offers as any)?.results ?? []);
+    }
+
+    if (path === '/api/v2/engine/commission' && method === 'GET') {
+      const { plan_id, offer_id } = params;
+      let query = 'SELECT * FROM commission_rules WHERE tenant_id = ? AND active = 1';
+      const binds: any[] = [tenantId];
+      if (offer_id) { query += ' AND (offer_id = ? OR offer_id IS NULL)'; binds.push(offer_id); }
+      else if (plan_id) { query += ' AND (plan_id = ? OR plan_id IS NULL)'; binds.push(plan_id); }
+      query += ' ORDER BY priority ASC LIMIT 1';
+      const rule = await env.REFERIX_DB.prepare(query).bind(...binds).first();
+      if (!rule) return success({ type: 'PERCENTAGE', value: 10, amount: 0 });
+      const price = plan_id ? (await env.REFERIX_DB.prepare('SELECT price FROM catalog_plans WHERE id = ?').bind(plan_id).first()) : null;
+      const amount = (rule as any).type === 'PERCENTAGE' ? ((price as any)?.price || 0) * (rule as any).value / 100 : (rule as any).value;
+      return success({ ...rule, calculatedAmount: Math.round(amount) });
+    }
+
+    if (path === '/api/v2/engine/profitability' && method === 'GET') {
+      const { plan_id } = params;
+      if (!plan_id) return error('VALIDATION', 'plan_id requerido');
+      const plan = await env.REFERIX_DB.prepare('SELECT * FROM catalog_plans WHERE id = ? AND tenant_id = ?').bind(plan_id, tenantId).first() as any;
+      const costs = await env.REFERIX_DB.prepare('SELECT * FROM plan_costs WHERE plan_id = ?').bind(plan_id).first() as any;
+      if (!plan) return error('NOT_FOUND', 'Plan no encontrado');
+      const infraCost = costs?.infrastructure || (plan.price * 0.3);
+      const supportCost = costs?.support || (plan.price * 0.07);
+      const equipCost = costs?.equipment || (plan.price * 0.03);
+      const totalCost = infraCost + supportCost + equipCost;
+      const margin = plan.price - totalCost;
+      const marginPct = plan.price > 0 ? (margin / plan.price) * 100 : 0;
+      return success({
+        planName: plan.name, price: plan.price, totalCost, margin, marginPct,
+        breakdown: { infrastructure: infraCost, support: supportCost, equipment: equipCost, other: 0 }
+      });
+    }
+
+    if (path === '/api/v2/engine/recommend' && method === 'POST') {
+      const { devices, useCases } = body as any;
+      const deviceCount = parseInt(devices || '1');
+      const needs = (useCases || []).map((u: string) => u.toLowerCase());
+      const plans = await env.REFERIX_DB.prepare('SELECT * FROM catalog_plans WHERE tenant_id = ? AND status = "PUBLISHED" ORDER BY price ASC').bind(tenantId).all() as any;
+      const scored = (plans.results || []).map((p: any) => {
+        let score = 0;
+        if (p.download_speed >= 50 && deviceCount <= 5) score += 20;
+        if (p.download_speed >= 100 && deviceCount <= 10) score += 30;
+        if (p.download_speed >= 200) score += 40;
+        if (needs.includes('teletrabajo') && p.download_speed >= 100) score += 25;
+        if (needs.includes('gaming') && p.download_speed >= 100) score += 20;
+        if (needs.includes('streaming') && p.download_speed >= 50) score += 15;
+        if (needs.includes('netflix')) score += 10;
+        return { ...p, score };
+      });
+      scored.sort((a: any, b: any) => b.score - a.score);
+      return success({
+        recommended: scored[0] || null,
+        alternatives: scored.slice(1, 3) || [],
+        allScored: scored,
+      });
+    }
+
+    if (path === '/api/v2/engine/simulate' && method === 'POST') {
+      const { plan_id, new_price } = body as any;
+      if (!plan_id || !new_price) return error('VALIDATION', 'plan_id y new_price requeridos');
+      const plan = await env.REFERIX_DB.prepare('SELECT * FROM catalog_plans WHERE id = ? AND tenant_id = ?').bind(plan_id, tenantId).first() as any;
+      if (!plan) return error('NOT_FOUND', 'Plan no encontrado');
+      const oldPrice = plan.price;
+      const diff = new_price - oldPrice;
+      const oldCommission = oldPrice * 0.10;
+      const newCommission = new_price * 0.10;
+      return success({
+        planName: plan.name, oldPrice, newPrice: new_price, difference: diff,
+        commissionChange: { old: oldCommission, new: newCommission, diff: newCommission - oldCommission },
+        iva: { residential: 0, commercial: new_price * 0.19 },
+        marginChange: { old: oldPrice * 0.6, new: new_price * 0.6, diff: diff * 0.6 },
+      });
     }
 
     // ─── HEALTH ─────────────────────────────────────────────────────
