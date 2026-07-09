@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referix — Experience Router</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>*{font-family:'Inter',sans-serif}.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>
+</head>
+<body class="bg-neutral-50">
+<div id="app" class="min-h-screen flex items-center justify-center p-4"></div>
+<script>
+const API_BASE='https://referix-api.reto-diario.workers.dev';
+const APPS={
+  console:{name:'Console',path:'/console',roles:['ADMIN','SUPERVISOR','GERENTE'],desc:'Administración y gobierno de la empresa'},
+  sales:{name:'Sales',path:'/sales.html',roles:['SALES','ASESOR'],desc:'Registro de ventas en menos de 2 minutos'},
+  partner:{name:'Partner',path:'/partner.html',roles:['REFERIDOR'],desc:'Referidos, comisiones y wallet'},
+  operations:{name:'Operations',path:'/operations.html',roles:['TECHNICIAN','INSTALADOR'],desc:'Instalaciones y órdenes de trabajo'},
+  support:{name:'Support',path:'/support.html',roles:['SUPPORT','SOPORTE'],desc:'Atención y diagnóstico'},
+  finance:{name:'Finance',path:'/finance.html',roles:['FINANCE','CONTABILIDAD'],desc:'Facturación, pagos y comisiones'},
+  network:{name:'Network',path:'/network.html',roles:['NETWORK','INGENIERIA'],desc:'Monitoreo de red y capacidad'},
+  executive:{name:'Executive',path:'/executive.html',roles:['EXECUTIVE','DIRECTOR','GERENTE'],desc:'Indicadores y toma de decisiones'}
+};
+
+let state={step:'login',user:null,token:null,roles:[],multiRole:false,selectedRole:null};
+
+async function login(email,password){
+  try{
+    const r=await fetch(`${API_BASE}/api/v1/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json();
+    if(d.errors) return alert('Credenciales inválidas');
+    state.user=d.data.user;
+    state.token=d.data.token;
+    state.roles=[d.data.user.role];
+    resolveExperience();
+  }catch(e){alert('Error de conexión');}
+}
+
+function resolveExperience(){
+  const role=state.roles[0];
+  const matched=Object.entries(APPS).find(([_,app])=>app.roles.includes(role));
+  if(!matched){alert(`Sin experiencia para el rol: ${role}`);return;}
+  const [key,app]=matched;
+  if(state.roles.length>1){state.multiRole=true;state.step='select-role';render();return;}
+  window.location.href=app.path;
+}
+
+function selectApp(key){
+  const app=APPS[key];
+  if(app) window.location.href=app.path;
+}
+
+function render(){
+  const el=document.getElementById('app');
+  if(state.step==='login'){el.innerHTML=renderLogin();return;}
+  if(state.step==='select-role'){el.innerHTML=renderRoleSelect();return;}
+}
+
+function renderLogin(){
+  return `<div class="w-full max-w-sm slide-in">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">R</div>
+      <h1 class="text-2xl font-bold text-neutral-900">Referix</h1>
+      <p class="text-sm text-neutral-500 mt-1">Inicia sesión para continuar</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+      <div><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Correo electrónico</label>
+        <input id="login-email" type="email" value="admin@interplay.com" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm"></div>
+      <div><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Contraseña</label>
+        <input id="login-pass" type="password" value="admin123" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm"></div>
+      <button onclick="login(document.getElementById('login-email').value,document.getElementById('login-pass').value)" class="w-full rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600">Ingresar</button>
+    </div>
+    <div class="mt-6 text-center">
+      <p class="text-[10px] text-neutral-400">Demo: admin@interplay.com / admin123</p>
+      <div class="flex justify-center gap-2 mt-2">${Object.entries(APPS).slice(0,4).map(([k,a])=>`<span class="text-[10px] bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full">${a.name}</span>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
+function renderRoleSelect(){
+  return `<div class="w-full max-w-sm slide-in">
+    <div class="text-center mb-6"><div class="w-14 h-14 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">R</div>
+      <h2 class="text-lg font-bold text-neutral-900">Selecciona tu perfil</h2>
+      <p class="text-sm text-neutral-500 mt-1">Tienes múltiples roles asignados</p>
+    </div>
+    <div class="space-y-2">${Object.entries(APPS).filter(([_,a])=>a.roles.some(r=>state.roles.includes(r))).map(([k,a])=>`<button onclick="selectApp('${k}')" class="w-full text-left flex items-center gap-4 rounded-xl border-2 border-neutral-200 p-4 hover:border-primary-400 hover:bg-primary-50 transition-all">
+      <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-lg">${k==='console'?'🏢':k==='sales'?'📝':k==='partner'?'🤝':k==='operations'?'🔧':k==='support'?'🎧':k==='finance'?'💰':k==='network'?'🌐':'📊'}</div>
+      <div><p class="font-semibold text-neutral-900">${a.name}</p><p class="text-xs text-neutral-500">${a.desc}</p></div>
+    </button>`).join('')}</div>
+    <button onclick="state.step='login';render()" class="w-full mt-4 text-sm text-neutral-500 hover:text-neutral-700">← Cerrar sesión</button>
+  </div>`;
+}
+render();
+</script>
+</body>
+</html>
