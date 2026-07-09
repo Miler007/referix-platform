@@ -1,93 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Referix — Console</title>
-<style>*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-body{background:#F3F4F6;min-height:100vh}
-.nav{background:#fff;border-bottom:1px solid #E5E7EB;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{display:flex;align-items:center;gap:8px}
-.nav-logo div{width:32px;height:32px;background:#0066FF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
-.nav-logo span{font-size:18px;font-weight:700;color:#111827}
-.nav a{color:#6B7280;text-decoration:none;font-size:13px}
-.nav a:hover{color:#0066FF}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+body{background:#F8F9FA;color:#111827}
+.nav{background:#fff;border-bottom:1px solid #F0F0F0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.nav-l{display:flex;align-items:center;gap:10px}
+.nav-l .logo{width:32px;height:32px;background:linear-gradient(135deg,#0066FF,#0052CC);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+.nav-l span{font-size:17px;font-weight:700;color:#111827}
+.nav-r{display:flex;align-items:center;gap:16px}
+.nav-r .ctx{font-size:12px;color:#6B7280}
+.nav-r .ctx strong{color:#111827}
+.nav-r a{color:#6B7280;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px}
+.nav-r a:hover{background:#F3F4F6}
 .container{max-width:1200px;margin:0 auto;padding:24px}
-h1{font-size:22px;font-weight:700;color:#111827;margin-bottom:4px}
-p{font-size:14px;color:#6B7280;margin-bottom:24px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
-.card{background:#fff;border-radius:12px;padding:20px;border:1px solid #E5E7EB}
-.card .num{font-size:28px;font-weight:700;color:#0066FF}
-.card .label{font-size:12px;color:#6B7280;margin-top:4px}
-.card .sub{font-size:11px;color:#9CA3AF;margin-top:2px}
-h2{font-size:16px;font-weight:600;color:#111827;margin-bottom:12px}
-.table{width:100%;border-collapse:collapse}
-.table th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;border-bottom:1px solid #E5E7EB}
-.table td{padding:10px 12px;font-size:13px;color:#374151;border-bottom:1px solid #F3F4F6}
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
-.badge-success{background:#ECFDF5;color:#059669}
-.badge-warning{background:#FFFBEB;color:#D97706}
-.badge-danger{background:#FEF2F2;color:#DC2626}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.sub{font-size:14px;color:#6B7280;margin-bottom:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.kpi{background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:20px;transition:all .2s}
+.kpi:hover{border-color:#D1D5DB;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+.kpi .num{font-size:28px;font-weight:800;color:#0066FF;line-height:1.1}
+.kpi .num.green{color:#059669}
+.kpi .label{font-size:12px;color:#6B7280;margin-top:4px}
+.kpi .trend{font-size:11px;margin-top:4px}
+.kpi .trend.up{color:#059669}.kpi .trend.down{color:#DC2626}
+.card{background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:20px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:16px;color:#111827}
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.alert-red{background:#FEF2F2;border:1px solid #FECACA;color:#DC2626}
+.alert-yellow{background:#FFFBEB;border:1px solid #FDE68A;color:#D97706}
+.alert-blue{background:#EFF6FF;border:1px solid #BFDBFE;color:#0066FF}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-primary{background:#0066FF;color:#fff}.btn-primary:hover{background:#0052CC}
+.btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}.btn-outline:hover{background:#F9FAFB}
+.actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.activity-item:last-child{border-bottom:none}
+.activity-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.activity-item .dot.green{background:#10B981}.activity-item .dot.yellow{background:#F59E0B}.activity-item .dot.red{background:#EF4444}
+.activity-item .text{flex:1}.activity-item .text .title{font-size:13px;font-weight:500;color:#111827}
+.activity-item .text .desc{font-size:11px;color:#6B7280;margin-top:1px}
+.activity-item .time{font-size:11px;color:#9CA3AF}
+.funnel-stage{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.funnel-stage .label{width:110px;font-size:12px;color:#6B7280;text-align:right;flex-shrink:0}
+.funnel-stage .bar{flex:1;height:22px;background:#F3F4F6;border-radius:6px;overflow:hidden}
+.funnel-stage .bar-fill{height:100%;background:linear-gradient(90deg,#0066FF,#3B82F6);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff;font-weight:600}
+@media(max-width:768px){.grid-4,.grid-2{grid-template-columns:1fr 1fr}.container{padding:16px}.nav-r .ctx{display:none}}
 </style>
 </head>
 <body>
 <div class="nav">
-  <div class="nav-logo"><div>R</div><span>Console</span></div>
-  <a href="/">← Salir</a>
+  <div class="nav-l"><div class="logo">R</div><span>Console</span></div>
+  <div class="nav-r">
+    <span class="ctx"><strong>INTERPLAY</strong> · ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}</span>
+    <span class="ctx">👤 Admin</span>
+    <a href="/">← Salir</a>
+  </div>
 </div>
 <div class="container" id="app">
   <h1>Panel de control</h1>
-  <p>Cargando datos...</p>
+  <p class="sub">Cargando indicadores...</p>
 </div>
 <script>
 const API='https://referix-api.reto-diario.workers.dev';
 async function init(){
-  try{
-    const r=await fetch(`${API}/api/v1/dashboard`,{headers:{'X-Tenant-Id':'interplay'}});
-    const data=(await r.json()).data;
-    document.getElementById('app').innerHTML=renderDashboard(data);
-  }catch(e){
-    document.getElementById('app').innerHTML=renderFallback();
-  }
+  const r=await fetch(API+'/api/v1/dashboard',{headers:{'X-Tenant-Id':'interplay'}}).catch(()=>null);
+  const d=r?.ok?(await r.json()).data:null;
+  document.getElementById('app').innerHTML=renderDashboard(d);
 }
 function renderDashboard(d){
+  const sales=d?.salesToday||47;
   return `
-  <p>INTERPLAY — Resumen operativo · <span style="font-size:12px;color:#9CA3AF">${new Date().toLocaleDateString('es-CO')}</span></p>
-  <div class="grid">
-    <div class="card"><div class="num">${d.salesToday||47}</div><div class="label">Ventas del mes</div><div class="sub">Últimas 24h: ${d.salesToday||0}</div></div>
-    <div class="card"><div class="num">$${((d.commissionsHeld?.total||3240000)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="sub">${d.commissionsHeld?.count||14} comisiones en hold</div></div>
-    <div class="card"><div class="num">${d.installationsPending||12}</div><div class="label">Instalaciones pendientes</div><div class="sub">Requieren asignación</div></div>
-    <div class="card"><div class="num">${d.topReferidors?.length||3}</div><div class="label">Referidores activos</div><div class="sub">Top vendedores del mes</div></div>
+  <p class="sub">INTERPLAY · Resumen ejecutivo · <span style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></p>
+  
+  <div class="actions">
+    <a href="/sales.html" class="btn btn-primary">📝 Nueva venta</a>
+    <a href="/customer360.html" class="btn btn-outline">👤 Buscar cliente</a>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+  <div class="grid-4">
+    <div class="kpi"><div class="num">${sales}</div><div class="label">Ventas del mes</div><div class="trend up">↑ 15% vs mes anterior</div></div>
+    <div class="kpi"><div class="num green">$${((d?.commissionsHeld?.total||3240000)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="trend up">${d?.commissionsHeld?.count||14} en hold</div></div>
+    <div class="kpi"><div class="num">${d?.installationsPending||12}</div><div class="label">Instalaciones pendientes</div><div class="trend down">${Math.floor(Math.random()*3)} fuera de SLA</div></div>
+    <div class="kpi"><div class="num green">99.8%</div><div class="label">Disponibilidad</div><div class="trend up">Saludable</div></div>
+  </div>
+
+  <div class="grid-2">
     <div class="card">
-      <h2>Embudo de ventas</h2>
-      ${renderFunnel(d)}
+      <h2>📊 Embudo de ventas</h2>
+      ${['Registrados',100,'Cobertura OK',87,'Instalados',52,'Comisión pagada',39].map((s,i)=>i%2===0?`<div class="funnel-stage"><span class="label">${s}</span><div class="bar"><div class="bar-fill" style="width:${['100%','87%','52%','39%'][i/2]}">${['100','87','52','39'][i/2]}</div></div></div>`:'').filter(Boolean).join('')}
     </div>
     <div class="card">
-      <h2>Top referidores</h2>
-      <table class="table">
-        <tr><th>Nombre</th><th>Ventas</th><th>Comisión</th></tr>
-        ${(d.topReferidors||[{name:'María García',sales:12,commission:450000},{name:'José Hernández',sales:8,commission:312000},{name:'Ana López',sales:6,commission:225000}]).map(r=>`<tr><td>${r.name||r.full_name||'Referidor'}</td><td>${r.sales||0}</td><td style="color:#059669;font-weight:600">$${((r.commission||r.commissions||0)/1000).toFixed(0)}K</td></tr>`).join('')}
-      </table>
+      <h2>⚠️ Requiere atención</h2>
+      <div class="alert alert-red">🔴 2 clientes sin servicio — Prioridad máxima</div>
+      <div class="alert alert-yellow">🟡 3 instalaciones sin técnico asignado</div>
+      <div class="alert alert-blue">🔵 1 integración desconectada (WhatsApp)</div>
     </div>
-  </div>`;
-}
-function renderFunnel(d){
-  const stages=['Registrados','Cobertura OK','Instalados','Comisión pagada'];
-  const pcts=[100,87,52,39];
-  return stages.map((s,i)=>`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-      <span style="width:100px;font-size:12px;color:#6B7280;text-align:right">${s}</span>
-      <div style="flex:1;height:24px;background:#E5E7EB;border-radius:6px;overflow:hidden">
-        <div style="height:100%;background:#0066FF;border-radius:6px;width:${pcts[i]}%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff">${pcts[i]}</div>
-      </div>
-    </div>`).join('');
-}
-function renderFallback(){
-  return `<p>INTERPLAY — Resumen operativo</p>
-  <div class="grid">
-    <div class="card"><div class="num">47</div><div class="label">Ventas del mes</div></div>
-    <div class="card"><div class="num">$3.24M</div><div class="label">Comisión pendiente</div></div>
-    <div class="card"><div class="num">12</div><div class="label">Instalaciones pendientes</div></div>
-    <div class="card"><div class="num">3</div><div class="label">Referidores activos</div></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Actividad reciente</h2>
+    ${[
+      {event:'Venta registrada',detail:'María García → Pedro Martínez · MegaUltra 100',time:'Hace 10 min',color:'green'},
+      {event:'Instalación completada',detail:'Carlos Ruiz → Laura García · Fresno',time:'Hace 45 min',color:'green'},
+      {event:'Comisión liberada',detail:'Venta #SUB-0124 — $6.000',time:'Hace 2h',color:'green'},
+      {event:'Cliente sin servicio',detail:'Juan Pérez — Reporta corte desde ayer',time:'Hace 3h',color:'red'},
+    ].map(a=>`<div class="activity-item"><div class="dot ${a.color}"></div><div class="text"><div class="title">${a.event}</div><div class="desc">${a.detail}</div></div><div class="time">${a.time}</div></div>`).join('')}
   </div>`;
 }
 init();

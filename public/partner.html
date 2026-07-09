@@ -1,78 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Referix — Partner</title><script src="https://cdn.tailwindcss.com"></script>
-<style>*{font-family:'Inter',sans-serif}.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}</style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Referix — Partner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+body{background:#F8F9FA;color:#111827}#app{max-width:440px;margin:0 auto;min-height:100vh;background:#fff}
+.px-4{padding-left:16px;padding-right:16px}.py-5{padding-top:20px;padding-bottom:20px}.py-8{padding-top:32px;padding-bottom:32px}
+.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mt-4{margin-top:16px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.flex-1{flex:1}.gap-2{gap:8px}.gap-3{gap:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.text-xs{font-size:12px;color:#6B7280}.text-sm{font-size:14px;color:#6B7280}.text-lg{font-size:18px;font-weight:700}
+.text-xl{font-size:22px;font-weight:700}.text-2xl{font-size:26px;font-weight:800}.text-3xl{font-size:32px;font-weight:800}
+.text-center{text-align:center}.text-right{text-align:right}
+.font-bold{font-weight:700}.font-semibold{font-weight:600}
+.w-full{width:100%}.card{background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px}
+.shadow{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.primary{color:#0066FF}.success{color:#059669}
+.bg-primary-50{background:#EFF6FF}.bg-success-50{background:#ECFDF5}.bg-warning-50{background:#FFFBEB}
+.bg-premium{background:linear-gradient(135deg,#0066FF,#0052CC);color:#fff}
+.rounded-xl{border-radius:14px}.rounded-full{border-radius:999px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:600;border:none;cursor:pointer}
+.btn-primary{background:#0066FF;color:#fff}.btn-primary:hover{background:#0052CC}
+.btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.animate-fadeUp{animation:fadeUp .35s ease-out}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
 </head>
-<body class="bg-neutral-50">
-<div id="app" class="max-w-lg mx-auto min-h-screen bg-white shadow-sm"></div>
+<body>
+<div id="app" class="animate-fadeUp"></div>
 <script>
-const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch{return null}}};
-let page='dashboard',refs=[],walletData=null;
-const refName='María García',refSales=12;
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
+  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});return(await r.json()).data}catch(e){return null}}};
+const n='María García';
+let wallet=null,page='dashboard';
+(async()=>{wallet=await API.get('/api/v1/wallet?referrerId=person-maria');render();})();
 
-async function init(){
-  refs=await API.get('/api/v2/catalog/plans')||[];
-  walletData=await API.get('/api/v1/wallet?referrerId=person-maria');
-  render();
-}
 function render(){
   document.getElementById('app').innerHTML={
-    dashboard:renderDashboard(),
-    referrals:renderReferrals(),
-    commissions:renderCommissions(),
-    wallet:renderWallet(),
-    register:renderRegister()
-  }[page];
+    dashboard:renderDashboard,
+    referrals:()=>`<div class="px-4 py-5 animate-fadeUp"><button class="text-sm primary" onclick="page='dashboard';render()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:16px">← Volver</button><p class="text-lg mb-4">Mis referidos</p><p class="text-sm muted">Próximamente: lista completa de referidos</p></div>`,
+    wallet:renderWallet,
+  }[page]()||renderDashboard();
 }
-init();
 
 function renderDashboard(){
-  const balance=walletData?.balance||0;
-  const pending=walletData?.pendingBalance||0;
-  const earned=walletData?.totalEarned||2450000;
-  return`
-  <div class="p-5 slide-in">
-    <div class="mb-6"><h1 class="text-xl font-bold">¡Hola, ${refName}! 👋</h1><p class="text-sm text-neutral-500">Tus ventas van muy bien</p></div>
-    <div class="grid grid-cols-2 gap-3 mb-6">
-      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Ventas este mes</p><p class="text-2xl font-bold text-primary-600">${refSales}</p></div>
-      <div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">Disponible</p><p class="text-2xl font-bold text-success-600">$${balance.toLocaleString('es-CO')}</p><p class="text-[10px] text-neutral-400">Retenido: $${pending.toLocaleString('es-CO')}</p></div>
+  const b=wallet?.balance||0,pnd=wallet?.pendingBalance||0,earned=wallet?.totalEarned||2450000;
+  const meta=3000000,pct=Math.min(100,Math.round((earned/meta)*100));
+  return `<div class="px-4 py-5 animate-fadeUp">
+    <div class="flex items-center gap-3 mb-6">
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#0052CC);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700">${n[0]}</div>
+      <div><p class="text-lg">${n}</p><p class="text-xs" style="color:#9CA3AF">Referidor INTERPLAY</p></div>
     </div>
-    <button onclick="page='register';render()" class="w-full rounded-xl bg-primary-500 text-white py-4 text-lg font-semibold shadow-lg mb-6 hover:bg-primary-600 active:scale-[0.98] transition-all">📝 Registrar venta</button>
-    <div class="space-y-3">
-      <h2 class="text-sm font-semibold text-neutral-700">Tus últimas ventas</h2>
-      ${['Pedro Martínez','Laura García','Carlos Ruiz'].map((n,i)=>`
-        <div class="rounded-xl bg-white border p-3 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-lg">👤</div>
-          <div class="flex-1"><p class="font-medium text-sm">${n}</p><p class="text-xs text-neutral-500">${['Instalación','Validación','Comisión lista'][i]}</p></div>
-          <span class="text-[10px] ${['bg-warning-100 text-warning-700','bg-primary-100 text-primary-700','bg-success-100 text-success-700'][i]} px-2 py-0.5 rounded-full">${['Progreso','Pendiente','Listo'][i]}</span>
-        </div>`).join('')}
+    
+    <div class="card shadow mb-4" style="background:linear-gradient(135deg,#0066FF,#003DA6);color:#fff;border:none">
+      <p class="text-xs" style="opacity:.8">Saldo disponible</p>
+      <p class="text-3xl font-bold" style="margin:4px 0">$${b.toLocaleString('es-CO')}</p>
+      <p class="text-xs" style="opacity:.8">Retenido: $${pnd.toLocaleString('es-CO')} · Próximo pago estimado: en 5 días</p>
     </div>
-    <div class="mt-6 grid grid-cols-4 gap-1">
-      ${[{icon:'📝',label:'Venta',p:'register'},{icon:'📋',label:'Mis Ventas',p:'referrals'},{icon:'💰',label:'Comisiones',p:'commissions'},{icon:'👛',label:'Wallet',p:'wallet'}].map(b=>`
-        <button onclick="page='${b.p}';render()" class="flex flex-col items-center gap-1 py-2 ${page===b.p?'text-primary-600':'text-neutral-400'}"><span class="text-xl">${b.icon}</span><span class="text-[10px]">${b.label}</span></button>`).join('')}
+
+    <div class="grid-2 mb-4">
+      <div class="card"><p class="text-xs">Meta del mes</p><p class="text-xl success">$${(earned/1000).toFixed(0)}K</p><p class="text-xs">de $${(meta/1000).toFixed(0)}K</p></div>
+      <div class="card"><p class="text-xs">Comisiones</p><p class="text-xl primary">${wallet?.transactions?.length||8}</p><p class="text-xs">este mes</p></div>
     </div>
-  </div>`;}
-function renderReferrals(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis ventas</h2><p class="text-neutral-500 text-sm">Tus ventas registradas aparecerán aquí</p></div>`;}
-function renderCommissions(){return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mis comisiones</h2><p class="text-neutral-500 text-sm">Próximamente: detalle de comisiones</p></div>`;}
+
+    <div style="height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden;margin-bottom:24px">
+      <div style="height:100%;background:linear-gradient(90deg,#0066FF,#3B82F6);border-radius:3px;width:${pct}%"></div>
+    </div>
+
+    <div class="grid-3 mb-6">
+      <div style="text-align:center;padding:12px;background:#EFF6FF;border-radius:12px"><p class="text-xl primary font-bold">12</p><p class="text-xs" style="color:#6B7280">Ventas</p></div>
+      <div style="text-align:center;padding:12px;background:#ECFDF5;border-radius:12px"><p class="text-xl success font-bold">8</p><p class="text-xs" style="color:#6B7280">Activas</p></div>
+      <div style="text-align:center;padding:12px;background:#F3F4F6;border-radius:12px"><p class="text-xl font-bold" style="color:#374151">75%</p><p class="text-xs" style="color:#6B7280">Conversión</p></div>
+    </div>
+
+    <button class="btn btn-primary mb-3" onclick="window.location='/sales.html'">📝 Nueva venta</button>
+    
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline flex-1" onclick="page='wallet';render()">💰 Mi wallet</button>
+    </div>
+  </div>`;
+}
+
 function renderWallet(){
-  const balance=walletData?.balance||0;
-  const pending=walletData?.pendingBalance||0;
-  const earned=walletData?.totalEarned||2450000;
-  return`<div class="p-5 slide-in"><button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button><h2 class="text-lg font-bold mb-4">Mi wallet</h2>
-    <div class="grid grid-cols-2 gap-3 mb-4">
-      <div class="rounded-xl bg-success-50 border p-4"><p class="text-xs text-success-600">Disponible</p><p class="text-2xl font-bold text-success-600">$${balance.toLocaleString('es-CO')}</p></div>
-      <div class="rounded-xl bg-warning-50 border p-4"><p class="text-xs text-warning-600">Retenido</p><p class="text-2xl font-bold text-warning-600">$${pending.toLocaleString('es-CO')}</p></div>
+  const b=wallet?.balance||0,pnd=wallet?.pendingBalance||0,earned=wallet?.totalEarned||2450000;
+  const txs=wallet?.transactions||[{type:'COMMISSION',amount:12500,description:'Comisión Pedro Martínez',created_at:'2024-07-08'},{type:'COMMISSION',amount:12500,description:'Comisión Laura García',created_at:'2024-07-07'},{type:'PAYOUT',amount:-150000,description:'Retiro a cuenta bancaria',created_at:'2024-07-05'}];
+  return `<div class="px-4 py-5 animate-fadeUp">
+    <button class="text-sm primary" onclick="page='dashboard';render()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:16px">← Volver</button>
+    <p class="text-lg mb-4">Mi wallet</p>
+    <div class="card shadow mb-4" style="background:linear-gradient(135deg,#0066FF,#003DA6);color:#fff;border:none">
+      <p class="text-xs" style="opacity:.8">Balance disponible</p>
+      <p class="text-3xl font-bold" style="margin:4px 0">$${b.toLocaleString('es-CO')}</p>
+      <p class="text-xs" style="opacity:.8">Retenido: $${pnd.toLocaleString('es-CO')}</p>
     </div>
-    <div class="rounded-xl bg-white border p-4 mb-4"><p class="text-xs text-neutral-500 mb-1">Total ganado</p><p class="text-xl font-bold">$${earned.toLocaleString('es-CO')}</p></div>
-    <button class="w-full rounded-xl bg-primary-500 text-white py-3 font-semibold">Solicitar pago</button>
-  </div>`;}
-function renderRegister(){return`
-  <div class="p-5 slide-in">
-    <button onclick="page='dashboard';render()" class="text-primary-500 text-sm mb-4">← Volver</button>
-    <h2 class="text-lg font-bold mb-4">Registrar una venta</h2>
-    <p class="text-sm text-neutral-500 mb-4">Próximamente: captura de prospectos. Por ahora, usa la <a href='/sales.html' class='text-primary-500 font-medium'>Sales App</a></p>
-  </div>`;}
+    <div class="grid-2 mb-4">
+      <div class="card"><p class="text-xs">Total ganado</p><p class="text-xl success">$${(earned/1000).toFixed(0)}K</p></div>
+      <div class="card"><p class="text-xs">Próximo pago</p><p class="text-xl primary">$${(b*0.5/1000).toFixed(0)}K</p><p class="text-xs">Est. 5 días</p></div>
+    </div>
+    <p class="text-sm font-semibold mb-3">Movimientos recientes</p>
+    ${txs.map(t=>`<div class="flex items-center gap-3" style="padding:10px 0;border-bottom:1px solid #F3F4F6">
+      <div style="width:36px;height:36px;border-radius:50%;background:${t.amount>0?'#ECFDF5':'#FEF2F2'};display:flex;align-items:center;justify-content:center;font-size:16px">${t.amount>0?'💰':'💳'}</div>
+      <div class="flex-1"><p class="text-sm" style="font-weight:500">${t.description||'Movimiento'}</p><p class="text-xs" style="color:#9CA3AF">${t.created_at?.split('T')[0]||''}</p></div>
+      <p class="text-sm font-semibold" style="color:${t.amount>0?'#059669':'#DC2626'}">${t.amount>0?'+':''}$${Math.abs(t.amount).toLocaleString('es-CO')}</p>
+    </div>`).join('')}
+    <button class="btn btn-primary mt-4">Solicitar pago</button>
+  </div>`;
+}
 </script>
 </body>
 </html>
