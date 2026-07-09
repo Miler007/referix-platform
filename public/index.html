@@ -1,71 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Referix — Plataforma de Gestión Comercial</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>*{font-family:'Inter',sans-serif}.slide-in{animation:slideIn .3s ease-out}@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>
+<title>Referix</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+body{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:#ffffff;border-radius:16px;padding:32px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.logo{width:64px;height:64px;background:#0066FF;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;color:#fff;font-weight:800}
+h1{text-align:center;font-size:24px;font-weight:700;color:#111827;margin-bottom:4px}
+.sub{text-align:center;font-size:14px;color:#6B7280;margin-bottom:24px}
+label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px}
+input{width:100%;padding:12px 16px;border:1.5px solid #D1D5DB;border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;background:#fff;color:#111827}
+input:focus{border-color:#0066FF;box-shadow:0 0 0 3px rgba(0,102,255,0.15)}
+.form-group{margin-bottom:16px}
+.btn{width:100%;padding:14px;background:#0066FF;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
+.btn:hover{background:#0052CC}
+.btn:active{transform:scale(0.98)}
+.footer{text-align:center;margin-top:16px;font-size:10px;color:#9CA3AF}
+.app-grid{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.app-btn{display:flex;align-items:center;gap:12px;padding:16px;border:2px solid #E5E7EB;border-radius:12px;text-decoration:none;transition:all .2s;background:#fff}
+.app-btn:hover{border-color:#0066FF;background:#EFF6FF}
+.app-icon{width:48px;height:48px;background:#EFF6FF;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.app-name{font-size:15px;font-weight:600;color:#111827}
+.app-desc{font-size:12px;color:#6B7280}
+.logout{display:block;margin-top:24px;text-align:center;font-size:13px;color:#9CA3AF;text-decoration:none;cursor:pointer}
+.logout:hover{color:#6B7280}
+.alert{background:#FEF2F2;color:#DC2626;padding:10px;border-radius:8px;font-size:13px;text-align:center;margin-bottom:12px;display:none}
+</style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-<div id="app" class="w-full max-w-sm"></div>
+<body>
+<div id="app"></div>
 <script>
 const API='https://referix-api.reto-diario.workers.dev';
-
 const APPS={
-  admin:{name:'Console',path:'/console.html',roles:['ADMIN','SUPERVISOR'],icon:'🏢',desc:'Administración'},
-  sales:{name:'Sales',path:'/sales.html',roles:['SALES','ASESOR','ADMIN'],icon:'📝',desc:'Ventas'},
-  partner:{name:'Partner',path:'/partner.html',roles:['REFERIDOR'],icon:'🤝',desc:'Referidos'},
+  admin:{name:'Console',path:'/console.html',roles:['ADMIN','SUPERVISOR'],icon:'🏢',desc:'Administración de la empresa'},
+  sales:{name:'Sales',path:'/sales.html',roles:['SALES','ASESOR','ADMIN'],icon:'📝',desc:'Registrar ventas en 2 minutos'},
+  partner:{name:'Partner',path:'/partner.html',roles:['REFERIDOR'],icon:'🤝',desc:'Comisiones y wallet'},
   operations:{name:'Operations',path:'/ops.html',roles:['TECHNICIAN'],icon:'🔧',desc:'Instalaciones'},
-  executive:{name:'Executive',path:'/exec.html',roles:['GERENTE','DIRECTOR','ADMIN'],icon:'📊',desc:'Dashboard'}
+  executive:{name:'Executive',path:'/exec.html',roles:['GERENTE','DIRECTOR','ADMIN'],icon:'📊',desc:'Dashboard ejecutivo'}
 };
 
-let user=null,roles=[];
-
-async function doLogin(){
-  const email=document.getElementById('login-email').value;
-  const pass=document.getElementById('login-pass').value;
-  if(!email||!pass){alert('Ingresa correo y contraseña');return;}
+async function login(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('pass').value;
+  const alertEl=document.getElementById('alert');
+  if(!email||!pass){alertEl.textContent='Ingresa correo y contraseña';alertEl.style.display='block';return;}
   try{
     const r=await fetch(API+'/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await r.json();
-    if(d.errors){alert('Credenciales inválidas');return;}
-    user=d.data.user;
-    roles=[user.role];
-    showApps();
-  }catch(e){alert('Error de conexión');}
+    if(d.errors){alertEl.textContent='Credenciales inválidas';alertEl.style.display='block';return;}
+    const user=d.data.user;
+    const roles=[user.role];
+    renderApps(user,roles);
+  }catch(e){alertEl.textContent='Error de conexión al servidor';alertEl.style.display='block';}
 }
 
-function showApps(){
+function renderApps(user,roles){
   const available=Object.entries(APPS).filter(([_,a])=>a.roles.some(r=>roles.includes(r)));
   document.getElementById('app').innerHTML=`
-    <div class="slide-in text-center">
-      <div class="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-3">R</div>
-      <h2 class="text-xl font-bold text-neutral-900 mb-1">Bienvenido, ${user?.name||'Usuario'}</h2>
-      <p class="text-sm text-neutral-500 mb-6">Selecciona una aplicación</p>
-      <div class="space-y-2">${available.map(([k,a])=>`<a href="${a.path}" class="block text-left flex items-center gap-4 rounded-xl bg-white border-2 border-neutral-200 p-4 hover:border-primary-400 hover:bg-primary-50 transition-all shadow-sm">
-        <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-2xl">${a.icon}</div>
-        <div><p class="font-semibold text-neutral-900">${a.name}</p><p class="text-xs text-neutral-500">${a.desc}</p></div>
+    <div class="card">
+      <div class="logo">R</div>
+      <h2 style="font-size:18px">Bienvenido, ${user.name}</h2>
+      <p class="sub" style="margin-bottom:8px">Selecciona una aplicación</p>
+      <div class="app-grid">${available.map(([k,a])=>`<a href="${a.path}" class="app-btn">
+        <div class="app-icon">${a.icon}</div>
+        <div><div class="app-name">${a.name}</div><div class="app-desc">${a.desc}</div></div>
       </a>`).join('')}</div>
-      <button onclick="location.reload()" class="mt-6 text-sm text-neutral-400 hover:text-neutral-600">← Cerrar sesión</button>
+      <div class="logout" onclick="location.reload()">← Cerrar sesión</div>
     </div>`;
 }
 
 document.getElementById('app').innerHTML=`
-  <div class="slide-in">
-    <div class="text-center mb-6">
-      <div class="w-16 h-16 rounded-2xl bg-primary-500 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-3">R</div>
-      <h1 class="text-2xl font-bold text-neutral-900">Referix</h1>
-      <p class="text-sm text-neutral-500 mt-1">Inicia sesión para continuar</p>
-    </div>
-    <div class="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
-      <div><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Correo electrónico</label>
-        <input id="login-email" type="email" value="admin@interplay.com" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"></div>
-      <div><label class="text-xs font-medium text-neutral-600 mb-1.5 block">Contraseña</label>
-        <input id="login-pass" type="password" value="admin123" class="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"></div>
-      <button onclick="doLogin()" class="w-full rounded-xl bg-primary-500 text-white py-3.5 font-semibold hover:bg-primary-600 active:scale-[0.98] transition-all">Ingresar</button>
-    </div>
-    <div class="mt-4 text-center text-[10px] text-neutral-400">
-      Demo: admin@interplay.com / admin123
-    </div>
+  <div class="card">
+    <div class="logo">R</div>
+    <h1>Referix</h1>
+    <p class="sub">Inicia sesión para continuar</p>
+    <div id="alert" class="alert"></div>
+    <div class="form-group"><label>Correo electrónico</label><input id="email" type="email" value="admin@interplay.com"></div>
+    <div class="form-group"><label>Contraseña</label><input id="pass" type="password" value="admin123"></div>
+    <button class="btn" onclick="login()">Ingresar</button>
+    <div class="footer">Demo: admin@interplay.com / admin123</div>
   </div>`;
 </script>
 </body>
