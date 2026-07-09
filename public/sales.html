@@ -94,6 +94,7 @@ class CEREv2 {
 
   evaluatePlan(profile,plan){
     const demandScore=this.calculateDemandScore(profile);
+    const demandScore=this.calculateDemandScore(profile);
     const speed=plan.download_speed||50;
     const margin=Math.max(0,Math.round((1-demandScore/100)*100));
     const safetyMargin=Math.round(((speed-demandScore)/speed)*100);
@@ -103,6 +104,11 @@ class CEREv2 {
     const risk=usagePct>=90?'MUY_ALTO':usagePct>=80?'ALTO':usagePct>=70?'MEDIO':usagePct>=50?'BAJO':'MUY_BAJO';
     const lifeYears=usagePct<=40?5:usagePct<=55?4:usagePct<=70?3:usagePct<=85?2:1;
     const recommended=margin>=25&&usagePct<=75&&risk!=='ALTO'&&risk!=='MUY_ALTO';
+    const exp=this.getExperienceName(speed,profile);
+    const trank=this.getTranquility(compatibility,risk);
+    const costPerPerson=this.getCostPerPerson(plan.price||0,profile);
+    const upgradeRisk=this.getUpgradeRisk(demandScore,speed);
+    const profileBenefits=this.getProfileSpecificBenefits(profile);
     const reasons=[];
     const warnings=[];
     const totalDevices=Object.values(profile.devices).reduce((a,b)=>a+b,0);
@@ -117,7 +123,7 @@ class CEREv2 {
     if(profile.growth.moreTvs||profile.growth.cameras||profile.growth.moreDevices)reasons.push('Plan con margen de crecimiento');
     if(!recommended)warnings.push(`Riesgo de soporte: ${risk}. Ocupación estimada: ${usagePct}%.`);
     if(usagePct<=30&&speed>=150)warnings.push('Un plan superior no aportará mejoras perceptibles para este perfil.');
-    return{planId:plan.id,planName:plan.name,price:plan.price||0,downloadSpeed:speed,uploadSpeed:plan.upload_speed||speed,isSymmetric:!!plan.is_symmetric,technology:plan.technology_name||'',demandScore,compatibility,demandLevel:this.demandLevel(demandScore),supportRisk:risk,safetyMargin:usagePct,estimatedLifeYears:lifeYears,recommended,reasons,warnings};
+    return{planId:plan.id,planName:plan.name,price:plan.price||0,experienceName:exp.name,experienceIcon:exp.icon,downloadSpeed:speed,uploadSpeed:plan.upload_speed||speed,isSymmetric:!!plan.is_symmetric,technology:plan.technology_name||'',demandScore,compatibility,tranquility:trank,costPerPerson,costPerDay:Math.round((plan.price||0)/30),upgradeRisk,profileBenefits,demandLevel:this.demandLevel(demandScore),supportRisk:risk,safetyMargin:usagePct,estimatedLifeYears:lifeYears,recommended,reasons,warnings};
   }
 
   calculateRQI(evaluation){
@@ -137,6 +143,57 @@ class CEREv2 {
     if(speed>=100)return{people:'3-4 personas',devices:'Hasta 10 dispositivos',streaming:'2 TV 4K sin interrupciones',work:'Videollamadas y teletrabajo estables',gaming:'1 consola con baja latencia',cameras:'Hasta 4 cámaras IP'};
     if(speed>=50)return{people:'2-3 personas',devices:'Hasta 6 dispositivos',streaming:'1 TV HD + música',work:'Teletrabajo básico',gaming:'Casual',cameras:'1-2 cámaras'};
     return{people:'1-2 personas',devices:'Hasta 4 dispositivos',streaming:'Navegación y redes sociales',work:'Correo y mensajería',gaming:'No recomendado',cameras:'No recomendado'};
+  }
+
+  // Predefined profiles for quick selection
+  predefinedProfiles=[
+    {id:'solo',name:'Persona sola',icon:'🏠',desc:'1 persona, navegación y redes',data:{composition:{adults:1,children:0,teens:0,elderly:0},devices:{smartphones:1,tablets:0,smartTvs:1,computers:0,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:1,smartTvs:1,computers:0,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:false},priority:'PRECIO'}},
+    {id:'familia-peq',name:'Familia pequeña',icon:'👨‍👩‍👧',desc:'2-3 personas, streaming y estudios',data:{composition:{adults:2,children:1,teens:0,elderly:0},devices:{smartphones:3,tablets:1,smartTvs:2,computers:0,laptops:2,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:2,smartTvs:1,computers:0,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:true,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:1,usesVpn:false,videoCalls:true,platforms:[]},education:{virtualClasses:true,university:false,onlineCourses:false,students:1},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
+    {id:'familia-grande',name:'Familia grande',icon:'👨‍👩‍👧‍👦',desc:'4+ personas, múltiples dispositivos',data:{composition:{adults:2,children:2,teens:1,elderly:0},devices:{smartphones:5,tablets:2,smartTvs:3,computers:1,laptops:2,consoles:1,ipCameras:2,alexaGoogleHome:1,decoders:1,wifiPrinters:0,otherIot:1},simultaneous:{smartphones:3,smartTvs:2,computers:1,laptops:1,consoles:1},streaming:{netflix:true,disneyPlus:true,primeVideo:true,max:false,youtube:true,iptv:false,quality:'4K'},remoteWork:{people:1,usesVpn:true,videoCalls:true,platforms:[]},education:{virtualClasses:true,university:false,onlineCourses:true,students:2},gaming:{platforms:['PS5','NINTENDO'],frequentGames:true,priorityLatency:true},cameras:{count:2,records24h:true,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:true,cameras:true,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
+    {id:'gamer',name:'Gamer',icon:'🎮',desc:'Gaming online, baja latencia',data:{composition:{adults:1,children:0,teens:0,elderly:0},devices:{smartphones:2,tablets:0,smartTvs:1,computers:1,laptops:1,consoles:2,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:0,otherIot:0},simultaneous:{smartphones:1,smartTvs:1,computers:1,laptops:0,consoles:1},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'FULL_HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:['PS5','PC_GAMER'],frequentGames:true,priorityLatency:true},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'VELOCIDAD'}},
+    {id:'teletrabajo',name:'Teletrabajo',icon:'💻',desc:'Trabajo remoto, videollamadas, VPN',data:{composition:{adults:2,children:0,teens:0,elderly:0},devices:{smartphones:2,tablets:0,smartTvs:1,computers:2,laptops:1,consoles:0,ipCameras:0,alexaGoogleHome:0,decoders:0,wifiPrinters:1,otherIot:0},simultaneous:{smartphones:2,smartTvs:1,computers:1,laptops:1,consoles:0},streaming:{netflix:true,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'FULL_HD'},remoteWork:{people:2,usesVpn:true,videoCalls:true,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:0,records24h:false,cloudUpload:false},business:{isBusiness:false,employees:0,hasPos:false,electronicInvoicing:false,cameras:false,vpn:false,servers:false,clientWifi:false},growth:{moreTvs:false,cameras:false,remoteWork:true,homeBusiness:false,moreDevices:false},priority:'ESTABILIDAD'}},
+    {id:'empresa',name:'Empresa',icon:'🏢',desc:'Varios empleados, sistemas críticos',data:{composition:{adults:3,children:0,teens:0,elderly:0},devices:{smartphones:5,tablets:0,smartTvs:0,computers:3,laptops:2,consoles:0,ipCameras:4,alexaGoogleHome:0,decoders:0,wifiPrinters:1,otherIot:0},simultaneous:{smartphones:3,smartTvs:0,computers:2,laptops:2,consoles:0},streaming:{netflix:false,disneyPlus:false,primeVideo:false,max:false,youtube:true,iptv:false,quality:'HD'},remoteWork:{people:0,usesVpn:false,videoCalls:false,platforms:[]},education:{virtualClasses:false,university:false,onlineCourses:false,students:0},gaming:{platforms:[],frequentGames:false,priorityLatency:false},cameras:{count:4,records24h:true,cloudUpload:true},business:{isBusiness:true,employees:5,hasPos:true,electronicInvoicing:true,cameras:true,vpn:true,servers:true,clientWifi:true},growth:{moreTvs:false,cameras:true,remoteWork:false,homeBusiness:false,moreDevices:true},priority:'ESTABILIDAD'}},
+  ];
+
+  getExperienceName(speed,profile){
+    if(profile?.business?.isBusiness)return{name:'Oficina Conectada',icon:'🏢'};
+    if(speed>=200)return{name:'Hogar Total',icon:'🏠'};
+    if(speed>=100)return{name:'Hogar Conectado',icon:'👨‍👩‍👧‍👦'};
+    return{name:'Hogar Esencial',icon:'🏡'};
+  }
+
+  getTranquility(compatibility,risk){
+    if(compatibility>=90&&risk==='MUY_BAJO')return{stars:5,label:'Dormirás tranquilo',color:'text-success-500'};
+    if(compatibility>=80&&(risk==='MUY_BAJO'||risk==='BAJO'))return{stars:4,label:'Muy tranquilo',color:'text-success-500'};
+    if(compatibility>=70&&risk!=='ALTO')return{stars:3,label:'Tranquilo',color:'text-primary-500'};
+    if(compatibility>=50)return{stars:2,label:'Precaución',color:'text-warning-500'};
+    return{stars:1,label:'Riesgoso',color:'text-danger-500'};
+  }
+
+  getCostPerPerson(price,profile){
+    const total=profile.composition.adults+profile.composition.children+profile.composition.teens+profile.composition.elderly;
+    return total>0?Math.round(price/total):price;
+  }
+
+  getUpgradeRisk(demandScore,speed){
+    const usagePct=Math.min(100,Math.round((demandScore/speed)*100));
+    if(usagePct<=40)return{year1:5,year2:12};
+    if(usagePct<=55)return{year1:12,year2:28};
+    if(usagePct<=70)return{year1:25,year2:45};
+    if(usagePct<=85)return{year1:40,year2:65};
+    return{year1:60,year2:85};
+  }
+
+  getProfileSpecificBenefits(profile){
+    const benefits=[];
+    if(profile.streaming.netflix||profile.streaming.disneyPlus)benefits.push('Netflix, Disney+ y streaming');
+    if(profile.remoteWork.people>0)benefits.push('Teletrabajo y videollamadas');
+    if(profile.education.students>0)benefits.push('Clases virtuales y tareas');
+    if(profile.gaming.platforms.length>0)benefits.push('Gaming con baja latencia');
+    if(profile.cameras.count>0)benefits.push('Cámaras IP 24/7');
+    if(profile.devices.smartphones>3||profile.devices.smartTvs>1)benefits.push('Múltiples dispositivos simultáneos');
+    if(profile.business.isBusiness)benefits.push('Facturación electrónica, POS, VPN');
+    return benefits;
   }
 
   recommend(profile,plans){
@@ -171,10 +228,22 @@ class CEREv2 {
       negativeExplain='Riesgos esperados: buffering en horas pico, videollamadas inestables, posible upgrade en pocos meses.';
     }
 
-    // Capacity labels
+    // Capacity labels with docs and install
     const cap=this.capacityLabel(recommended.downloadSpeed);
+    cap.docs=['Copia de cédula','Fotocopia recibo público'];
+    cap.installTime='2 a 3 días hábiles';
+    cap.supportPriority='Clientes sin servicio: prioridad máxima. Resolución el mismo día.';
 
-    return{recommended,economy,premium,alternatives,oversellWarning,explanation,positiveExplain,negativeExplain,riskBlocked,blockReason,confidence,capacity:cap,rqi:recommended.rqi};
+    const profileBenefits=recommended.profileBenefits||[];
+    const economicComparison=economy?{
+      savings:recommended.price-economy.price,
+      riskIncrease:Math.round((economy.supportRisk==='MUY_ALTO'?90:economy.supportRisk==='ALTO'?70:economy.supportRisk==='MEDIO'?50:30)-30)
+    }:null;
+    const premiumComparison=premium?{
+      extraCost:premium.price-recommended.price,
+      riskReduction:Math.round(82-(recommended.supportRisk==='MUY_BAJO'?10:recommended.supportRisk==='BAJO'?25:40))
+    }:null;
+    return{recommended,economy,premium,alternatives,oversellWarning,explanation,positiveExplain,negativeExplain,riskBlocked,blockReason,confidence,capacity:cap,rqi:recommended.rqi,profileBenefits,economicComparison,premiumComparison};
   }
 
   explain(profile,plan){
@@ -272,6 +341,7 @@ let profileViews=[{id:1,title:'Composición del hogar'},{id:2,title:'Dispositivo
 
 function renderProfile(){
   const s=pdata.profileStep;
+  if(s===0)return renderProfileQuickSelect();
   return `<div class="p-5 slide-in">
     <div class="flex items-center gap-1 mb-6">${['Zona','Perfil','Plan','Datos'].map((l,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${l}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
     <div class="flex items-center justify-between mb-4">
@@ -279,12 +349,33 @@ function renderProfile(){
       <span class="text-xs text-neutral-400">${s}/${profileViews.length}</span>
     </div>
     <div class="flex gap-1 mb-4">${profileViews.map((v,i)=>`<div class="h-1 flex-1 rounded-full ${i+1===s?'bg-primary-500':i+1<s?'bg-success-400':'bg-neutral-200'}"></div>`).join('')}</div>
+    <button onclick="pdata.profileStep=0;render()" class="text-xs text-primary-500 mb-3 flex items-center gap-1">← Usar perfil rápido</button>
     ${s===1?renderHousehold():s===2?renderDevices():s===3?renderStreaming():s===4?renderWorkEducation():renderBusinessGrowth()}
     <div class="flex gap-3 mt-6">
       ${s>1?`<button onclick="pdata.profileStep--;render()" class="flex-1 rounded-xl border-2 border-neutral-300 py-3 font-medium text-sm">← Anterior</button>`:''}
       <button onclick="${s<5?'pdata.profileStep++;render()':'applyProfile()'}" class="flex-1 rounded-xl bg-primary-500 text-white py-3 font-semibold hover:bg-primary-600">${s<5?'Siguiente →':'Ver planes recomendados'}</button>
     </div>
   </div>`;
+}
+function renderProfileQuickSelect(){
+  return `<div class="p-5 slide-in">
+    <div class="flex items-center gap-1 mb-6">${['Zona','Perfil','Plan','Datos'].map((l,i)=>`<div class="flex items-center gap-1"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i===1?'bg-primary-500 text-white':i<1?'bg-success-500 text-white':'bg-neutral-200 text-neutral-400'}">${i<1?'✓':i+1}</div><span class="text-[10px] ${i===1?'text-primary-600 font-medium':'text-neutral-400'}">${l}</span>${i<3?'<div class="w-3 h-0.5 bg-neutral-200 ml-1"></div>':''}</div>`).join('')}</div>
+    <h2 class="text-lg font-bold mb-1">¿Qué experiencia necesita el cliente?</h2>
+    <p class="text-sm text-neutral-500 mb-4">Selecciona el perfil que más se acerque</p>
+    <div class="grid grid-cols-2 gap-2">${cere.predefinedProfiles.map(p=>`<button onclick="applyPredefinedProfile('${p.id}')" class="rounded-xl border-2 border-neutral-200 p-4 text-left hover:border-primary-400 hover:bg-primary-50 transition-all card-hover">
+      <span class="text-2xl block mb-1">${p.icon}</span>
+      <h3 class="font-semibold text-sm text-neutral-900">${p.name}</h3>
+      <p class="text-[10px] text-neutral-500 mt-0.5">${p.desc}</p>
+    </button>`).join('')}</div>
+    <button onclick="pdata.profileStep=1;render()" class="w-full mt-4 rounded-xl border-2 border-dashed border-neutral-300 py-3 text-sm text-neutral-500 hover:border-primary-300">✏️ O crear perfil personalizado</button>
+  </div>`;
+}
+function applyPredefinedProfile(id){
+  const pp=cere.predefinedProfiles.find(p=>p.id===id);
+  if(!pp)return;
+  customerProfile=cere.buildProfile(pp.data);
+  const techId=zoneData.find(z=>z.name===selectedZone?.name)?.technology_id;
+  loadPlans(selectedZone.id,techId);
 }
 function renderHousehold(){return`
   <div class="space-y-4">
