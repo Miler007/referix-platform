@@ -299,6 +299,81 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       });
     }
 
+    // ─── CATALOG MANAGEMENT (Console) ──────────────────────────────
+    if (path === '/api/v2/admin/plans' && method === 'GET') {
+      const result = await env.REFERIX_DB.prepare('SELECT cp.*, cz.name as zone_name, t.name as technology_name FROM catalog_plans cp JOIN coverage_zones cz ON cz.id = cp.zone_id JOIN technologies t ON t.id = cp.technology_id WHERE cp.tenant_id = ? ORDER BY cp.name').bind(tenantId).all();
+      return success((result as any)?.results ?? []);
+    }
+
+    if (path === '/api/v2/admin/plans' && method === 'POST') {
+      const p = body as any;
+      const id = uuid();
+      await env.REFERIX_DB.prepare('INSERT INTO catalog_plans (id, tenant_id, zone_id, technology_id, category_id, name, code, description, benefits, download_speed, upload_speed, is_symmetric, price, installation_days_min, installation_days_max, status, version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)').bind(id, tenantId, p.zone_id || 'z-fresno', p.technology_id || 'tech-gpon', p.category_id || 'cat-hogar', p.name, p.code || p.name.toUpperCase().replace(/\s/g, '_'), p.description || '', JSON.stringify(p.benefits || []), p.download_speed || 50, p.upload_speed || 50, p.is_symmetric !== undefined ? (p.is_symmetric ? 1 : 0) : 1, p.price || 0, p.install_days_min || 2, p.install_days_max || 3, 'DRAFT').run();
+      return success({ id, status: 'DRAFT' });
+    }
+
+    if (path.startsWith('/api/v2/admin/plans/') && method === 'GET') {
+      const id = path.split('/')[5];
+      const plan = await env.REFERIX_DB.prepare('SELECT cp.*, cz.name as zone_name, t.name as technology_name FROM catalog_plans cp JOIN coverage_zones cz ON cz.id = cp.zone_id JOIN technologies t ON t.id = cp.technology_id WHERE cp.id = ? AND cp.tenant_id = ?').bind(id, tenantId).first();
+      if (!plan) return error('NOT_FOUND', 'Plan no encontrado');
+      const services = await env.REFERIX_DB.prepare('SELECT * FROM plan_services WHERE plan_id = ? AND active = 1').bind(id).all();
+      const equipment = await env.REFERIX_DB.prepare('SELECT * FROM plan_equipment WHERE plan_id = ? AND active = 1').bind(id).all();
+      const docs = await env.REFERIX_DB.prepare('SELECT * FROM plan_documents WHERE plan_id = ? AND active = 1').bind(id).all();
+      const commissions = await env.REFERIX_DB.prepare('SELECT * FROM plan_commissions WHERE plan_id = ? AND active = 1').bind(id).all();
+      const costs = await env.REFERIX_DB.prepare('SELECT * FROM plan_costs WHERE plan_id = ?').bind(id).first();
+      return success({ ...plan, services: (services as any)?.results || [], equipment: (equipment as any)?.results || [], documents: (docs as any)?.results || [], commissions: (commissions as any)?.results || [], costs });
+    }
+
+    if (path.startsWith('/api/v2/admin/plans/') && method === 'PUT') {
+      const id = path.split('/')[5];
+      const p = body as any;
+      await env.REFERIX_DB.prepare('UPDATE catalog_plans SET name = ?, price = ?, download_speed = ?, upload_speed = ?, is_symmetric = ?, description = ?, benefits = ?, installation_days_min = ?, installation_days_max = ?, updated_at = datetime("now") WHERE id = ? AND tenant_id = ?').bind(p.name, p.price, p.download_speed, p.upload_speed, p.is_symmetric ? 1 : 0, p.description || '', JSON.stringify(p.benefits || []), p.install_days_min || 2, p.install_days_max || 3, id, tenantId).run();
+      return success({ id, updated: true });
+    }
+
+    if (path.startsWith('/api/v2/admin/plans/') && path.endsWith('/publish')) {
+      const id = path.split('/')[5];
+      await env.REFERIX_DB.prepare('UPDATE catalog_plans SET status = "PUBLISHED", version = version + 1, published_at = datetime("now"), updated_at = datetime("now") WHERE id = ? AND tenant_id = ?').bind(id, tenantId).run();
+      return success({ id, status: 'PUBLISHED' });
+    }
+
+    if (path.startsWith('/api/v2/admin/plans/') && path.endsWith('/duplicate')) {
+      const id = path.split('/')[5];
+      const original = await env.REFERIX_DB.prepare('SELECT * FROM catalog_plans WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any;
+      if (!original) return error('NOT_FOUND', 'Plan no encontrado');
+      const newId = uuid();
+      await env.REFERIX_DB.prepare('INSERT INTO catalog_plans (id, tenant_id, zone_id, technology_id, category_id, name, code, description, benefits, download_speed, upload_speed, is_symmetric, price, installation_days_min, installation_days_max, support_priority, max_incident_resolution_hours, status, version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)').bind(newId, tenantId, original.zone_id, original.technology_id, original.category_id, `${original.name} (copia)`, `${original.code}-COPY`, original.description, original.benefits, original.download_speed, original.upload_speed, original.is_symmetric, original.price, original.installation_days_min, original.installation_days_max, original.support_priority || 'NORMAL', original.max_incident_resolution_hours || 24, 'DRAFT').run();
+      return success({ id: newId, name: `${original.name} (copia)` });
+    }
+
+    // ─── COMMISSION RULES MANAGEMENT ──────────────────────────────────
+    if (path === '/api/v2/admin/commissions' && method === 'GET') {
+      const rules = await env.REFERIX_DB.prepare('SELECT cr.*, cp.name as plan_name FROM commission_rules cr LEFT JOIN catalog_plans cp ON cp.id = cr.plan_id WHERE cr.tenant_id = ? ORDER BY cr.type, cr.value DESC').bind(tenantId).all();
+      return success((rules as any)?.results ?? []);
+    }
+
+    if (path === '/api/v2/admin/commissions' && method === 'POST') {
+      const r = body as any;
+      const id = uuid();
+      await env.REFERIX_DB.prepare('INSERT INTO commission_rules (id, tenant_id, plan_id, offer_id, role, type, value, min_amount, max_amount, holding_days) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id, tenantId, r.plan_id || null, r.offer_id || null, r.role || 'REFERIDOR', r.type || 'PERCENTAGE', r.value || 0, r.min_amount || null, r.max_amount || null, r.holding_days || 15).run();
+      return success({ id });
+    }
+
+    if (path.startsWith('/api/v2/admin/commissions/') && method === 'DELETE') {
+      const id = path.split('/')[5];
+      await env.REFERIX_DB.prepare('UPDATE commission_rules SET active = 0 WHERE id = ? AND tenant_id = ?').bind(id, tenantId).run();
+      return success({ id, deleted: true });
+    }
+
+    // ─── PLAN COMPARISON ──────────────────────────────────────────────
+    if (path === '/api/v2/catalog/compare' && method === 'POST') {
+      const { planIds } = body as any;
+      if (!planIds || !Array.isArray(planIds) || planIds.length < 2) return error('VALIDATION', 'Se requieren al menos 2 plan_ids');
+      const placeholders = planIds.map(() => '?').join(',');
+      const plans = await env.REFERIX_DB.prepare(`SELECT cp.*, cz.name as zone_name, t.name as technology_name FROM catalog_plans cp JOIN coverage_zones cz ON cz.id = cp.zone_id JOIN technologies t ON t.id = cp.technology_id WHERE cp.id IN (${placeholders}) AND cp.tenant_id = ?`).bind(...planIds, tenantId).all();
+      return success((plans as any)?.results ?? []);
+    }
+
     if (path === '/api/v2/engine/simulate' && method === 'POST') {
       const { plan_id, new_price } = body as any;
       if (!plan_id || !new_price) return error('VALIDATION', 'plan_id y new_price requeridos');

@@ -965,6 +965,13 @@ const API = {
     }
   },
 
+  async fetch(method, path, body) {
+    try {
+      const res = await fetch(`${this.base}${path}`, { method, headers: this.headers, body: body ? JSON.stringify(body) : undefined });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return (await res.json()).data;
+    } catch (e) { console.log(`[API] Fallback ${method} ${path}: ${e.message}`); return null; }
+  },
   async login(email, password) {
     return this.post('/api/v1/auth/login', { email, password });
   },
@@ -1021,7 +1028,20 @@ const API = {
   },
   async simulatePrice(planId, newPrice) {
     return this.post('/api/v2/engine/simulate', { plan_id: planId, new_price: newPrice });
-  }
+  },
+
+  // Admin
+  async adminListPlans() { return this.get('/api/v2/admin/plans'); },
+  async adminGetPlan(id) { return this.get(`/api/v2/admin/plans/${id}`); },
+  async adminCreatePlan(data) { return this.post('/api/v2/admin/plans', data); },
+  async adminUpdatePlan(id, data) { return this.fetch('PUT', `/api/v2/admin/plans/${id}`, data); },
+  async adminPublishPlan(id) { return this.post(`/api/v2/admin/plans/${id}/publish`, {}); },
+  async adminDuplicatePlan(id) { return this.post(`/api/v2/admin/plans/${id}/duplicate`, {}); },
+  async adminListCommissions() { return this.get('/api/v2/admin/commissions'); },
+  async adminCreateCommission(data) { return this.post('/api/v2/admin/commissions', data); },
+  async adminDeleteCommission(id) { return this.fetch('DELETE', `/api/v2/admin/commissions/${id}`); },
+  async comparePlans(planIds) { return this.post('/api/v2/catalog/compare', { planIds }); },
+}
 };
 
 document.addEventListener('DOMContentLoaded', () => {
