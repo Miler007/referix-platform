@@ -185,6 +185,32 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return success({ ...wallet, transactions: (transactions as any)?.results ?? [] });
     }
 
+    // ─── COMMERCIAL CATALOG ─────────────────────────────────────────
+    if (path === '/api/v1/catalog/zones' && method === 'GET') {
+      const zones = await env.REFERIX_DB.prepare('SELECT DISTINCT name, technology FROM coverage_zones WHERE tenant_id = ? AND active = 1 ORDER BY name').bind(tenantId).all();
+      return success((zones as any)?.results ?? []);
+    }
+
+    if (path === '/api/v1/catalog/plans' && method === 'GET') {
+      const { zone, technology } = params;
+      let query = 'SELECT * FROM plans WHERE tenant_id = ? AND active = 1';
+      const binds: any[] = [tenantId];
+      if (zone) { query += ' AND id LIKE ?'; binds.push(`plan-${zone.toLowerCase().replace(/\s/g, '-')}%`); }
+      if (technology) { query += ' AND technology = ?'; binds.push(technology); }
+      query += ' ORDER BY price ASC';
+      const plans = await env.REFERIX_DB.prepare(query).bind(...binds).all();
+      return success((plans as any)?.results ?? []);
+    }
+
+    if (path === '/api/v1/catalog/plan-detail' && method === 'GET') {
+      const { planId } = params;
+      if (!planId) return error('VALIDATION', 'planId requerido');
+      const plan = await env.REFERIX_DB.prepare('SELECT * FROM plans WHERE id = ? AND tenant_id = ?').bind(planId, tenantId).first();
+      if (!plan) return error('NOT_FOUND', 'Plan no encontrado');
+      const zones = await env.REFERIX_DB.prepare('SELECT name FROM coverage_zones WHERE tenant_id = ? AND technology = ? AND active = 1').bind(tenantId, (plan as any).technology).all();
+      return success({ ...plan, availableZones: (zones as any)?.results ?? [] });
+    }
+
     // ─── HEALTH ─────────────────────────────────────────────────────
     if (path === '/health') {
       return success({ status: 'healthy', version: '1.0.0', timestamp: new Date().toISOString() });

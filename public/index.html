@@ -98,10 +98,12 @@ const modules = [
   { id: 'identity', label: 'Seguridad', icon: 'shield', color: 'text-danger-500' },
   { id: 'integrations', label: 'Integraciones', icon: 'link', color: 'text-indigo-500' },
   { id: 'digital-twin', label: 'Gemelo Digital', icon: 'copy', color: 'text-purple-500' },
+  { id: 'catalog', label: 'Catálogo', icon: 'package', color: 'text-emerald-500' },
   { id: 'monitoring', label: 'Monitoreo', icon: 'activity', color: 'text-neutral-600' },
 ];
 
 const sidebarIcons = {
+  'package': 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
   'layout-dashboard': 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1',
   'building': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
   'trending-up': 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
@@ -149,6 +151,7 @@ function renderContent(id) {
     case 'identity': main.innerHTML = renderIdentity(); break;
     case 'integrations': main.innerHTML = renderIntegrations(); break;
     case 'digital-twin': main.innerHTML = renderDigitalTwin(); break;
+    case 'catalog': main.innerHTML = renderCatalog(); break;
     case 'monitoring': main.innerHTML = renderMonitoring(); break;
   }
 }
@@ -637,6 +640,120 @@ function renderDigitalTwin() {
 
 // ─── MONITORING ──────────────────────────────────────────────────────
 
+// ─── COMMERCIAL CATALOG ─────────────────────────────────────────────
+
+let selectedZone = null;
+let selectedTech = null;
+let catalogPlans = [];
+let catalogZones = [];
+
+async function loadCatalog() {
+  try {
+    const zones = await API.get('/api/v1/catalog/zones');
+    if (zones) catalogZones = zones;
+  } catch {}
+  renderCatalog();
+}
+
+async function selectZone(zone) {
+  selectedZone = zone;
+  selectedTech = null;
+  const techs = [...new Set(catalogZones.filter(z => z.name === zone).map(z => z.technology))];
+  if (techs.length === 1) { selectedTech = techs[0]; await loadPlans(); }
+  renderCatalog();
+}
+
+async function selectTech(tech) {
+  selectedTech = tech;
+  await loadPlans();
+}
+
+async function loadPlans() {
+  try {
+    const plans = await API.get(`/api/v1/catalog/plans?zone=${selectedZone}&technology=${selectedTech}`);
+    if (plans) catalogPlans = plans;
+  } catch {}
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const zones = [...new Set(catalogZones.map(z => z.name))];
+  const techs = selectedZone ? [...new Set(catalogZones.filter(z => z.name === selectedZone).map(z => z.technology))] : [];
+  const ivaText = 'Hogares: IVA 0% | Locales comerciales: IVA 19%';
+  const docsText = 'Copia de cédula · Fotocopia recibo público';
+  const installTime = '2 a 3 días hábiles';
+
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Catálogo Comercial</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Planes INTERPLAY</h1>
+      <p class="text-sm text-neutral-500 mb-6">Selecciona la zona y tecnología para ver los planes disponibles</p>
+
+      <div class="flex items-center gap-4 mb-6">
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-neutral-600 mb-1.5">Zona</label>
+          <select onchange="selectZone(this.value)" class="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm bg-white">
+            <option value="">Seleccionar zona...</option>
+            ${zones.map(z => `<option value="${z}" ${selectedZone === z ? 'selected' : ''}>${z}</option>`).join('')}
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-neutral-600 mb-1.5">Tecnología</label>
+          <select onchange="selectTech(this.value)" class="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm bg-white" ${techs.length === 0 ? 'disabled' : ''}>
+            <option value="">Seleccionar tecnología...</option>
+            ${techs.map(t => `<option value="${t}" ${selectedTech === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      ${selectedZone ? `
+        <div class="flex items-center gap-4 text-xs text-neutral-500 mb-6 p-3 rounded-lg bg-neutral-50 border">
+          <span>📋 ${docsText}</span>
+          <span>⏱ Instalación: ${installTime}</span>
+          <span>💰 ${ivaText}</span>
+        </div>
+      ` : ''}
+
+      ${catalogPlans.length > 0 ? `
+        <div class="grid grid-cols-3 gap-4">
+          ${catalogPlans.map(p => `
+            <div class="rounded-xl bg-white border-2 hover:border-primary-400 transition-all p-5 card-hover cursor-pointer ${p.speed >= 200 ? 'border-primary-200' : 'border-neutral-200'}">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-medium ${p.technology === 'GPON' ? 'bg-primary-100 text-primary-700' : 'bg-amber-100 text-amber-700'} px-2 py-0.5 rounded-full">${p.technology}</span>
+                <span class="text-[10px] bg-success-100 text-success-700 px-1.5 py-0.5 rounded-full">${selectedZone}</span>
+              </div>
+              <h3 class="text-lg font-bold text-neutral-900 mb-1">${p.name}</h3>
+              <div class="flex items-baseline gap-1 mb-3">
+                <span class="text-3xl font-bold text-primary-600">$${(p.price ?? 0).toLocaleString('es-CO')}</span>
+                <span class="text-sm text-neutral-400">/mes</span>
+              </div>
+              <div class="h-px bg-neutral-100 my-3"></div>
+              <div class="space-y-2 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 text-center">🚀</span>
+                  <span class="text-neutral-700"><strong>${p.speed} Mbps</strong> ${p.speed >= 100 ? 'Simétrico' : ''}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-5 text-center">📺</span>
+                  <span class="text-neutral-500">TV Digital incluida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-5 text-center">📡</span>
+                  <span class="text-neutral-500">ONT + Router incluidos</span>
+                </div>
+                ${p.commission_pct ? `
+                  <div class="flex items-center gap-2 mt-2 p-2 rounded-lg bg-success-50">
+                    <span class="w-5 text-center">💰</span>
+                    <span class="text-sm text-success-700 font-medium">Comisión: ${p.commission_pct}% ($${((p.price * p.commission_pct / 100)).toLocaleString('es-CO')})</span>
+                  </div>` : ''}
+              </div>
+              <button class="mt-4 w-full rounded-lg bg-primary-500 text-white py-2.5 text-sm font-medium hover:bg-primary-600 transition-colors">Seleccionar plan</button>
+            </div>`).join('')}
+        </div>
+      ` : selectedTech ? '<div class="text-center py-12 text-neutral-400">No hay planes disponibles para esta combinación</div>' : selectedZone ? '<div class="text-center py-12 text-neutral-400">Selecciona una tecnología para ver los planes</div>' : '<div class="text-center py-12 text-neutral-400">Selecciona una zona para comenzar</div>'}
+    </div>`;
+}
+
 function renderMonitoring() {
   return `
     <div class="p-6 slide-in">
@@ -804,10 +921,10 @@ const API = {
 
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
-  // Try to load real data on dashboard
   API.getDashboard().then(data => {
-    if (data) console.log('[API] Dashboard data loaded:', data);
+    if (data) console.log('[API] Dashboard loaded:', data);
   });
+  loadCatalog();
 });
 </script>
 </body>
