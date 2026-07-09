@@ -146,10 +146,55 @@ curl -o /dev/null -s -w "%{http_code}" https://referix-platform.pages.dev
 
 ---
 
-## 6. Próximos pasos
+## 6. Release Candidate Score (RCS)
 
-1. Corregir bugs P0 y P1
-2. Ejecutar auditorías de navegación, mobile y accesibilidad
-3. Completar Release Checklist
-4. Obtener Pilot Readiness Certificate
-5. Iniciar Pilot Day 1
+```
+RCS: 77/100 — Beta. Camino a Release Candidate.
+Target: 90/100
+```
+
+| Componente | Peso | Score | Gap |
+|---|---|---|---|
+| Backend | 15% | 88 | -2 |
+| Frontend | 15% | 82 | -8 |
+| UX | 15% | 78 | -12 |
+| Performance | 10% | 75 | -15 |
+| Stability | 15% | 70 | -20 |
+| Security | 10% | 75 | -15 |
+| Integration | 10% | 65 | -25 |
+| Documentation | 5% | 80 | -10 |
+| Business Audit | 5% | 75 | -15 |
+| **Total** | **100%** | **77** | **-13** |
+
+## 7. Bug Status
+
+| Prioridad | Total | Corregidos | Abiertos |
+|---|---|---|---|
+| P0 — Críticos | 3 | 2 | 1 (B-002) |
+| P1 — Altos | 4 | 2 | 2 (B-005, B-006) |
+| P2 — Medios | 3 | 0 | 3 |
+| P3 — Bajos | 3 | 0 | 3 |
+
+## 8. Pilot Readiness Certificate
+
+**Estado:** ⏳ Pendiente (RCS 77/90, 3 bugs P0-P1 abiertos)
+
+**Condiciones para certificar:**
+- [ ] RCS ≥ 90
+- [ ] P0 = 0
+- [ ] P1 = 0
+- [ ] Todas las pantallas revisadas
+- [ ] APIs verificadas
+- [ ] Auditoría de negocio completada
+- [ ] Prueba de humo completa: Login → Venta → Instalación → Pago → Comisión
+
+## 9. Próximos pasos
+
+1. ✅ Release Candidate Report generado
+2. ✅ Bug Register documentado
+3. ✅ RCS calculado: 77/100
+4. ✅ Bugs P0 corregidos: 2/3
+5. 🔲 Corregir bugs restantes P0-P1
+6. 🔲 Ejecutar auditorías mobile y navegación
+7. 🔲 Alcanzar RCS ≥ 90
+8. 🔲 Pilot Day 1
