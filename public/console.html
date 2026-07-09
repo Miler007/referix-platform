@@ -64,14 +64,16 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
   <p class="sub">Cargando indicadores...</p>
 </div>
 <script>
-const API='https://referix-api.reto-diario.workers.dev';
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});if(!r.ok)return null;const j=await r.json();return j.data||null}catch(e){return null}}};
 async function init(){
-  const r=await fetch(API+'/api/v1/dashboard',{headers:{'X-Tenant-Id':'interplay'}}).catch(()=>null);
-  const d=r?.ok?(await r.json()).data:null;
-  document.getElementById('app').innerHTML=renderDashboard(d);
+  const d=await API.get('/api/v1/dashboard');
+  document.getElementById('app').innerHTML=d?renderDashboard(d):renderEmpty();
+}
+function renderEmpty(){
+  return `<p class="sub">INTERPLAY · Resumen ejecutivo · <span style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></p><div class="actions"><a href="/sales.html" class="btn btn-primary">📝 Nueva venta</a><a href="/customer360.html" class="btn btn-outline">👤 Buscar cliente</a></div><div class="card"><p class="text-xs muted">Aún no hay datos disponibles. Cuando comiences a operar, los indicadores aparecerán aquí.</p></div>`;
 }
 function renderDashboard(d){
-  const sales=d?.salesToday||47;
+  const sales=d?.salesToday||0;
   return `
   <p class="sub">INTERPLAY · Resumen ejecutivo · <span style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></p>
   
@@ -81,33 +83,28 @@ function renderDashboard(d){
   </div>
 
   <div class="grid-4">
-    <div class="kpi"><div class="num">${sales}</div><div class="label">Ventas del mes</div><div class="trend up">↑ 15% vs mes anterior</div></div>
-    <div class="kpi"><div class="num green">$${((d?.commissionsHeld?.total||3240000)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="trend up">${d?.commissionsHeld?.count||14} en hold</div></div>
-    <div class="kpi"><div class="num">${d?.installationsPending||12}</div><div class="label">Instalaciones pendientes</div><div class="trend down">${Math.floor(Math.random()*3)} fuera de SLA</div></div>
-    <div class="kpi"><div class="num green">99.8%</div><div class="label">Disponibilidad</div><div class="trend up">Saludable</div></div>
+    <div class="kpi"><div class="num">${sales}</div><div class="label">Ventas del mes</div></div>
+    <div class="kpi"><div class="num green">$${((d?.commissionsHeld?.total||0)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="trend up">${d?.commissionsHeld?.count||0} en hold</div></div>
+    <div class="kpi"><div class="num">${d?.installationsPending||0}</div><div class="label">Instalaciones pendientes</div></div>
+    <div class="kpi"><div class="num">${d?.topReferidors?.length||0}</div><div class="label">Referidores activos</div></div>
   </div>
 
   <div class="grid-2">
     <div class="card">
       <h2>📊 Embudo de ventas</h2>
-      ${['Registrados',100,'Cobertura OK',87,'Instalados',52,'Comisión pagada',39].map((s,i)=>i%2===0?`<div class="funnel-stage"><span class="label">${s}</span><div class="bar"><div class="bar-fill" style="width:${['100%','87%','52%','39%'][i/2]}">${['100','87','52','39'][i/2]}</div></div></div>`:'').filter(Boolean).join('')}
+      ${sales>0?`<div class="funnel-stage"><span class="label">Registrados</span><div class="bar"><div class="bar-fill" style="width:100%">${sales}</div></div></div>
+      <div class="funnel-stage"><span class="label">Activos</span><div class="bar"><div class="bar-fill" style="width:${d?.conversionRate||75}%">${Math.round(sales*(d?.conversionRate||75)/100)}</div></div></div>
+      <div class="funnel-stage"><span class="label">Comisión pagada</span><div class="bar"><div class="bar-fill" style="width:${d?.commissionsHeld?.count?Math.round(d.commissionsHeld.count/sales*100):0}%">${d?.commissionsHeld?.count||0}</div></div></div>`:'<p class="text-xs muted">Registra ventas para ver el embudo.</p>'}
     </div>
     <div class="card">
       <h2>⚠️ Requiere atención</h2>
-      <div class="alert alert-red">🔴 2 clientes sin servicio — Prioridad máxima</div>
-      <div class="alert alert-yellow">🟡 3 instalaciones sin técnico asignado</div>
-      <div class="alert alert-blue">🔵 1 integración desconectada (WhatsApp)</div>
+      ${sales===0?'<div class="alert alert-blue">🔵 Sin alertas. Todos los sistemas operativos.</div>':'<div class="alert alert-blue">🔵 Sin alertas críticas.</div>'}
     </div>
   </div>
 
   <div class="card">
     <h2>📋 Actividad reciente</h2>
-    ${[
-      {event:'Venta registrada',detail:'María García → Pedro Martínez · MegaUltra 100',time:'Hace 10 min',color:'green'},
-      {event:'Instalación completada',detail:'Carlos Ruiz → Laura García · Fresno',time:'Hace 45 min',color:'green'},
-      {event:'Comisión liberada',detail:'Venta #SUB-0124 — $6.000',time:'Hace 2h',color:'green'},
-      {event:'Cliente sin servicio',detail:'Juan Pérez — Reporta corte desde ayer',time:'Hace 3h',color:'red'},
-    ].map(a=>`<div class="activity-item"><div class="dot ${a.color}"></div><div class="text"><div class="title">${a.event}</div><div class="desc">${a.detail}</div></div><div class="time">${a.time}</div></div>`).join('')}
+    ${(d?.recentActivity?.length?d.recentActivity:[{event:'Esperando actividad',detail:'No hay eventos recientes aún. Comienza a operar y aquí aparecerán.',time:''}]).map(a=>`<div class="activity-item"><div class="dot green"></div><div class="text"><div class="title">${a.event||a.events||'Actividad'}</div><div class="desc">${a.detail||a.description||''}</div></div><div class="time">${a.time||''}</div></div>`).join('')}
   </div>`;
 }
 init();
