@@ -120,17 +120,61 @@ class CEREv2 {
     return{planId:plan.id,planName:plan.name,price:plan.price||0,downloadSpeed:speed,uploadSpeed:plan.upload_speed||speed,isSymmetric:!!plan.is_symmetric,technology:plan.technology_name||'',demandScore,compatibility,demandLevel:this.demandLevel(demandScore),supportRisk:risk,safetyMargin:usagePct,estimatedLifeYears:lifeYears,recommended,reasons,warnings};
   }
 
+  calculateRQI(evaluation){
+    let score=evaluation.compatibility;
+    if(evaluation.supportRisk==='MUY_BAJO')score+=10;
+    if(evaluation.supportRisk==='BAJO')score+=5;
+    if(evaluation.supportRisk==='ALTO')score-=15;
+    if(evaluation.supportRisk==='MUY_ALTO')score-=25;
+    if(evaluation.estimatedLifeYears>=4)score+=5;
+    if(evaluation.estimatedLifeYears<=1)score-=10;
+    if(evaluation.safetyMargin<=30)score-=10;
+    return Math.max(0,Math.min(100,score));
+  }
+
+  capacityLabel(speed){
+    if(speed>=200)return{people:'5+ personas',devices:'20+ dispositivos',streaming:'4 TV 4K simultáneo',work:'Teletrabajo + videollamadas + VPN',gaming:'Múltiples consolas',cameras:'8+ cámaras IP'};
+    if(speed>=100)return{people:'3-4 personas',devices:'Hasta 10 dispositivos',streaming:'2 TV 4K sin interrupciones',work:'Videollamadas y teletrabajo estables',gaming:'1 consola con baja latencia',cameras:'Hasta 4 cámaras IP'};
+    if(speed>=50)return{people:'2-3 personas',devices:'Hasta 6 dispositivos',streaming:'1 TV HD + música',work:'Teletrabajo básico',gaming:'Casual',cameras:'1-2 cámaras'};
+    return{people:'1-2 personas',devices:'Hasta 4 dispositivos',streaming:'Navegación y redes sociales',work:'Correo y mensajería',gaming:'No recomendado',cameras:'No recomendado'};
+  }
+
   recommend(profile,plans){
     const evaluated=plans.map(p=>this.evaluatePlan(profile,p));
     evaluated.sort((a,b)=>b.compatibility-a.compatibility);
     const recommended=evaluated.find(p=>p.recommended)||evaluated[0];
-    const alternatives=evaluated.filter(p=>p.planId!==recommended.planId&&!p.warnings.some(w=>w.includes('Riesgo'))).slice(0,2);
+    const economy=evaluated.filter(p=>p.planId!==recommended.planId&&p.price<recommended.price).sort((a,b)=>b.compatibility-a.compatibility)[0];
+    const premium=evaluated.filter(p=>p.planId!==recommended.planId&&p.price>recommended.price).sort((a,b)=>b.compatibility-a.compatibility)[0];
+    const alternatives=[economy,premium].filter(Boolean);
     const riskBlocked=recommended.supportRisk==='ALTO'||recommended.supportRisk==='MUY_ALTO';
-    const oversell=evaluated.find(p=>p.safetyMargin<=30&&p.downloadSpeed>=150);
-    const oversellWarning=oversell&&recommended.downloadSpeed<150?null:oversell?'Un plan superior no aportará mejoras perceptibles para este perfil.':null;
+    const oversell=evaluated.find(p=>p.safetyMargin<=25&&p.downloadSpeed>=150);
+    const oversellWarning=oversell&&recommended.downloadSpeed<150?null:oversell?'Una plan superior no aportará mejoras perceptibles para este perfil.':null;
     const explanation=this.explain(profile,recommended);
-    const blockReason=riskBlocked?`Riesgo de soporte ${recommended.supportRisk}. Se requiere autorización.`:null;
-    return{recommended,alternatives,oversellWarning,explanation,riskBlocked,blockReason};
+    const blockReason=riskBlocked?`Riesgo de soporte ${recommended.supportRisk}. Se requiere autorización para vender este plan.`:null;
+
+    // RQI
+    evaluated.forEach(e=>e.rqi=this.calculateRQI(e));
+    recommended.rqi=this.calculateRQI(recommended);
+
+    // Confidence
+    const confidence=recommended.compatibility>=85?96:recommended.compatibility>=70?85:recommended.compatibility>=50?70:50;
+
+    // Positive/negative explanations
+    let positiveExplain=null;
+    let negativeExplain=null;
+    if(recommended.supportRisk==='MUY_BAJO'||recommended.supportRisk==='BAJO'){
+      positiveExplain='Este plan funcionará excelente hoy y seguirá siendo adecuado si agregas más dispositivos en el futuro.';
+    } else if(recommended.supportRisk==='MEDIO'){
+      positiveExplain='Este plan funcionará bien hoy, pero podría quedarse corto si agregas otra Smart TV o aumentan el teletrabajo.';
+    }
+    if(!recommended.recommended){
+      negativeExplain='Riesgos esperados: buffering en horas pico, videollamadas inestables, posible upgrade en pocos meses.';
+    }
+
+    // Capacity labels
+    const cap=this.capacityLabel(recommended.downloadSpeed);
+
+    return{recommended,economy,premium,alternatives,oversellWarning,explanation,positiveExplain,negativeExplain,riskBlocked,blockReason,confidence,capacity:cap,rqi:recommended.rqi};
   }
 
   explain(profile,plan){
@@ -146,7 +190,8 @@ class CEREv2 {
     if(profile.gaming.platforms.length>0)activities.push('gaming');
     if(profile.education.students>0)activities.push('educación virtual');
     if(activities.length>0)parts.push(activities.join(', '));
-    const lines=[`• ${parts.join('\n  • ')}`];
+    const lines=[];
+    lines.push(`• ${parts.join('\n  • ')}`);
     lines.push(`Compatibilidad: ${plan.compatibility}%`);
     lines.push(`Riesgo de soporte: ${plan.supportRisk}`);
     lines.push(`Margen disponible: ${plan.safetyMargin}%`);
