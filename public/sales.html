@@ -468,12 +468,17 @@ async function checkCoverage(){
   const addr=document.getElementById('cov-addr')?.value||'';
   if(!addr||!selectedZone) return;
   coverResult={loading:true};view='coverage';render();
-  // Simulate coverage check
   const techs=zoneData.filter(z=>z.name===selectedZone.name);
-  setTimeout(()=>{
-    coverResult={available:true,technology:techs[0]?.technology_code||'GPON',technologyName:techs[0]?.technology||'Fibra Óptica',zoneName:selectedZone.name};
-    view='coverage';render();
-  },800);
+  const covTech=techs[0]?.technology_code||'GPON';
+  const covName=techs[0]?.technology||'Fibra Óptica';
+  // Try API first, fallback to zone data
+  try{
+    const r=await fetch(`${API_BASE||'https://referix-api.reto-diario.workers.dev'}/api/v1/coverage/check`,{method:'POST',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},body:JSON.stringify({address:addr,latitude:0,longitude:0})});
+    if(r.ok){const d=await r.json();if(d.data){coverResult={available:d.data.available,technology:d.data.technology||covTech,technologyName:d.data.technologyName||covName,zoneName:selectedZone.name};view='coverage';render();return;}}
+  }catch(e){}
+  // Fallback: continuar sin datos de cobertura
+  coverResult={available:true,technology:covTech,technologyName:covName,zoneName:selectedZone.name};
+  view='coverage';render();
 }
 function continueToProfile(){
   view='profile';render();

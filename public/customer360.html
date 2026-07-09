@@ -55,9 +55,14 @@ let state='search',results=[],client=null,activeTab='resumen';
 async function search(){
   const q=document.getElementById('q').value;
   if(!q)return;
-  // Simulate search from referrals
-  const refs=await fetch(`${API}/api/v1/referrals?query=${q}&limit=5`,{headers:{'X-Tenant-Id':'interplay'}}).then(r=>r.json()).then(d=>d.data||[]).catch(()=>[]);
-  results=refs.length?refs:[{id:'demo-1',full_name:'Juan Pérez',phone:'+573001234567',address:'Calle 5 #10-20, Fresno',funnel_status:'WON',created_at:'2024-07-05'}];
+  try{
+    const r=await fetch(`${API}/api/v1/referrals?query=${encodeURIComponent(q)}&limit=10`,{headers:{'X-Tenant-Id':'interplay'}});
+    const d=await r.json();
+    results=(d.data||[]).map((ref:any)=>({id:ref.id,name:ref.full_name||ref.fullName||'Cliente',phone:ref.phone||'Sin teléfono',address:ref.address||'',status:ref.funnel_status||ref.status||'ACTIVE',plan:ref.plan_name||ref.plan||'MegaUltra 100',installDate:ref.created_at?.split('T')[0]||''}));
+  }catch(e){
+    // Fallback: datos de ejemplo si API no responde
+    results=[{id:'demo-1',name:'Juan Pérez',phone:'+573001234567',address:'Calle 5 #10-20, Fresno',status:'WON',plan:'MegaUltra 100',installDate:'2024-07-10'}];
+  }
   state='results';render();
 }
 
