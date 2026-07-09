@@ -33,16 +33,28 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Tenant-Id' } });
 
   const tenantId = request.headers.get('X-Tenant-Id') ?? 'demo-tenant';
-  const body = method !== 'GET' ? await request.json().catch(() => ({})) : {};
+  let body: any = {};
+  const contentType = request.headers.get('content-type') || '';
+  if (method !== 'GET' && contentType.includes('json')) {
+    const text = await request.text();
+    try { body = JSON.parse(text); } catch { body = {}; }
+  }
   const params = Object.fromEntries(url.searchParams);
 
   try {
+    // ─── DEBUG ──────────────────────────────────────────────────────
+    if (path === '/api/v1/debug') {
+      return success({ method, path, headers: Object.fromEntries(request.headers), body, params });
+    }
+
     // ─── AUTH ────────────────────────────────────────────────────────
     if (path === '/api/v1/auth/login' && method === 'POST') {
-      const { email, password } = body as any;
-      const user = await env.REFERIX_DB.prepare('SELECT id, name, email, role, tenant_id FROM users WHERE email = ?').bind(email).first();
-      if (!user) return error('AUTH_FAILED', 'Credenciales inválidas', 401);
-      return success({ token: `jwt-${user.id}-${Date.now()}`, user: { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenant_id } });
+      if (!body?.email || !body?.password) return error('VALIDATION', 'Email y password requeridos', 400);
+      const result = await env.REFERIX_DB.prepare('SELECT id, name, email, role, tenant_id FROM users WHERE email = ? AND password = ?').bind(body.email, body.password).all();
+      const users = result.results ?? [];
+      if (users.length === 0) return error('AUTH_FAILED', 'Credenciales inválidas', 401);
+      const u = users[0] as any;
+      return success({ token: `jwt-${u.id}-${Date.now()}`, user: { id: u.id, name: u.name, email: u.email, role: u.role, tenantId: u.tenant_id } });
     }
 
     // ─── DASHBOARD ──────────────────────────────────────────────────
@@ -52,7 +64,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
         env.REFERIX_DB.prepare('SELECT COUNT(*) as count FROM installations WHERE tenant_id = ? AND status IN ("PENDING","SCHEDULED")').bind(tenantId).first(),
         env.REFERIX_DB.prepare('SELECT COUNT(*) as count, COALESCE(SUM(final_amount),0) as total FROM commissions WHERE tenant_id = ? AND financial_state = "HELD"').bind(tenantId).first(),
         env.REFERIX_DB.prepare('SELECT r.id, p.full_name as name, COUNT(ref.id) as sales, COALESCE(SUM(c.final_amount),0) as commission FROM referidors r JOIN persons p ON r.person_id = p.id LEFT JOIN referrals ref ON ref.referrer_person_id = r.person_id LEFT JOIN commissions c ON c.referral_id = ref.id WHERE r.tenant_id = ? GROUP BY r.id ORDER BY sales DESC LIMIT 5').bind(tenantId).all(),
-        env.REFERIX_DB.prepare("SELECT event_name as event, description, created_at as time FROM events WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 10").bind(tenantId).all(),
+        env.REFERIX_DB.prepare("SELECT event_name as event, event_name as description, created_at as time FROM events WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 10").bind(tenantId).all(),
       ]);
       return success({
         salesToday: (salesToday as any)?.count ?? 0,
