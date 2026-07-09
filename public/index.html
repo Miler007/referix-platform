@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referix — Plataforma de Gestión Comercial</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: { 50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE', 300: '#93C5FD', 400: '#60A5FA', 500: '#0066FF', 600: '#0052CC', 700: '#003DA6', 800: '#002980', 900: '#001A59' },
+        success: { 50: '#ECFDF5', 100: '#D1FAE5', 200: '#A7F3D0', 300: '#6EE7B7', 400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857', 800: '#065F46', 900: '#064E3B' },
+        warning: { 50: '#FFFBEB', 100: '#FEF3C7', 200: '#FDE68A', 300: '#FCD34D', 400: '#FBBF24', 500: '#F59E0B', 600: '#D97706', 700: '#B45309', 800: '#92400E', 900: '#78350F' },
+        danger: { 50: '#FEF2F2', 100: '#FEE2E2', 200: '#FECACA', 300: '#FCA5A5', 400: '#F87171', 500: '#EF4444', 600: '#DC2626', 700: '#B91C1C', 800: '#991B1B', 900: '#7F1D1D' },
+      }
+    }
+  }
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.sidebar-item { transition: all 0.2s; }
+.sidebar-item:hover { background: #F3F4F6; }
+.sidebar-item.active { background: #EFF6FF; color: #0066FF; font-weight: 600; }
+.card-hover { transition: all 0.2s; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+.wizard-step { transition: all 0.3s; }
+.slide-in { animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.pulse-dot { animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<div id="app" class="flex h-screen bg-neutral-50">
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-white border-r border-neutral-200 flex flex-col flex-shrink-0">
+    <div class="p-5 border-b border-neutral-100">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold text-sm">R</div>
+        <div>
+          <h1 class="text-lg font-bold text-primary-600">Referix</h1>
+          <p class="text-[10px] text-neutral-400 uppercase tracking-widest">Console</p>
+        </div>
+      </div>
+    </div>
+    <div class="px-3 pt-3">
+      <button onclick="toggleSearch()" class="w-full flex items-center gap-2 rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500 hover:bg-neutral-200 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="flex-1 text-left">Buscar en Referix...</span>
+        <span class="text-[10px] text-neutral-400 bg-white px-1.5 py-0.5 rounded font-medium">Ctrl+K</span>
+      </button>
+    </div>
+    <nav class="flex-1 overflow-y-auto p-3 space-y-0.5" id="sidebar-nav"></nav>
+    <div class="p-4 border-t border-neutral-100">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">I</div>
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-neutral-900">INTERPLAY</p>
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-success-500 pulse-dot"></span>
+            <span class="text-[10px] text-neutral-400">Demo · Plan Enterprise</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 overflow-y-auto" id="main-content"></main>
+</div>
+
+<!-- SEARCH MODAL -->
+<div id="search-modal" class="fixed inset-0 bg-black/30 z-50 hidden items-start justify-center pt-24" onclick="closeSearch(event)">
+  <div class="w-full max-w-xl bg-white rounded-xl shadow-2xl border overflow-hidden slide-in" onclick="event.stopPropagation()">
+    <div class="flex items-center gap-3 p-4 border-b">
+      <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input id="global-search" autofocus class="flex-1 outline-none text-base placeholder-neutral-300" placeholder="Buscar usuarios, planes, instalaciones, facturas...">
+      <span class="text-[10px] text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded">ESC</span>
+    </div>
+    <div class="p-2 max-h-80 overflow-y-auto" id="search-results"></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────
+
+const modules = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', color: 'text-primary-500' },
+  { id: 'organization', label: 'Organización', icon: 'building', color: 'text-primary-500' },
+  { id: 'commercial', label: 'Comercial', icon: 'trending-up', color: 'text-success-500' },
+  { id: 'operations', label: 'Operaciones', icon: 'tool', color: 'text-warning-500' },
+  { id: 'financial', label: 'Financiero', icon: 'wallet', color: 'text-emerald-500' },
+  { id: 'identity', label: 'Seguridad', icon: 'shield', color: 'text-danger-500' },
+  { id: 'integrations', label: 'Integraciones', icon: 'link', color: 'text-indigo-500' },
+  { id: 'digital-twin', label: 'Gemelo Digital', icon: 'copy', color: 'text-purple-500' },
+  { id: 'monitoring', label: 'Monitoreo', icon: 'activity', color: 'text-neutral-600' },
+];
+
+const sidebarIcons = {
+  'layout-dashboard': 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1',
+  'building': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+  'trending-up': 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+  'tool': 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  'wallet': 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
+  'shield': 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+  'link': 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
+  'copy': 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
+  'activity': 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+};
+
+// ─── RENDER ──────────────────────────────────────────────────────────
+
+let currentModule = 'dashboard';
+
+function initSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  modules.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-600';
+    btn.dataset.id = m.id;
+    btn.innerHTML = `<svg class="w-5 h-5 ${m.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${sidebarIcons[m.icon]}"/></svg>${m.label}`;
+    btn.onclick = () => navigate(m.id);
+    nav.appendChild(btn);
+  });
+  navigate('dashboard');
+}
+
+function navigate(id) {
+  currentModule = id;
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.sidebar-item[data-id="${id}"]`);
+  if (active) active.classList.add('active');
+  renderContent(id);
+}
+
+function renderContent(id) {
+  const main = document.getElementById('main-content');
+  switch(id) {
+    case 'dashboard': main.innerHTML = renderDashboard(); break;
+    case 'organization': main.innerHTML = renderOrganization(); break;
+    case 'commercial': main.innerHTML = renderCommercial(); break;
+    case 'operations': main.innerHTML = renderOperations(); break;
+    case 'financial': main.innerHTML = renderFinancial(); break;
+    case 'identity': main.innerHTML = renderIdentity(); break;
+    case 'integrations': main.innerHTML = renderIntegrations(); break;
+    case 'digital-twin': main.innerHTML = renderDigitalTwin(); break;
+    case 'monitoring': main.innerHTML = renderMonitoring(); break;
+  }
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────
+
+function renderDashboard() {
+  return `
+    <div class="p-6 slide-in">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-neutral-900">Panel de control</h1>
+        <p class="text-sm text-neutral-500 mt-1">Bienvenido a Referix — Centro de Gobierno de INTERPLAY</p>
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        ${[
+          { label: 'Ventas del mes', value: '47', sub: '34% vs mes anterior', trend: '+15%', positive: true, icon: '📈', color: 'bg-primary-50' },
+          { label: 'Ingreso mensual', value: '$18,453', sub: 'Próximo: $21,200', trend: '+22%', positive: true, icon: '💰', color: 'bg-success-50' },
+          { label: 'Comisión pendiente', value: '$3,240', sub: '14 comisiones en hold', trend: '', positive: true, icon: '⏳', color: 'bg-warning-50' },
+          { label: 'Técnicos activos', value: '8', sub: '3 en ruta ahora', trend: '2 disponibles', positive: true, icon: '🔧', color: 'bg-blue-50' },
+        ].map(k => `
+          <div class="rounded-xl bg-white border p-4 shadow-sm card-hover">
+            <div class="flex items-start justify-between mb-2">
+              <p class="text-xs font-medium uppercase tracking-wider text-neutral-500">${k.label}</p>
+              <span class="text-xl">${k.icon}</span>
+            </div>
+            <p class="text-2xl font-bold text-neutral-900">${k.value}</p>
+            <p class="text-xs text-neutral-400 mt-1">${k.sub}</p>
+            ${k.trend ? `<p class="text-xs font-medium mt-1 ${k.positive ? 'text-success-600' : 'text-danger-600'}">${k.positive ? '↑' : '↓'} ${k.trend}</p>` : ''}
+          </div>`).join('')}
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Embudo de ventas</h2>
+          ${[
+            { stage: 'Registrados', count: 100, pct: 100 },
+            { stage: 'Cobertura OK', count: 87, pct: 87 },
+            { stage: 'Aprobados', count: 65, pct: 65 },
+            { stage: 'Instalados', count: 52, pct: 52 },
+            { stage: 'Activos', count: 47, pct: 47 },
+            { stage: 'Comisión pagada', count: 39, pct: 39 },
+          ].map(f => `
+            <div class="flex items-center gap-3 mb-2">
+              <span class="w-28 text-xs text-neutral-600 text-right">${f.stage}</span>
+              <div class="flex-1 h-6 bg-neutral-100 rounded-full overflow-hidden">
+                <div class="h-full bg-primary-500 rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-medium" style="width:${f.pct}%">${f.pct > 20 ? f.count : ''}</div>
+              </div>
+              <span class="w-8 text-xs text-neutral-500">${f.count}</span>
+            </div>`).join('')}
+        </div>
+
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Top referidores</h2>
+          <table class="w-full text-sm">
+            <thead><tr class="text-xs text-neutral-500 uppercase border-b"><th class="text-left py-2 font-medium">Nombre</th><th class="text-right py-2 font-medium">Ventas</th><th class="text-right py-2 font-medium">Comisión</th><th class="text-right py-2 font-medium">Conv.</th></tr></thead>
+            <tbody>
+              ${[
+                { name: 'María García', sales: 12, commission: '$450', conv: '75%' },
+                { name: 'José Hernández', sales: 8, commission: '$312', conv: '62%' },
+                { name: 'Ana López', sales: 6, commission: '$225', conv: '50%' },
+              ].map(r => `<tr class="border-b border-neutral-50"><td class="py-2.5 font-medium">${r.name}</td><td class="py-2.5 text-right">${r.sales}</td><td class="py-2.5 text-right text-success-600 font-medium">${r.commission}</td><td class="py-2.5 text-right">${r.conv}</td></tr>`).join('')}
+            </tbody>
+          </table>
+          <div class="mt-4 rounded-lg bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800">
+            💡 ${Math.random() > 0.5 ? 'María García está a 3 ventas de superar su récord mensual' : 'La campaña "Fibra Enero" tiene 34% más conversión que el promedio'}
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-white border p-5">
+        <h2 class="font-semibold text-neutral-900 mb-4">Actividad reciente</h2>
+        <div class="space-y-3">
+          ${[
+            { event: 'Venta registrada', detail: 'María García → Pedro Martínez', time: 'Hace 10 min', type: 'success' },
+            { event: 'Instalación completada', detail: 'Carlos Ruiz → Laura García', time: 'Hace 45 min', type: 'success' },
+            { event: 'Comisión liberada', detail: 'Venta SUB-0124 — $12.50', time: 'Hace 2h', type: 'success' },
+            { event: 'Venta perdida', detail: 'Cliente rechazó precio — Zona Norte', time: 'Hace 3h', type: 'danger' },
+          ].map(a => `
+            <div class="flex items-center gap-3 py-2 border-b border-neutral-50 last:border-0">
+              <span class="w-2 h-2 rounded-full bg-${a.type === 'success' ? 'success' : a.type === 'danger' ? 'danger' : 'warning'}-500"></span>
+              <div class="flex-1"><p class="text-sm font-medium text-neutral-900">${a.event}</p><p class="text-xs text-neutral-500">${a.detail}</p></div>
+              <span class="text-xs text-neutral-400">${a.time}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── ORGANIZATION ─────────────────────────────────────────────────────
+
+function renderOrganization() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Organización</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Organización</h1>
+      <p class="text-sm text-neutral-500 mb-6">Administra la configuración general de INTERPLAY</p>
+
+      <div class="rounded-xl bg-white border p-4 mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-neutral-700">Configuración completa</span>
+          <span class="text-sm font-semibold text-primary-600">65%</span>
+        </div>
+        <div class="h-2 bg-neutral-100 rounded-full overflow-hidden">
+          <div class="h-full bg-primary-500 rounded-full" style="width:65%"></div>
+        </div>
+        <p class="text-xs text-neutral-400 mt-2">Faltan: Branding (logo), Zonas de cobertura (3 polígonos), Festivos (5 días)</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Información de la empresa</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Nombre</label>
+              <input value="INTERPLAY Telecomunicaciones" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-neutral-600 mb-1">Moneda</label>
+                <select class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm bg-white"><option>MXN</option><option>USD</option><option>COP</option></select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-neutral-600 mb-1">Zona horaria</label>
+                <select class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm bg-white"><option>America/Mexico_City</option><option>America/Bogota</option><option>America/Santiago</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t flex justify-end gap-3">
+            <button class="rounded-lg border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-50">Cancelar</button>
+            <button class="rounded-lg bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Guardar cambios</button>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Sucursales</h2>
+          <div class="space-y-3">
+            ${[
+              { name: 'Matriz', city: 'Ciudad de México', techs: 5, active: true },
+              { name: 'Norte', city: 'Monterrey', techs: 3, active: true },
+              { name: 'Sur', city: 'Guadalajara', techs: 2, active: false },
+            ].map(b => `
+              <div class="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <p class="font-medium text-sm text-neutral-900">${b.name}</p>
+                    <span class="text-[10px] ${b.active ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-500'} px-1.5 py-0.5 rounded-full">${b.active ? 'Activa' : 'Inactiva'}</span>
+                  </div>
+                  <p class="text-xs text-neutral-500">${b.city} · ${b.techs} técnicos</p>
+                </div>
+                <button class="text-xs text-primary-600 font-medium hover:text-primary-700">Editar</button>
+              </div>`).join('')}
+          </div>
+          <button class="mt-4 w-full rounded-lg border-2 border-dashed border-neutral-300 py-3 text-sm text-neutral-500 hover:border-primary-300 hover:text-primary-600 transition-colors">+ Agregar sucursal</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── COMMERCIAL ──────────────────────────────────────────────────────
+
+function renderCommercial() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Comercial</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Planes y comisiones</h1>
+      <p class="text-sm text-neutral-500 mb-6">Administra los planes de internet y políticas de comisión</p>
+
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        ${[
+          { name: 'Fibra 100MB', price: 299, speed: 100, commission: 15, active: true, color: 'bg-blue-500' },
+          { name: 'Fibra 300MB', price: 449, speed: 300, commission: 15, active: true, color: 'bg-primary-500' },
+          { name: 'Fibra 1GB', price: 699, speed: 1000, commission: 12, active: true, color: 'bg-purple-500' },
+        ].map(p => `
+          <div class="rounded-xl bg-white border p-5 card-hover">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full ${p.color}"></div>
+                <h3 class="font-semibold text-neutral-900">${p.name}</h3>
+              </div>
+              <span class="text-[10px] bg-success-100 text-success-700 px-1.5 py-0.5 rounded-full">Activo</span>
+            </div>
+            <p class="text-3xl font-bold text-neutral-900">$${p.price}<span class="text-sm font-normal text-neutral-400">/mes</span></p>
+            <div class="mt-3 space-y-2 text-sm text-neutral-600">
+              <div class="flex justify-between"><span>Velocidad</span><span class="font-medium">${p.speed} Mbps</span></div>
+              <div class="flex justify-between"><span>Tecnología</span><span>FTTH</span></div>
+              <div class="flex justify-between"><span>Comisión</span><span class="text-success-600 font-medium">${p.commission}% ($${(p.price * p.commission / 100).toFixed(2)})</span></div>
+            </div>
+            <button class="mt-4 w-full rounded-lg border border-neutral-300 py-2 text-sm hover:bg-neutral-50 transition-colors">Editar plan</button>
+          </div>`).join('')}
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Políticas de comisión</h2>
+          <div class="space-y-2">
+            ${[
+              { name: '50% primera factura', type: 'Porcentaje', value: '50%', priority: 1, holding: '15 días' },
+              { name: 'Bono Fibra 1GB', type: 'Porcentaje', value: '60%', priority: 2, holding: '15 días' },
+              { name: 'Comisión fija rural', type: 'Fijo', value: '$100', priority: 3, holding: '20 días' },
+            ].map(pol => `
+              <div class="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p class="text-sm font-medium text-neutral-900">${pol.name}</p>
+                  <p class="text-xs text-neutral-500">${pol.type} · ${pol.value} · Hold ${pol.holding}</p>
+                </div>
+                <span class="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded-full">P${pol.priority}</span>
+              </div>`).join('')}
+          </div>
+          <button class="mt-4 w-full rounded-lg border-2 border-dashed border-neutral-300 py-2 text-sm text-neutral-500 hover:border-primary-300">+ Agregar política</button>
+        </div>
+
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Crear nuevo plan</h2>
+          <div class="space-y-3">
+            <input placeholder="Nombre del plan" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" value="Fibra 500MB">
+            <div class="grid grid-cols-2 gap-3">
+              <input type="number" placeholder="Velocidad Mbps" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm" value="500">
+              <input type="number" placeholder="Precio $" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm" value="549">
+            </div>
+            <select class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm bg-white"><option>FTTH</option><option>HFC</option><option>FWA</option></select>
+            <div class="rounded-lg bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800">
+              💡 Comisión estimada: <strong>$${(549 * 15 / 100).toFixed(2)}</strong> por venta (15%)
+            </div>
+            <button class="w-full rounded-lg bg-success-500 text-white py-2.5 text-sm font-medium hover:bg-success-600">Crear plan</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── OPERATIONS ──────────────────────────────────────────────────────
+
+function renderOperations() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Operaciones</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Instalaciones</h1>
+      <p class="text-sm text-neutral-500 mb-6">Gestiona las instalaciones programadas y en curso</p>
+
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        ${[
+          { label: 'Pendientes', value: '12', icon: '📋', color: 'text-warning-600' },
+          { label: 'Hoy', value: '5', icon: '📅', color: 'text-primary-600' },
+          { label: 'A tiempo', value: '4', icon: '✅', color: 'text-success-600' },
+          { label: 'SLA en riesgo', value: '1', icon: '⚠️', color: 'text-danger-600' },
+        ].map(k => `<div class="rounded-xl bg-white border p-4 text-center card-hover"><p class="text-2xl font-bold ${k.color}">${k.value}</p><p class="text-xs text-neutral-500 mt-1">${k.label}</p></div>`).join('')}
+      </div>
+
+      <div class="rounded-xl bg-white border divide-y">
+        <div class="p-4 bg-neutral-50 rounded-t-xl flex items-center justify-between">
+          <h2 class="font-semibold text-neutral-900">Instalaciones del día</h2>
+          <span class="text-xs text-neutral-400">${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        </div>
+        ${[
+          { client: 'Pedro Martínez', address: 'Av. Reforma 123, Centro', time: '09:00 - 11:00', tech: 'Carlos Ruiz', status: 'En progreso', statusColor: 'text-primary-600 bg-primary-50' },
+          { client: 'Laura García', address: 'Calle 5 de Mayo 45, Norte', time: '11:30 - 13:30', tech: 'Ana López', status: 'Pendiente', statusColor: 'text-warning-600 bg-warning-50' },
+          { client: 'Carlos Ruiz', address: 'Insurgentes 789, Sur', time: '14:00 - 16:00', tech: 'Carlos Ruiz', status: 'Asignada', statusColor: 'text-blue-600 bg-blue-50' },
+        ].map(j => `
+          <div class="p-4 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-lg">🔧</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-sm text-neutral-900">${j.client}</p>
+                <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full ${j.statusColor}">${j.status}</span>
+              </div>
+              <p class="text-xs text-neutral-500">${j.address}</p>
+              <div class="flex items-center gap-3 mt-1 text-[10px] text-neutral-400">
+                <span>🕐 ${j.time}</span>
+                <span>👤 ${j.tech}</span>
+              </div>
+            </div>
+            <button class="rounded-lg bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Ver detalle</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── FINANCIAL ────────────────────────────────────────────────────────
+
+function renderFinancial() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Financiero</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Wallet y comisiones</h1>
+      <p class="text-sm text-neutral-500 mb-6">Gestiona la wallet, facturación y pagos a referidores</p>
+
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="rounded-xl bg-white border p-5 col-span-1">
+          <h2 class="font-semibold text-neutral-900 mb-4">Resumen wallet</h2>
+          <div class="space-y-3">
+            <div class="flex justify-between items-end">
+              <span class="text-sm text-neutral-500">Balance disponible</span>
+              <span class="text-2xl font-bold text-success-600">$2,450.00</span>
+            </div>
+            <div class="flex justify-between text-sm"><span class="text-neutral-500">Comisiones retenidas</span><span class="text-warning-600 font-medium">$890.00</span></div>
+            <div class="flex justify-between text-sm"><span class="text-neutral-500">Total ganado</span><span class="font-medium">$12,340.00</span></div>
+            <div class="flex justify-between text-sm"><span class="text-neutral-500">Total retirado</span><span class="font-medium">$9,890.00</span></div>
+            <button class="w-full mt-4 rounded-lg bg-primary-500 text-white py-2.5 text-sm font-medium hover:bg-primary-600">Solicitar pago</button>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-white border p-5 col-span-2">
+          <h2 class="font-semibold text-neutral-900 mb-4">Movimientos recientes</h2>
+          <div class="space-y-2">
+            ${[
+              { type: 'Comisión', amount: '+$12.50', desc: 'Venta Pedro Martínez', date: 'Hoy', color: 'text-success-600' },
+              { type: 'Pago', amount: '-$150.00', desc: 'Retiro a María García', date: 'Ayer', color: 'text-danger-600' },
+              { type: 'Comisión', amount: '+$12.50', desc: 'Venta Laura García', date: 'Ayer', color: 'text-success-600' },
+              { type: 'Bono', amount: '+$25.00', desc: 'Bono meta mensual', date: 'Hace 3d', color: 'text-success-600' },
+              { type: 'Ajuste', amount: '-$5.00', desc: 'Reversión comisión', date: 'Hace 5d', color: 'text-danger-600' },
+            ].map(t => `
+              <div class="flex items-center justify-between py-2 border-b border-neutral-50 last:border-0">
+                <div class="flex items-center gap-3">
+                  <span class="w-2 h-2 rounded-full ${t.amount.startsWith('+') ? 'bg-success-500' : 'bg-danger-500'}"></span>
+                  <div><p class="text-sm font-medium text-neutral-900">${t.type}</p><p class="text-xs text-neutral-500">${t.desc}</p></div>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold ${t.color}">${t.amount}</p>
+                  <p class="text-[10px] text-neutral-400">${t.date}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── IDENTITY ────────────────────────────────────────────────────────
+
+function renderIdentity() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Seguridad</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Usuarios y permisos</h1>
+      <p class="text-sm text-neutral-500 mb-6">Administra quién accede a Referix y qué puede hacer</p>
+
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        ${[
+          { label: 'Usuarios activos', value: '12', icon: '👤' },
+          { label: 'Roles', value: '4', icon: '🔖' },
+          { label: 'Sesiones activas', value: '8', icon: '🔑' },
+          { label: 'Auditoría', value: '1,247', icon: '📋' },
+        ].map(k => `<div class="rounded-xl bg-white border p-4 card-hover"><div class="flex justify-between mb-1"><p class="text-xs text-neutral-500">${k.label}</p><span>${k.icon}</span></div><p class="text-2xl font-bold text-neutral-900">${k.value}</p></div>`).join('')}
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="rounded-xl bg-white border p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="font-semibold text-neutral-900">Usuarios</h2>
+            <button class="rounded-lg bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">+ Invitar</button>
+          </div>
+          ${[
+            { name: 'Admin INTERPLAY', email: 'admin@interplay.com', role: 'Admin', online: true },
+            { name: 'María García', email: 'maria@referix.com', role: 'Referidor', online: true },
+            { name: 'Carlos Ruiz', email: 'carlos@referix.com', role: 'Técnico', online: false },
+            { name: 'Ana López', email: 'ana@referix.com', role: 'Supervisor', online: true },
+          ].map(u => `
+            <div class="flex items-center gap-3 py-2.5 border-b border-neutral-50 last:border-0">
+              <div class="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-bold text-neutral-600">${u.name.charAt(0)}</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><p class="text-sm font-medium text-neutral-900">${u.name}</p><span class="w-1.5 h-1.5 rounded-full ${u.online ? 'bg-success-500' : 'bg-neutral-300'}"></span></div>
+                <p class="text-xs text-neutral-500">${u.email} · ${u.role}</p>
+              </div>
+              <button class="text-xs text-primary-600 hover:text-primary-700">Editar</button>
+            </div>`).join('')}
+        </div>
+
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Matriz de permisos</h2>
+          <table class="w-full text-sm">
+            <thead><tr class="text-xs text-neutral-500 uppercase border-b"><th class="text-left py-2 font-medium">Permiso</th><th class="text-center py-2 font-medium">Admin</th><th class="text-center py-2 font-medium">Sup.</th><th class="text-center py-2 font-medium">Tec.</th><th class="text-center py-2 font-medium">Ref.</th></tr></thead>
+            <tbody>
+              ${[
+                ['Crear ventas', '✅','✅','❌','✅'],
+                ['Aprobar ventas', '✅','✅','❌','❌'],
+                ['Iniciar instalación', '✅','❌','✅','❌'],
+                ['Liberar comisiones', '✅','❌','❌','❌'],
+                ['Configurar empresa', '✅','❌','❌','❌'],
+              ].map(row => `<tr class="border-b border-neutral-50"><td class="py-2 text-neutral-900">${row[0]}</td><td class="text-center py-2">${row[1]}</td><td class="text-center py-2">${row[2]}</td><td class="text-center py-2">${row[3]}</td><td class="text-center py-2">${row[4]}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── INTEGRATIONS ────────────────────────────────────────────────────
+
+function renderIntegrations() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Integraciones</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Centro de integraciones</h1>
+      <p class="text-sm text-neutral-500 mb-6">Conecta Referix con tu infraestructura existente</p>
+
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        ${[
+          { name: 'Google Maps', status: 'Conectado', statusColor: 'bg-success-500', lastSync: 'Ahora', latency: '45ms' },
+          { name: 'SMTP (Correo)', status: 'Conectado', statusColor: 'bg-success-500', lastSync: 'Ahora', latency: '120ms' },
+          { name: 'MikroTik', status: 'No configurado', statusColor: 'bg-neutral-300', lastSync: '—', latency: '—' },
+          { name: 'Huawei OLT', status: 'No configurado', statusColor: 'bg-neutral-300', lastSync: '—', latency: '—' },
+          { name: 'Stripe', status: 'Conectado', statusColor: 'bg-success-500', lastSync: 'Hace 2min', latency: '230ms' },
+          { name: 'WhatsApp', status: 'Error', statusColor: 'bg-danger-500', lastSync: 'Hace 1h', latency: 'Timeout' },
+        ].map(integ => `
+          <div class="rounded-xl bg-white border p-4 card-hover">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-neutral-900">${integ.name}</h3>
+              <span class="flex items-center gap-1.5 text-[10px] text-neutral-500"><span class="w-2 h-2 rounded-full ${integ.statusColor}"></span>${integ.status}</span>
+            </div>
+            <div class="text-xs text-neutral-400 flex justify-between">
+              <span>Última sincronización: ${integ.lastSync}</span>
+              <span>Latencia: ${integ.latency}</span>
+            </div>
+            ${integ.status !== 'No configurado' ? `<button class="mt-3 w-full rounded-lg border border-neutral-300 py-1.5 text-xs hover:bg-neutral-50">Probar conexión</button>` : `<button class="mt-3 w-full rounded-lg bg-primary-500 text-white py-1.5 text-xs font-medium hover:bg-primary-600">Configurar</button>`}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ─── DIGITAL TWIN ────────────────────────────────────────────────────
+
+function renderDigitalTwin() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Gemelo Digital</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Business Digital Twin</h1>
+      <p class="text-sm text-neutral-500 mb-6">Representación digital de la operación de INTERPLAY</p>
+
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="rounded-xl bg-white border p-5 col-span-2">
+          <h2 class="font-semibold text-neutral-900 mb-4">Journey — Venta #SUB-2024-0124</h2>
+          <div class="space-y-0">
+            ${[
+              { time: '09:14', action: 'Prospecto registrado', actor: 'María García', icon: '📋', active: true },
+              { time: '09:18', action: 'Cobertura validada', actor: 'Sistema', icon: '🗺️', active: true },
+              { time: '09:22', action: 'Supervisor aprobó', actor: 'Ana López', icon: '✅', active: true },
+              { time: '09:41', action: 'Instalación programada', actor: 'Coordinador', icon: '📅', active: true },
+              { time: '11:03', action: 'Técnico inició', actor: 'Carlos Ruiz', icon: '🔧', active: true },
+              { time: '11:48', action: 'Instalación completada', actor: 'Carlos Ruiz', icon: '✅', active: true },
+              { time: '12:01', action: 'Servicio activado', actor: 'Sistema', icon: '🚀', active: true },
+              { time: '+30d', action: 'Factura pagada — Comisión liberada', actor: 'Sistema', icon: '💰', active: false },
+            ].map((s, i) => `
+              <div class="flex items-start gap-3 ${i < 7 ? 'pb-4' : ''} ${s.active ? '' : 'opacity-40'}">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full ${s.active ? 'bg-primary-100 text-primary-600' : 'bg-neutral-100 text-neutral-400'} flex items-center justify-center text-sm">${s.icon}</div>
+                  ${i < 7 ? '<div class="w-0.5 h-8 bg-neutral-200"></div>' : ''}
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-neutral-900">${s.action}</p>
+                  <p class="text-xs text-neutral-500">${s.time} · ${s.actor}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-xl bg-white border p-5">
+            <h2 class="font-semibold text-neutral-900 mb-3">BDTI Score</h2>
+            <p class="text-3xl font-bold text-primary-600">63</p>
+            <p class="text-xs text-neutral-500 mt-1">/100 — Modelo útil</p>
+            <div class="mt-3 h-2 bg-neutral-100 rounded-full overflow-hidden">
+              <div class="h-full bg-primary-500 rounded-full" style="width:63%"></div>
+            </div>
+            <button class="mt-4 w-full rounded-lg border border-neutral-300 py-2 text-xs hover:bg-neutral-50">Ver detalle</button>
+          </div>
+          <div class="rounded-xl bg-white border p-5">
+            <h2 class="font-semibold text-neutral-900 mb-3">Inteligencia operacional</h2>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-danger-500"></span><span class="text-neutral-700">Caja CT-50 saturada</span></div>
+              <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-warning-500"></span><span class="text-neutral-700">3 instalaciones sin técnico</span></div>
+              <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-success-500"></span><span class="text-neutral-700">María García — mejor referidor</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-white border p-5">
+        <h2 class="font-semibold text-neutral-900 mb-4">Reproducir proceso (Business Replay)</h2>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-neutral-50">
+          <button class="rounded-lg bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600 flex items-center gap-2">▶ Reproducir</button>
+          <span class="text-sm text-neutral-500">Venta #SUB-2024-0124 — 8 etapas · Duración total: 12d 3h</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── MONITORING ──────────────────────────────────────────────────────
+
+function renderMonitoring() {
+  return `
+    <div class="p-6 slide-in">
+      <p class="text-[10px] uppercase tracking-wider text-neutral-400 mb-1">Centro de Gobierno / Monitoreo</p>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-2">Estado de la plataforma</h1>
+      <p class="text-sm text-neutral-500 mb-6">Métricas en tiempo real de la operación de Referix</p>
+
+      <div class="rounded-xl bg-success-50 border border-success-200 p-4 mb-6 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-success-500 pulse-dot"></span>
+        <span class="text-sm font-medium text-success-800">Todos los sistemas operativos — 99.8% disponibilidad última semana</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        ${[
+          { label: 'CPU', value: '34%', sub: '8 cores', color: 'text-success-600' },
+          { label: 'Memoria', value: '2.1 GB', sub: '4 GB disponibles', color: 'text-success-600' },
+          { label: 'Latencia P95', value: '187ms', sub: 'Objetivo < 300ms', color: 'text-success-600' },
+          { label: 'Throughput', value: '47 rpm', sub: 'Pico: 124 rpm', color: 'text-primary-600' },
+        ].map(m => `<div class="rounded-xl bg-white border p-4"><p class="text-xs text-neutral-500">${m.label}</p><p class="text-xl font-bold ${m.color}">${m.value}</p><p class="text-[10px] text-neutral-400 mt-0.5">${m.sub}</p></div>`).join('')}
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">Alertas activas</h2>
+          <div class="space-y-2">
+            ${[
+              { severity: 'warning', msg: 'Caja CT-50 saturada (100%) — Zona Norte', time: 'Hace 2h' },
+              { severity: 'info', msg: '3 instalaciones pendientes de asignar desde ayer', time: 'Hace 5h' },
+              { severity: 'info', msg: 'Integración WhatsApp desconectada — reconectar', time: 'Hace 1h' },
+            ].map(a => `
+              <div class="flex items-center gap-3 p-2 rounded-lg ${a.severity === 'warning' ? 'bg-warning-50' : 'bg-blue-50'}">
+                <span class="w-2 h-2 rounded-full ${a.severity === 'warning' ? 'bg-warning-500' : 'bg-blue-500'}"></span>
+                <div class="flex-1"><p class="text-sm text-neutral-900">${a.msg}</p><p class="text-[10px] text-neutral-400">${a.time}</p></div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="rounded-xl bg-white border p-5">
+          <h2 class="font-semibold text-neutral-900 mb-4">SLOs</h2>
+          <div class="space-y-3">
+            ${[
+              { name: 'API Availability', current: '99.9%', slo: '99.9%', met: true },
+              { name: 'API Latency (P95)', current: '187ms', slo: '< 300ms', met: true },
+              { name: 'Dashboard Load', current: '1.2s', slo: '< 2s', met: true },
+              { name: 'Sale Registration', current: '3.8s', slo: '< 5s', met: true },
+            ].map(slo => `
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-neutral-900">${slo.name}</p>
+                  <p class="text-xs text-neutral-500">SLO: ${slo.slo}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium ${slo.met ? 'text-success-600' : 'text-danger-600'}">${slo.current}</span>
+                  <span>${slo.met ? '✅' : '❌'}</span>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── SEARCH ──────────────────────────────────────────────────────────
+
+function toggleSearch() {
+  const modal = document.getElementById('search-modal');
+  modal.classList.toggle('hidden');
+  modal.classList.toggle('flex');
+  if (!modal.classList.contains('hidden')) {
+    setTimeout(() => document.getElementById('global-search').focus(), 100);
+    renderSearchResults('');
+  }
+}
+
+function closeSearch(e) {
+  if (e.target === e.currentTarget) {
+    document.getElementById('search-modal').classList.add('hidden');
+    document.getElementById('search-modal').classList.remove('flex');
+  }
+}
+
+function renderSearchResults(query) {
+  const results = document.getElementById('search-results');
+  const items = [
+    { icon: '👤', text: 'María García — Referidor', type: 'Usuario' },
+    { icon: '📡', text: 'Fibra 300MB — Plan', type: 'Plan' },
+    { icon: '🔧', text: 'INS-0042 — Instalación', type: 'Instalación' },
+    { icon: '💰', text: 'COM-0012 — Comisión \$12.50', type: 'Comisión' },
+    { icon: '🏢', text: 'INTERPLAY Telecomunicaciones — Empresa', type: 'Organización' },
+    { icon: '🔗', text: 'Google Maps — Integración', type: 'Integración' },
+  ];
+  results.innerHTML = items.filter(i => !query || i.text.toLowerCase().includes(query.toLowerCase())).map(i => `
+    <button class="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-neutral-50 text-left" onclick="document.getElementById('search-modal').classList.add('hidden');document.getElementById('search-modal').classList.remove('flex')">
+      <span class="text-lg">${i.icon}</span>
+      <div><p class="text-sm font-medium text-neutral-900">${i.text}</p><p class="text-[10px] text-neutral-400">${i.type}</p></div>
+    </button>`).join('') || '<p class="text-sm text-neutral-400 p-3 text-center">Sin resultados</p>';
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleSearch(); }
+  if (e.key === 'Escape') { document.getElementById('search-modal').classList.add('hidden'); document.getElementById('search-modal').classList.remove('flex'); }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSidebar();
+});
+</script>
+</body>
+</html>

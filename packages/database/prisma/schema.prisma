@@ -1,0 +1,294 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public"]
+}
+
+/// Multi-tenant schema helper — run migrations per tenant schema
+
+/// Public schema — cross-tenant data
+model Tenant {
+  id        String   @id @default(uuid()) @map("id")
+  name      String   @map("name")
+  subdomain String   @unique @map("subdomain")
+  schema    String   @unique @map("schema")
+  email     String   @map("email")
+  status    String   @default("ACTIVE") @map("status")
+  config    Json?    @map("config")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  users      User[]
+  roles      Role[]
+  capabilities TenantCapability[]
+
+  @@map("tenants")
+  @@schema("public")
+}
+
+model User {
+  id             String   @id @default(uuid()) @map("id")
+  tenantId       String   @map("tenant_id")
+  email          String   @map("email")
+  passwordHash   String   @map("password_hash")
+  name           String   @map("name")
+  roleId         String   @map("role_id")
+  status         String   @default("ACTIVE") @map("status")
+  lastLoginAt    DateTime? @map("last_login_at")
+  metadata       Json?    @map("metadata")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@map("users")
+  @@schema("public")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @map("id")
+  tenantId    String   @map("tenant_id")
+  name        String   @map("name")
+  description String?  @map("description")
+  permissions Json     @map("permissions")
+  level       Int      @default(0) @map("level")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  users  User[]
+
+  @@map("roles")
+  @@schema("public")
+}
+
+model TenantCapability {
+  id        String   @id @default(uuid()) @map("id")
+  tenantId  String   @map("tenant_id")
+  feature   String   @map("feature")
+  enabled   Boolean  @default(false) @map("enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, feature])
+  @@map("tenant_capabilities")
+  @@schema("public")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid()) @map("id")
+  tenantId      String   @map("tenant_id")
+  userId        String   @map("user_id")
+  action        String   @map("action")
+  entity        String   @map("entity")
+  entityId      String   @map("entity_id")
+  before        Json?    @map("before_value")
+  after         Json?    @map("after_value")
+  metadata      Json?    @map("metadata")
+  correlationId String   @map("correlation_id")
+  ipAddress     String?  @map("ip_address")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, action])
+  @@index([tenantId, entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+  @@schema("public")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  tenantId  String   @map("tenant_id")
+  value     String   @unique @map("value")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false) @map("revoked")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, tenantId])
+  @@map("refresh_tokens")
+  @@schema("public")
+}
+
+// ── Subscription Aggregate ──────────────────────────────────────
+
+model Subscription {
+  id             String    @id @default(uuid()) @map("id")
+  tenantId       String    @map("tenant_id")
+  personId       String    @map("person_id")
+  planId         String    @map("plan_id")
+  serviceId      String    @map("service_id")
+  locationId     String    @map("location_id")
+  contractId     String?   @map("contract_id")
+  status         String    @map("status")
+  publicId       String    @unique @map("public_id")
+  health         String    @default("HEALTHY") @map("health")
+  currentVersion Int       @default(0) @map("current_version")
+  sla            Json?     @map("sla")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  activatedAt    DateTime? @map("activated_at")
+  cancelledAt    DateTime? @map("cancelled_at")
+  archivedAt     DateTime? @map("archived_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  capabilities SubscriptionCapability[]
+  equipment    SubscriptionEquipment[]
+  milestones   SubscriptionMilestone[]
+  processSteps SubscriptionProcessStep[]
+  decisions    SubscriptionDecision[]
+  versions     SubscriptionVersion[]
+
+  @@index([tenantId, personId])
+  @@index([tenantId, status])
+  @@index([tenantId, planId])
+  @@map("subscriptions")
+  @@schema("public")
+}
+
+model SubscriptionVersion {
+  id             String   @id @default(uuid()) @map("id")
+  subscriptionId String   @map("subscription_id")
+  version        Int      @map("version")
+  snapshot       Json     @map("snapshot")
+  validFrom      DateTime @map("valid_from")
+  validTo        DateTime? @map("valid_to")
+  eventName      String   @map("event_name")
+  changedBy      String   @map("changed_by")
+  correlationId  String?  @map("correlation_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@unique([subscriptionId, version])
+  @@index([subscriptionId, validFrom, validTo])
+  @@map("subscription_versions")
+  @@schema("public")
+}
+
+model SubscriptionCapability {
+  id             String    @id @default(uuid()) @map("id")
+  subscriptionId String    @map("subscription_id")
+  type           String    @map("type")
+  name           String    @map("name")
+  status         String    @map("status")
+  priceAmount    Float     @map("price_amount")
+  priceCurrency  String    @default("USD") @map("price_currency")
+  startDate      DateTime  @map("start_date")
+  endDate        DateTime? @map("end_date")
+  metadata       Json?     @map("metadata")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, type])
+  @@map("subscription_capabilities")
+  @@schema("public")
+}
+
+model SubscriptionEquipment {
+  id             String    @id @default(uuid()) @map("id")
+  subscriptionId String    @map("subscription_id")
+  equipmentType  String    @map("equipment_type")
+  serialNumber   String    @map("serial_number")
+  model          String    @map("model")
+  brand          String    @map("brand")
+  status         String    @map("status")
+  warrantyEnd    DateTime? @map("warranty_end")
+  installedAt    DateTime  @map("installed_at")
+  removedAt      DateTime? @map("removed_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, status])
+  @@map("subscription_equipment")
+  @@schema("public")
+}
+
+model SubscriptionMilestone {
+  id             String   @id @default(uuid()) @map("id")
+  subscriptionId String   @map("subscription_id")
+  type           String   @map("type")
+  name           String   @map("name")
+  achievedAt     DateTime @map("achieved_at")
+  metadata       Json?    @map("metadata")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, type])
+  @@map("subscription_milestones")
+  @@schema("public")
+}
+
+model SubscriptionProcessStep {
+  id             String   @id @default(uuid()) @map("id")
+  subscriptionId String   @map("subscription_id")
+  step           String   @map("step")
+  description    String   @map("description")
+  timestamp      DateTime @map("timestamp")
+  correlationId  String?  @map("correlation_id")
+  metadata       Json?    @map("metadata")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, step])
+  @@map("subscription_process_steps")
+  @@schema("public")
+}
+
+model SubscriptionDecision {
+  id               String   @id @default(uuid()) @map("id")
+  subscriptionId   String   @map("subscription_id")
+  action           String   @map("action")
+  reason           String   @map("reason")
+  actorId          String?  @map("actor_id")
+  timestamp        DateTime @map("timestamp")
+  fromStatus       String   @map("from_status")
+  toStatus         String   @map("to_status")
+  policies         Json?    @map("policies")
+  rules            Json?    @map("rules")
+  workflowTransition String? @map("workflow_transition")
+  metadata         Json?    @map("metadata")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, action])
+  @@map("subscription_decisions")
+  @@schema("public")
+}
+
+model EventStore {
+  id              String   @id @default(uuid()) @map("id")
+  tenantId        String   @map("tenant_id")
+  aggregateType   String   @map("aggregate_type")
+  aggregateId     String   @map("aggregate_id")
+  aggregateVersion Int     @map("aggregate_version")
+  eventName       String   @map("event_name")
+  eventVersion    String   @map("event_version")
+  correlationId   String?  @map("correlation_id")
+  causationId     String?  @map("causation_id")
+  actorId         String?  @map("actor_id")
+  workflowId       String?  @map("workflow_id")
+  policyIds        Json?    @map("policy_ids")
+  ruleIds          Json?    @map("rule_ids")
+  integrityHash   String?  @map("integrity_hash")
+  payload         Json     @map("payload")
+  metadata        Json?    @map("metadata")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, aggregateType, aggregateId])
+  @@index([tenantId, eventName, createdAt])
+  @@index([correlationId])
+  @@map("event_store")
+  @@schema("public")
+}

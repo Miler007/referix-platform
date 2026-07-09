@@ -1,0 +1,21 @@
+{
+  "name": "@referix/demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "demo:seed": "ts-node demo/demo-seed.ts",
+    "demo:flow": "echo 'Follow the 15-step demo script in docs/product/REF-EXP-001.md'"
+  },
+  "dependencies": {
+    "@referix/people": "workspace:*",
+    "@referix/referral": "workspace:*",
+    "@referix/coverage": "workspace:*",
+    "@referix/operations": "workspace:*",
+    "@referix/provisioning": "workspace:*",
+    "@referix/finance": "workspace:*"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "typescript": "^5.7.3"
+  }
+}
