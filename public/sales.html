@@ -191,88 +191,113 @@ function selectPlan(idx){
   if(display[idx]){selectedPlan=display[idx];go('form');}
 }
 function getDisplayPlans(){
-  return plans.length?plans:[
-    {name:'MegaUltra 50',price:49990,download_speed:50,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
-    {name:'MegaUltra 60',price:59990,download_speed:60,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
-    {name:'MegaUltra 80',price:69990,download_speed:80,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","Router WiFi"]'},
-    {name:'MegaUltra 100',price:79990,download_speed:100,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi"]'},
-    {name:'MegaUltra 200',price:99990,download_speed:200,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte Prioritario"]'},
-    {name:'MegaUltra 400',price:149990,download_speed:400,is_symmetric:1,benefits:'["Internet Ilimitado","Velocidad Simétrica","TV Digital HD Gratis","Router WiFi","Soporte VIP"]'},
-    {name:'Plan Rural 10',price:24990,download_speed:10,is_symmetric:0,benefits:'["Internet Ilimitado","Antena Radio Enlace","Router WiFi"]'},
-    {name:'Plan Rural 20',price:34990,download_speed:20,is_symmetric:0,benefits:'["Internet Ilimitado","Antena Radio Enlace","Router WiFi"]'},
-  ];
+  return plans; // Solo los planes de la API, nunca fallback genérico
 }
 async function renderPlans(){
-  if(!plans.length&&selectedZone){
-    const fetched=await API.get(`/api/v2/catalog/plans?zone_id=${selectedZone.id}&technology_id=tech-gpon`);
-    if(fetched&&fetched.length)plans=fetched;
+  if(selectedZone){
+    const zoneTech=zoneData.filter(function(z){return z.zone_id===selectedZone.id||z.name===selectedZone.name;});
+    const techId=zoneTech.length?zoneTech[0].technology_id:'tech-gpon';
+    const fetched=await API.get(`/api/v2/catalog/plans?zone_id=${selectedZone.id}&technology_id=${techId}`);
+    if(fetched&&fetched.length)plans=fetched; else plans=[];
   }
   const display=getDisplayPlans();
   const cmpIdx=comparadorActivo;
+  if(!display||display.length===0){
+    return `<div class="px-5 py-6 animate-fadeUp">
+      <button class="btn-ghost mb-4" onclick="go('coverage')">← Municipios</button>
+      <p class="text-lg mb-2">Planes en ${selectedZone?.name||''}</p>
+      <p style="font-size:13px;color:#6B7280;margin-top:12px;padding:20px;background:#F9FAFB;border-radius:12px">📋 Catálogo pendiente de configurar para ${selectedZone?.name||'este municipio'}. Cuando INTERPLAY disponga de la información oficial, los planes aparecerán aquí.</p>
+    </div>`;
+  }
   return `<div class="px-5 py-6 animate-fadeUp">
     <button class="btn-ghost mb-4" onclick="go('coverage')">← Municipios</button>
     <div class="flex items-center justify-between mb-1">
       <p class="text-lg">Planes en ${selectedZone?.name||'Fresno'}</p>
       <span class="text-xs muted">${coverResult?.technologyName||'GPON'}</span>
     </div>
-    <p class="text-sm mb-6">Selecciona el plan ideal para tu cliente</p>
+    <p class="text-sm mb-6">${display.length} planes disponibles</p>
 
-    <!-- Comparador si hay 2 seleccionados -->
     ${cmpIdx!==undefined?renderComparador(display,cmpIdx):''}
 
     <div class="flex flex-col gap-4">${display.map(function(plan,idx){
-      const badge=getPlanBadge(plan,idx);
       let ben=[];
       try{ben=JSON.parse(plan.benefits||'[]');}catch(e){}
       const hasTv=ben.some(function(b){return b.toLowerCase().includes('tv');});
-      const comm=getComm(plan.price);
       const instCost=plan.installation_cost||0;
-      const tvCost=plan.has_tv?0:(plan.tv_installation_cost||30000);
-      const firstPayment=plan.price+instCost+(hasTv?0:tvCost);
       return `<div class="card animate-fadeUp" style="padding:20px;border:2px solid ${selectedPlan?.name===plan.name?'#0066FF':'#F0F0F0'}"
                 onclick="selectPlan(${idx})">
-        <!-- Badge inteligente -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-          <span style="${badge.color};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600">${badge.icon} ${badge.text}</span>
-          <span style="background:#EFF6FF;color:#0066FF;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600">🔵 GPON</span>
-          ${hasTv?'<span style="background:#FEF3C7;color:#D97706;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600">🟢 TV GRATIS</span>':''}
+        <!-- Encabezado -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span style="background:#EFF6FF;color:#0066FF;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600">🔵 ${coverResult?.technologyName||'GPON'}</span>
         </div>
-
-        <!-- Nombre y precio -->
-        <div class="flex justify-between items-start mb-2">
+        <div class="flex justify-between items-start mb-3">
           <div><p class="text-lg font-bold" style="color:#111827">${plan.name}</p>
-            <p class="text-xs muted">${plan.download_speed} Mbps Simétricos</p></div>
-          <div class="text-right"><p class="text-2xl font-bold primary">$${(plan.price||0).toLocaleString('es-CO')}</p>
-            <p class="text-xs muted">$${Math.round((plan.price||0)/30).toLocaleString('es-CO')}/día</p></div>
+            <p class="text-sm" style="color:#6B7280">${plan.download_speed} Mbps ${plan.is_symmetric?'Simétricos':''}</p></div>
+          <div class="text-right"><p class="text-xl font-bold primary">$${(plan.price||0).toLocaleString('es-CO')}</p>
+            <p class="text-xs muted">/mes</p></div>
         </div>
 
-        <!-- Incluye / No incluye -->
-        <hr style="border:none;border-top:1px solid #F0F0F0;margin:12px 0">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px;font-size:12px">
+        <!-- Beneficios -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;font-size:13px">
           <span style="color:#059669">✅ Internet Fibra Óptica</span>
           <span style="color:#059669">✅ Router WiFi</span>
-          <span style="color:${hasTv?'#059669':'#6B7280'}">${hasTv?'✅ TV Digital HD GRATIS':'📺 TV no incluida'}</span>
+          <span style="color:#059669">✅ Instalación Internet ${instCost===0?'GRATIS':'$'+instCost.toLocaleString('es-CO')}</span>
           <span style="color:#059669">✅ Soporte INTERPLAY</span>
-          <span style="color:#059669">✅ Sin permanencia</span>
-          <span style="color:#374151">${instCost===0?'✅ Instalación gratis':'📋 Instalación: $'+instCost.toLocaleString('es-CO')}</span>
+          <span style="color:#059669">✅ Sin cláusula de permanencia</span>
         </div>
 
-        <!-- Resumen económico -->
-        <div style="background:#F3F4F6;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px">
-          <div class="flex justify-between"><span>Plan</span><span>$${plan.price.toLocaleString('es-CO')}</span></div>
-          <div class="flex justify-between"><span>Instalación</span><span>${instCost===0?'Gratis':'$'+instCost.toLocaleString('es-CO')}</span></div>
-          ${!hasTv?`<div class="flex justify-between"><span>TV (opcional)</span><span>$${tvCost.toLocaleString('es-CO')}</span></div>`:''}
-          <hr style="border:none;border-top:1px solid #D1D5DB;margin:6px 0">
-          <div class="flex justify-between font-bold"><span>Primer pago aprox.</span><span>$${firstPayment.toLocaleString('es-CO')}</span></div>
+        <!-- TV -->
+        <div style="margin-bottom:12px;font-size:13px">
+          ${hasTv
+            ? '<span style="color:#059669">🟢 Incluye TV Digital HD</span>'
+            : '<span style="color:#6B7280">📺 TV Digital HD disponible como adicional</span>'}
+        </div>
+
+        <!-- Ideal para -->
+        <div style="margin-bottom:12px">
+          <p style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Ideal para</p>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            <span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">👨‍👩‍👧 ${plan.recommended_users||'2-3 personas'}</span>
+            <span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">📱 ${plan.recommended_devices||'Hasta 8 dispositivos'}</span>
+            ${(plan.recommended_use||'').split(',').map(function(u){return '<span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">'+u.trim()+'</span>';}).join('')}
+          </div>
+        </div>
+
+        <!-- Costos -->
+        <div style="background:#F9FAFB;border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+            <span style="color:#6B7280">Plan mensual</span><span style="font-weight:600">$${(plan.price||0).toLocaleString('es-CO')}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+            <span style="color:#6B7280">Internet</span><span style="font-weight:600;color:#059669">${instCost===0?'Gratis':'$'+instCost.toLocaleString('es-CO')}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+            <span style="color:#6B7280">TV</span><span style="font-weight:600">${hasTv?'Incluida':'$'+ (plan.tv_installation_cost||30000).toLocaleString('es-CO')}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+            <span style="color:#6B7280">TV adicional</span><span style="font-weight:600">$${(plan.additional_tv_point||10000).toLocaleString('es-CO')}</span>
+          </div>
+        </div>
+
+        <!-- Facturación -->
+        <div style="background:#EFF6FF;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#0052CC">
+          📋 Servicio mes vencido · Hoy instalas sin pagar · Facturación del 15 al 18 · Pago hasta el 30
         </div>
 
         <!-- Cobertura -->
-        <div style="font-size:11px;color:#059669;margin-bottom:8px">📍 ${selectedZone?.name||''} · GPON · Disponible · 48 horas</div>
+        <div style="font-size:12px;color:#059669;margin-bottom:12px">
+          📍 ${selectedZone?.name||''} · GPON disponible · ⏱ Instalación estimada 48 horas hábiles
+        </div>
 
-        <!-- Comisión -->
-        <div class="flex items-center justify-between" style="background:#ECFDF5;border-radius:8px;padding:8px">
-          <span style="font-size:12px;font-weight:600;color:#059669">💰 Comisión: $${comm.toLocaleString('es-CO')}</span>
-          <button class="btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();toggleComparador(${idx})">📊 Comparar</button>
+        <!-- CERE Recommendation (si aplica) -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#166534">
+          ⭐ Recomendación CERE · Ideal para este cliente · Cubre correctamente su necesidad
+        </div>
+
+        <!-- Botones -->
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="event.stopPropagation();selectPlan(${idx})" style="flex:1;font-size:15px;padding:14px">Elegir este plan</button>
+          <button class="btn btn-outline" onclick="event.stopPropagation();toggleComparador(${idx})" style="padding:14px;font-size:13px">📊</button>
         </div>
       </div>`;
     }).join('')}</div>

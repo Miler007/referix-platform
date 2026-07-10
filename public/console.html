@@ -4,110 +4,212 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
-body{background:#F8F9FA;color:#111827}
-.nav{background:#fff;border-bottom:1px solid #F0F0F0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.nav-l{display:flex;align-items:center;gap:10px}
-.nav-l .logo{width:32px;height:32px;background:linear-gradient(135deg,#0066FF,#0052CC);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
-.nav-l span{font-size:17px;font-weight:700;color:#111827}
-.nav-r{display:flex;align-items:center;gap:16px}
-.nav-r .ctx{font-size:12px;color:#6B7280}
-.nav-r .ctx strong{color:#111827}
-.nav-r a{color:#6B7280;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px}
-.nav-r a:hover{background:#F3F4F6}
-.container{max-width:1200px;margin:0 auto;padding:24px}
-h1{font-size:22px;font-weight:700;margin-bottom:4px}
-.sub{font-size:14px;color:#6B7280;margin-bottom:24px}
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.kpi{background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:20px;transition:all .2s}
-.kpi:hover{border-color:#D1D5DB;box-shadow:0 4px 12px rgba(0,0,0,.04)}
-.kpi .num{font-size:28px;font-weight:800;color:#0066FF;line-height:1.1}
-.kpi .num.green{color:#059669}
-.kpi .label{font-size:12px;color:#6B7280;margin-top:4px}
-.kpi .trend{font-size:11px;margin-top:4px}
-.kpi .trend.up{color:#059669}.kpi .trend.down{color:#DC2626}
-.card{background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:20px}
-.card h2{font-size:15px;font-weight:600;margin-bottom:16px;color:#111827}
-.alert{padding:12px 16px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.alert-red{background:#FEF2F2;border:1px solid #FECACA;color:#DC2626}
-.alert-yellow{background:#FFFBEB;border:1px solid #FDE68A;color:#D97706}
-.alert-blue{background:#EFF6FF;border:1px solid #BFDBFE;color:#0066FF}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .2s}
+body{background:#F8F9FA;color:#111827;display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:240px;background:#fff;border-right:1px solid #F0F0F0;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:20px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:10px}
+.sidebar-header .logo{width:32px;height:32px;background:linear-gradient(135deg,#0066FF,#0052CC);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+.sidebar-header span{font-size:16px;font-weight:700;color:#111827}
+.sidebar-nav{flex:1;padding:12px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:#6B7280;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav-item:hover{background:#F3F4F6;color:#111827}.nav-item.active{background:#EFF6FF;color:#0066FF;font-weight:600}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #F0F0F0;font-size:12px;color:#9CA3AF}
+/* Main */
+.main{flex:1;overflow-y:auto}
+.main-header{background:#fff;border-bottom:1px solid #F0F0F0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.main-header h1{font-size:18px;font-weight:700}
+.main-header .sub{font-size:12px;color:#9CA3AF}
+.content{padding:24px;max-width:1200px}
+/* Cards */
+.card{background:#fff;border:1px solid #F0F0F0;border-radius:12px;padding:20px;margin-bottom:16px}
+.card h2{font-size:14px;font-weight:600;margin-bottom:12px;color:#111827}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid #F0F0F0;border-radius:12px;padding:16px}
+.kpi .num{font-size:24px;font-weight:800;color:#0066FF;line-height:1.1}
+.kpi .label{font-size:11px;color:#6B7280;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .15s}
 .btn-primary{background:#0066FF;color:#fff}.btn-primary:hover{background:#0052CC}
-.btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}.btn-outline:hover{background:#F9FAFB}
-.actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
-.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6}
-.activity-item:last-child{border-bottom:none}
-.activity-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.activity-item .dot.green{background:#10B981}.activity-item .dot.yellow{background:#F59E0B}.activity-item .dot.red{background:#EF4444}
-.activity-item .text{flex:1}.activity-item .text .title{font-size:13px;font-weight:500;color:#111827}
-.activity-item .text .desc{font-size:11px;color:#6B7280;margin-top:1px}
-.activity-item .time{font-size:11px;color:#9CA3AF}
-.funnel-stage{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.funnel-stage .label{width:110px;font-size:12px;color:#6B7280;text-align:right;flex-shrink:0}
-.funnel-stage .bar{flex:1;height:22px;background:#F3F4F6;border-radius:6px;overflow:hidden}
-.funnel-stage .bar-fill{height:100%;background:linear-gradient(90deg,#0066FF,#3B82F6);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;color:#fff;font-weight:600}
-@media(max-width:768px){.grid-4,.grid-2{grid-template-columns:1fr 1fr}.container{padding:16px}.nav-r .ctx{display:none}}
+.btn-outline{background:#fff;color:#374151;border:1px solid #E5E7EB}.btn-outline:hover{background:#F9FAFB}
+.btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
+.btn-danger{background:#DC2626;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;border-bottom:2px solid #F0F0F0}
+td{padding:10px 12px;border-bottom:1px solid #F3F4F6;color:#374151}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
+.badge-green{background:#ECFDF5;color:#059669}.badge-yellow{background:#FFFBEB;color:#D97706}.badge-blue{background:#EFF6FF;color:#0066FF}
+input,select{width:100%;padding:8px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif}
+input:focus{border-color:#0066FF}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-content{background:#fff;border-radius:14px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto}
+.modal-content h2{font-size:16px;font-weight:700;margin-bottom:16px}
+@media(max-width:768px){.sidebar{display:none}.grid-4{grid-template-columns:1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="nav">
-  <div class="nav-l"><div class="logo">R</div><span>Console</span></div>
-  <div class="nav-r">
-    <span class="ctx"><strong>INTERPLAY</strong> · ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}</span>
-    <span class="ctx">👤 Admin</span>
-    <a href="/">← Salir</a>
+<div class="sidebar">
+  <div class="sidebar-header"><div class="logo">R</div><span>Console</span></div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" data-mod="dashboard">📊 Dashboard</div>
+    <div class="nav-item" data-mod="catalog">📦 Catálogo</div>
+    <div class="nav-item" data-mod="users">👥 Usuarios</div>
+    <div class="nav-item" data-mod="commissions">💰 Comisiones</div>
+    <div class="nav-item" data-mod="coverage">📍 Cobertura</div>
+    <div class="nav-item" data-mod="reports">📈 Reportes</div>
   </div>
+  <div class="sidebar-footer"><a href="/" style="color:#9CA3AF;text-decoration:none">← Salir</a></div>
 </div>
-<div class="container" id="app">
-  <h1>Panel de control</h1>
-  <p class="sub">Cargando indicadores...</p>
-</div>
-<script>
-const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});if(!r.ok)return null;const j=await r.json();return j.data||null}catch(e){return null}}};
-async function init(){
-  const d=await API.get('/api/v1/dashboard');
-  document.getElementById('app').innerHTML=d?renderDashboard(d):renderEmpty();
-}
-function renderEmpty(){
-  return `<p class="sub">INTERPLAY · Resumen ejecutivo · <span style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></p><div class="actions"><a href="/sales.html" class="btn btn-primary">📝 Nueva venta</a><a href="/customer360.html" class="btn btn-outline">👤 Buscar cliente</a></div><div class="card"><p class="text-xs muted">Aún no hay datos disponibles. Cuando comiences a operar, los indicadores aparecerán aquí.</p></div>`;
-}
-function renderDashboard(d){
-  const sales=d?.salesToday||0;
-  return `
-  <p class="sub">INTERPLAY · Resumen ejecutivo · <span style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></p>
-  
-  <div class="actions">
+<div class="main">
+  <div class="main-header">
+    <div><h1 id="page-title">Dashboard</h1><span class="sub" id="page-sub">INTERPLAY · <span id="fecha-header"></span></span></div>
     <a href="/sales.html" class="btn btn-primary">📝 Nueva venta</a>
-    <a href="/customer360.html" class="btn btn-outline">👤 Buscar cliente</a>
   </div>
+  <div class="content" id="app"></div>
+</div>
 
-  <div class="grid-4">
+<script>
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
+  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}}};
+
+let currentModule='dashboard';
+document.getElementById('fecha-header').textContent=new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
+
+async function loadModule(mod){
+  currentModule=mod;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const active=document.querySelector(`.nav-item[data-mod="${mod}"]`);
+  if(active)active.classList.add('active');
+  const titles={dashboard:'Dashboard',catalog:'Catálogo de Planes',users:'Usuarios',commissions:'Comisiones',coverage:'Cobertura',reports:'Reportes'};
+  document.getElementById('page-title').textContent=titles[mod]||'Dashboard';
+  const el=document.getElementById('app');
+  if(mod==='dashboard')el.innerHTML=await renderDashboard();
+  else if(mod==='catalog')el.innerHTML=await renderCatalog();
+  else if(mod==='users')el.innerHTML=await renderUsers();
+  else if(mod==='commissions')el.innerHTML=await renderCommissions();
+  else if(mod==='coverage')el.innerHTML=await renderCoverage();
+  else if(mod==='reports')el.innerHTML=renderReports();
+}
+
+// ── Event listeners ─────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',function(){loadModule(this.dataset.mod);});
+});
+
+// ── DASHBOARD ──────────────────────────────────────────────────
+async function renderDashboard(){
+  const d=await API.get('/api/v1/dashboard');
+  const sales=d?.salesToday||0;
+  return `<div class="grid-4">
     <div class="kpi"><div class="num">${sales}</div><div class="label">Ventas del mes</div></div>
-    <div class="kpi"><div class="num green">$${((d?.commissionsHeld?.total||0)/1000).toFixed(0)}K</div><div class="label">Comisión pendiente</div><div class="trend up">${d?.commissionsHeld?.count||0} en hold</div></div>
+    <div class="kpi"><div class="num" style="color:#059669">$${((d?.commissionsHeld?.total||0)/1000).toFixed(0)}K</div><div class="label">Comisiones pendientes</div></div>
     <div class="kpi"><div class="num">${d?.installationsPending||0}</div><div class="label">Instalaciones pendientes</div></div>
     <div class="kpi"><div class="num">${d?.topReferidors?.length||0}</div><div class="label">Referidores activos</div></div>
   </div>
-
   <div class="grid-2">
-    <div class="card">
-      <h2>📊 Embudo de ventas</h2>
-      ${sales>0?`<div class="funnel-stage"><span class="label">Registrados</span><div class="bar"><div class="bar-fill" style="width:100%">${sales}</div></div></div>
-      <div class="funnel-stage"><span class="label">Activos</span><div class="bar"><div class="bar-fill" style="width:${d?.conversionRate||75}%">${Math.round(sales*(d?.conversionRate||75)/100)}</div></div></div>
-      <div class="funnel-stage"><span class="label">Comisión pagada</span><div class="bar"><div class="bar-fill" style="width:${d?.commissionsHeld?.count?Math.round(d.commissionsHeld.count/sales*100):0}%">${d?.commissionsHeld?.count||0}</div></div></div>`:'<p class="text-xs muted">Registra ventas para ver el embudo.</p>'}
+    <div class="card"><h2>⚡ Acciones rápidas</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a href="/sales.html" class="btn btn-primary">📝 Nueva venta</a>
+        <a href="/customer360.html" class="btn btn-outline">👤 Buscar cliente</a>
+        <button class="btn btn-outline" onclick="loadModule('catalog')">📦 Catálogo</button>
+        <button class="btn btn-outline" onclick="loadModule('users')">👥 Usuarios</button>
+      </div>
     </div>
-    <div class="card">
-      <h2>⚠️ Requiere atención</h2>
-      ${sales===0?'<div class="alert alert-blue">🔵 Sin alertas. Todos los sistemas operativos.</div>':'<div class="alert alert-blue">🔵 Sin alertas críticas.</div>'}
+    <div class="card"><h2>📋 Actividad</h2>
+      <p class="text-xs" style="color:#6B7280">No hay eventos recientes aún. Comienza a operar para ver actividad aquí.</p>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>📋 Actividad reciente</h2>
-    ${(d?.recentActivity?.length?d.recentActivity:[{event:'Esperando actividad',detail:'No hay eventos recientes aún. Comienza a operar y aquí aparecerán.',time:''}]).map(a=>`<div class="activity-item"><div class="dot green"></div><div class="text"><div class="title">${a.event||a.events||'Actividad'}</div><div class="desc">${a.detail||a.description||''}</div></div><div class="time">${a.time||''}</div></div>`).join('')}
   </div>`;
 }
-init();
+
+// ── CATALOG ────────────────────────────────────────────────────
+async function renderCatalog(){
+  const plans=await API.get('/api/v2/catalog/plans?zone_id=z-fresno&technology_id=tech-gpon')||[];
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <p style="font-size:13px;color:#6B7280">${plans.length} planes en catálogo</p>
+    <button class="btn btn-primary" onclick="showAddPlan()">+ Nuevo plan</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th>Nombre</th><th>Velocidad</th><th>Precio</th><th>TV</th><th>Comisión</th><th>Estado</th><th></th></tr>
+      ${plans.map(p=>{
+        const ben=p.benefits||'[]';
+        const hasTv=ben.includes('TV');
+        return `<tr><td><strong>${p.name}</strong></td><td>${p.download_speed} Mbps</td><td>$${(p.price||0).toLocaleString('es-CO')}</td>
+        <td>${hasTv?'<span class="badge badge-green">✅ Sí</span>':'<span class="badge" style="background:#F3F4F6">❌ No</span>'}</td>
+        <td>${p.commission_pct||10}%</td>
+        <td><span class="badge badge-green">${p.status||'PUBLISHED'}</span></td>
+        <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>`;
+      }).join('')}
+    </table>
+  </div>`;
+}
+function showAddPlan(){
+  document.getElementById('app').innerHTML+=`<div class="modal" onclick="if(event.target===this)this.remove()">
+    <div class="modal-content">
+      <h2>Nuevo plan</h2>
+      <div style="display:grid;gap:12px">
+        <input placeholder="Nombre del plan">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input placeholder="Velocidad Mbps" type="number"><input placeholder="Precio $" type="number"></div>
+        <select><option>GPON</option><option>Radio Enlace</option></select>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox"> Incluye TV</label>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Guardar</button>
+          <button class="btn btn-outline" onclick="this.closest('.modal').remove()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── USERS ──────────────────────────────────────────────────────
+async function renderUsers(){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <p style="font-size:13px;color:#6B7280">Usuarios del sistema</p>
+    <button class="btn btn-primary">+ Nuevo usuario</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr>
+      <tr><td><strong>Admin INTERPLAY</strong></td><td>admin@interplay.com</td><td>Administrador</td><td><span class="badge badge-green">Activo</span></td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>
+      <tr><td><strong>María García</strong></td><td>maria@demo.com</td><td>Asesor</td><td><span class="badge badge-green">Activo</span></td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>
+      <tr><td><strong>Carlos Ruiz</strong></td><td>carlos@demo.com</td><td>Técnico</td><td><span class="badge badge-green">Activo</span></td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>
+    </table>
+  </div>`;
+}
+
+// ── COMMISSIONS ────────────────────────────────────────────────
+async function renderCommissions(){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <p style="font-size:13px;color:#6B7280">Políticas de comisión</p>
+    <button class="btn btn-primary">+ Nueva regla</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Días hold</th><th>Estado</th><th></th></tr>
+      <tr><td><strong>10% GPON residencial</strong></td><td>Porcentaje</td><td>10%</td><td>15</td><td><span class="badge badge-green">Activa</span></td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>
+      <tr><td><strong>12% GPON premium</strong></td><td>Porcentaje</td><td>12%</td><td>15</td><td><span class="badge badge-green">Activa</span></td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">✏️</button></td></tr>
+    </table>
+  </div>`;
+}
+
+// ── COVERAGE ───────────────────────────────────────────────────
+async function renderCoverage(){
+  const zones=await API.get('/api/v2/catalog/zones')||[];
+  return `<p style="font-size:13px;color:#6B7280;margin-bottom:16px">${zones.length} zonas de cobertura</p>
+  <div class="grid-2">${zones.map(z=>`<div class="card"><h2>📍 ${z.name}</h2><p style="font-size:12px;color:#6B7280">${z.technology} · ${z.technology_code}</p><span class="badge badge-green">Activo</span></div>`).join('')}</div>`;
+}
+
+// ── REPORTS ────────────────────────────────────────────────────
+function renderReports(){
+  return `<div class="grid-3">
+    <div class="card"><h2>💰 Ventas por plan</h2><p class="text-xs" style="color:#6B7280">Próximamente</p></div>
+    <div class="card"><h2>📍 Ventas por zona</h2><p class="text-xs" style="color:#6B7280">Próximamente</p></div>
+    <div class="card"><h2>👥 Desempeño asesores</h2><p class="text-xs" style="color:#6B7280">Próximamente</p></div>
+  </div>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadModule('dashboard');
 </script>
 </body>
 </html>
