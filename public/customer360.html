@@ -1,246 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Customer 360</title>
-<style>*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-body{background:#F3F4F6;min-height:100vh}
-.nav{background:#fff;border-bottom:1px solid #E5E7EB;padding:12px 20px;display:flex;align-items:center;gap:12px}
-.nav .back{color:#0066FF;text-decoration:none;font-size:13px;cursor:pointer}
-.nav .back:hover{text-decoration:underline}
-.nav .title{font-size:16px;font-weight:600;color:#111827}
-.search-bar{background:#fff;border-bottom:1px solid #E5E7EB;padding:16px 20px}
-.search-bar input{width:100%;padding:10px 14px;border:1.5px solid #D1D5DB;border-radius:8px;font-size:14px;outline:none}
-.search-bar input:focus{border-color:#0066FF}
-.container{max-width:900px;margin:0 auto;padding:16px}
-.card{background:#fff;border-radius:12px;border:1px solid #E5E7EB;overflow:hidden;margin-bottom:16px}
-.card-header{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;cursor:pointer;user-select:none}
-.card-header .arrow{transition:transform .2s;margin-left:auto;color:#9CA3AF}
-.card-header .arrow.open{transform:rotate(180deg)}
-.card-body{padding:16px;display:none}
-.card-body.open{display:block}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.field{margin-bottom:8px}
-.field .label{font-size:11px;color:#6B7280;margin-bottom:2px}
-.field .value{font-size:13px;color:#111827;font-weight:500}
-.status-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
-.status-active{background:#ECFDF5;color:#059669}
-.status-pending{background:#FFFBEB;color:#D97706}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>:root{--primary:#0066FF;--success:#059669;--warning:#D97706;--gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;--gray-300:#D1D5DB;--gray-400:#9CA3AF;--gray-500:#6B7280;--gray-700:#374151;--gray-900:#111827;--shadow:0 1px 3px rgba(0,0,0,.04);--shadow-lg:0 8px 32px rgba(0,0,0,.08);--transition:all .2s cubic-bezier(.4,0,.2,1)}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',-apple-system,sans-serif}
+body{background:var(--gray-50);min-height:100vh;font-feature-settings:'cv02','cv03','cv04','cv11'}
+::selection{background:var(--primary);color:#fff}
+.nav{background:#fff;border-bottom:1px solid var(--gray-100);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.nav .back{color:var(--primary);text-decoration:none;font-size:13px;cursor:pointer;transition:var(--transition)}
+.nav .back:hover{opacity:.8}
+.nav .title{font-size:16px;font-weight:600;color:var(--gray-900);letter-spacing:-.2px}
+.search-bar{background:#fff;border-bottom:1px solid var(--gray-100);padding:20px 24px}
+.search-bar input{width:100%;padding:12px 16px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:14px;outline:none;transition:var(--transition);font-family:'Inter',sans-serif}
+.search-bar input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+.container{max-width:900px;margin:0 auto;padding:20px;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:#fff;border-radius:14px;border:1px solid var(--gray-100);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow);transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-lg)}
+.card-body{padding:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.field{margin-bottom:6px}
+.field .label{font-size:11px;color:var(--gray-400);margin-bottom:2px;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.field .value{font-size:13px;color:var(--gray-900);font-weight:500}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;letter-spacing:.2px}
+.status-active{background:#ECFDF5;color:var(--success)}
+.status-pending{background:#FFFBEB;color:var(--warning)}
 .status-inactive{background:#FEF2F2;color:#DC2626}
-.timeline{position:relative;padding-left:20px}
-.timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:#E5E7EB}
-.timeline-item{position:relative;padding-bottom:14px}
-.timeline-item::before{content:'';position:absolute;left:-16px;top:5px;width:8px;height:8px;border-radius:50%;background:#0066FF;border:2px solid #fff}
-.timeline-item .date{font-size:10px;color:#9CA3AF}
-.timeline-item .event{font-size:12px;color:#374151;font-weight:500}
-.timeline-item .detail{font-size:11px;color:#6B7280}
-.result-item{padding:12px;border-bottom:1px solid #F3F4F6;cursor:pointer;transition:background .15s}
-.result-item:hover{background:#F9FAFB}
+.result-item{padding:14px 20px;border-bottom:1px solid var(--gray-50);cursor:pointer;transition:var(--transition)}
+.result-item:hover{background:var(--gray-50)}
 .result-item:last-child{border-bottom:none}
-.result-item .name{font-size:14px;font-weight:600;color:#111827}
-.result-item .info{font-size:11px;color:#6B7280;margin-top:2px}
-.empty{text-align:center;padding:40px 16px;color:#9CA3AF;font-size:13px}
-.tab-bar{display:flex;background:#fff;border-bottom:1px solid #E5E7EB;overflow-x:auto}
-.tab{flex-shrink:0;padding:10px 16px;font-size:12px;font-weight:500;color:#6B7280;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
-.tab:hover{color:#111827}
-.tab.active{color:#0066FF;border-bottom-color:#0066FF}
-@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.result-item .name{font-size:14px;font-weight:600;color:var(--gray-900);letter-spacing:-.1px}
+.result-item .info{font-size:11px;color:var(--gray-400);margin-top:4px}
+.empty{text-align:center;padding:48px 16px;color:var(--gray-400);font-size:13px}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}.container{padding:12px}}
 </style>
 </head>
 <body>
 <div id="app"></div>
+<script src="/icons.js"></script>
 <script>
+const _user=JSON.parse(localStorage.getItem('referix_user')||'{}');
 const API='https://referix-api.reto-diario.workers.dev';
-let state='search',results=[],client=null,activeTab='resumen';
+const H={'Content-Type':'application/json','X-Tenant-Id':'interplay','X-User-Id':_user.id||''};
+let state='search',results=[],client=null,clientDetail=null;
+
+async function api(p){try{const r=await fetch(API+p,{headers:H});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}}
+
+function render(){document.getElementById('app').innerHTML=state==='search'?renderSearch():state==='results'?renderResults():renderDetail();}
+
+function renderSearch(){return`<div class="nav"><span style="font-weight:700;color:#0066FF">Referix</span><span style="color:#9CA3AF">/</span><span class="title">Customer 360</span></div>
+<div class="search-bar"><input id="q" placeholder="Buscar por nombre o teléfono..." onkeydown="if(event.key==='Enter')search()">
+<div style="margin-top:8px;display:flex;gap:8px"><button onclick="search()" style="padding:8px 20px;background:#0066FF;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">Buscar</button>
+<span style="font-size:11px;color:#9CA3AF;display:flex;align-items:center">Ej: María, 3001234567</span></div></div>
+<div class="container"><div class="empty">${icn('search',14)} Ingresa el nombre o teléfono del cliente</div></div>`;}
 
 async function search(){
-  const q=document.getElementById('q').value;
-  if(!q)return;
-  try{
-    const r=await fetch(`${API}/api/v1/referrals?query=${encodeURIComponent(q)}&limit=10`,{headers:{'X-Tenant-Id':'interplay'}});
-    const d=await r.json();
-    results=(d.data||[]).map(function(ref){return{id:ref.id,name:ref.full_name||ref.fullName||'Cliente',phone:ref.phone||'Sin teléfono',address:ref.address||'',status:ref.funnel_status||ref.status||'ACTIVE',plan:ref.plan_name||ref.plan||'MegaUltra 100',installDate:(ref.created_at||'').split('T')[0]||''};});
-  }catch(e){
-    // Fallback: datos de ejemplo si API no responde
-    results=[{id:'demo-1',name:'Juan Pérez',phone:'+573001234567',address:'Calle 5 #10-20, Fresno',status:'WON',plan:'MegaUltra 100',installDate:'2024-07-10'}];
-  }
+  const q=document.getElementById('q').value;if(!q)return;
+  results=await api('/api/v1/clients/search?q='+encodeURIComponent(q))||[];
   state='results';render();
 }
 
-function selectClient(c){
-  client=c;
-  activeTab='resumen';
+function renderResults(){return`<div class="nav"><span style="font-weight:700;color:#0066FF">Referix</span><span style="color:#9CA3AF">/</span><span class="title">Customer 360</span><a class="back" onclick="state='search';render()" style="margin-left:auto">${icn('back',14)} Nueva búsqueda</a></div>
+<div class="container"><div class="card"><div style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;color:#6B7280">${results.length} resultado(s)</div>
+${results.length===0?'<div class="empty">Sin resultados</div>':results.map(r=>`<div class="result-item" onclick="selectClient('${r.id}','${(r.full_name||'').replace(/'/g,"\\'")}')"><div class="name">${r.full_name||'Cliente'}</div><div class="info">${r.phone||''} · ${r.email||''} · <span class="status-badge ${r.funnel_status==='WON'||r.funnel_status==='ACTIVE'?'status-active':'status-pending'}">${r.funnel_status||''}</span></div></div>`).join('')}</div></div>`;}
+
+async function selectClient(id,name){
   state='detail';render();
-}
-
-function toggleSection(id){
-  const body=document.getElementById(id);
-  const arrow=document.getElementById(id+'-arrow');
-  if(!body)return;
-  body.classList.toggle('open');
-  if(arrow)arrow.classList.toggle('open');
-}
-
-function render(){
-  if(state==='search')renderSearch();
-  else if(state==='results')renderResults();
-  else if(state==='detail')renderDetail();
-}
-
-function renderSearch(){
-  document.getElementById('app').innerHTML=`
-    <div class="nav"><span style="font-weight:700;color:#0066FF">Referix</span><span style="color:#9CA3AF">/</span><span class="title">Customer 360</span></div>
-    <div class="search-bar">
-      <input id="q" placeholder="Buscar por nombre, documento o teléfono..." onkeydown="if(event.key==='Enter')search()">
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button onclick="search()" style="padding:8px 20px;background:#0066FF;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">Buscar</button>
-        <span style="font-size:11px;color:#9CA3AF;display:flex;align-items:center">Ej: Juan Pérez, 12345678, 3001234567</span>
-      </div>
-    </div>
-    <div class="container"><div class="empty">🔍 Ingresa el nombre, documento o teléfono del cliente</div></div>`;
-  setTimeout(()=>document.getElementById('q')?.focus(),100);
-}
-
-function renderResults(){
-  document.getElementById('app').innerHTML=`
-    <div class="nav"><span style="font-weight:700;color:#0066FF">Referix</span><span style="color:#9CA3AF">/</span><span class="title">Customer 360</span>
-      <a class="back" onclick="state='search';render()" style="margin-left:auto">← Nueva búsqueda</a>
-    </div>
-    <div class="container">
-      <div class="card">
-        <div style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;color:#6B7280">${results.length} resultado(s)</div>
-        ${results.map(r=>`<div class="result-item" onclick="selectClient({id:'${r.id||'demo'}',name:'${r.full_name||'Juan Pérez'}',phone:'${r.phone||'+573001234567'}',address:'${r.address||'Fresno'}',status:'${r.funnel_status||'ACTIVE'}',plan:'${r.plan||'MegaUltra 100'}',installDate:'${r.created_at?.split('T')[0]||'2024-07-10'}'})">
-          <div class="name">${r.full_name||'Juan Pérez'}</div>
-          <div class="info">${r.phone||'+573001234567'} · ${r.address||'Fresno'} · <span class="status-badge ${r.funnel_status==='WON'||r.funnel_status==='ACTIVE'?'status-active':'status-pending'}">${r.funnel_status||'ACTIVE'}</span></div>
-        </div>`).join('')}
-      </div>
-    </div>`;
+  client={id,name};
+  const ref=await api('/api/v1/referrals/'+id);
+  const comms=await api('/api/v1/commissions/my-commissions');
+  const myComm=comms?.commissions?.filter(c=>c.referral_id===id)||[];
+  clientDetail={...ref,commissions:myComm};
+  render();
 }
 
 function renderDetail(){
-  if(!client)return;
-  const tabs=['resumen','timeline','comercial','tecnico','financiero','soporte','documentos','observaciones'];
-  const tabLabels=['Resumen','Línea de tiempo','Comercial','Técnico','Financiero','Soporte','Documentos','Observaciones'];
-  document.getElementById('app').innerHTML=`
-    <div class="nav">
-      <a class="back" onclick="state='results';render()">← Resultados</a>
-      <span style="color:#9CA3AF">/</span>
-      <span class="title">${client.name}</span>
-      <span style="margin-left:auto"><span class="status-badge status-active">${client.status}</span></span>
-    </div>
-    <div class="tab-bar">${tabs.map((t,i)=>`<div class="tab ${activeTab===t?'active':''}" onclick="activeTab='${t}';renderDetail()">${tabLabels[i]}</div>`).join('')}</div>
-    <div class="container">
-      ${activeTab==='resumen'?renderResumen():activeTab==='timeline'?renderTimeline():activeTab==='comercial'?renderComercial():activeTab==='tecnico'?renderTecnico():activeTab==='financiero'?renderFinanciero():activeTab==='soporte'?renderSoporte():activeTab==='documentos'?renderDocumentos():renderObservaciones()}
-    </div>`;
-}
-
-function renderResumen(){
-  return `
-    <div class="card">
-      <div style="padding:20px;display:flex;align-items:center;gap:16px">
-        <div style="width:56px;height:56px;border-radius:50%;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#0066FF">${client.name.charAt(0)}</div>
-        <div><div style="font-size:18px;font-weight:700;color:#111827">${client.name}</div>
-          <div style="font-size:12px;color:#6B7280;margin-top:4px">${client.phone} · ${client.address}</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <span class="status-badge status-active">${client.status}</span>
-            <span class="status-badge" style="background:#EFF6FF;color:#0066FF">${client.plan||'MegaUltra 100'}</span>
-          </div>
-        </div>
+  const c=clientDetail||client||{};
+  const planName=c.plan_name||c.plan||'Plan no asignado';
+  const status=c.funnel_status||c.status||'NUEVO';
+  const totalComm=c.commissions?.reduce((s,cm)=>s+(cm.final_amount||0),0)||0;
+  const commCount=c.commissions?.length||0;
+  return`<div class="nav"><a class="back" onclick="state='results';render()">${icn('back',14)} Resultados</a><span style="color:#9CA3AF">/</span><span class="title">${c.full_name||client?.name||'Cliente'}</span><span style="margin-left:auto"><span class="status-badge ${status==='WON'||status==='ACTIVE'?'status-active':'status-pending'}">${status}</span></span></div>
+  <div class="container">
+    <div class="card"><div class="card-body">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:56px;height:56px;border-radius:50%;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#0066FF">${(c.full_name||client?.name||'?')[0]}</div>
+        <div><div style="font-size:18px;font-weight:700">${c.full_name||client?.name||'Cliente'}</div>
+        <div style="font-size:12px;color:#6B7280;margin-top:4px">${c.phone||''}${c.email?' · '+c.email:''}</div>
+        <div style="display:flex;gap:8px;margin-top:8px"><span class="status-badge status-active">${status}</span><span class="status-badge" style="background:#EFF6FF;color:#0066FF">${planName}</span></div></div>
       </div>
-    </div>
+    </div></div>
     <div class="grid-3">
-      <div class="card" style="padding:16px"><div class="field"><div class="label">Instalación</div><div class="value">${client.installDate||'10/07/2024'}</div></div></div>
-      <div class="card" style="padding:16px"><div class="field"><div class="label">Pagos</div><div class="value" style="color:#059669">Al día</div></div></div>
-      <div class="card" style="padding:16px"><div class="field"><div class="label">Servicio</div><div class="value" style="color:#059669">Activo</div></div></div>
+      <div class="card" style="padding:16px"><div class="field"><div class="label">Registro</div><div class="value">${c.created_at?new Date(c.created_at+'Z').toLocaleDateString('es-CO',{day:'numeric',month:'short'}):'—'}</div></div></div>
+      <div class="card" style="padding:16px"><div class="field"><div class="label">Comisiones</div><div class="value" style="color:#059669">${commCount} ($${totalComm.toLocaleString('es-CO')})</div></div></div>
+      <div class="card" style="padding:16px"><div class="field"><div class="label">Dirección</div><div class="value">${c.address||'—'}</div></div></div>
     </div>
-    <div class="card">
-      <div class="card-header" onclick="toggleSection('resumen-detalle')">📋 Información general<div class="arrow" id="resumen-detalle-arrow">▼</div></div>
-      <div class="card-body open" id="resumen-detalle">
-        <div class="grid-2">
-          <div><div class="field"><div class="label">Nombre</div><div class="value">${client.name}</div></div></div>
-          <div><div class="field"><div class="label">Teléfono</div><div class="value">${client.phone}</div></div></div>
-          <div><div class="field"><div class="label">Dirección</div><div class="value">${client.address}</div></div></div>
-          <div><div class="field"><div class="label">Plan</div><div class="value">${client.plan||'MegaUltra 100'}</div></div></div>
-          <div><div class="field"><div class="label">Tecnología</div><div class="value">GPON · Fibra Óptica</div></div></div>
-          <div><div class="field"><div class="label">Ejecutivo</div><div class="value">María García</div></div></div>
-        </div>
+    <div class="card"><div class="card-body">
+      <p style="font-size:13px;font-weight:600;margin-bottom:12px">${icn('document',14)} Información del cliente</p>
+      <div class="grid-2">
+        <div><div class="field"><div class="label">Nombre</div><div class="value">${c.full_name||client?.name||'—'}</div></div></div>
+        <div><div class="field"><div class="label">Teléfono</div><div class="value">${c.phone||'—'}</div></div></div>
+        <div><div class="field"><div class="label">Email</div><div class="value">${c.email||'—'}</div></div></div>
+        <div><div class="field"><div class="label">Dirección</div><div class="value">${c.address||'—'}</div></div></div>
+        <div><div class="field"><div class="label">Plan</div><div class="value">${planName}</div></div></div>
+        <div><div class="field"><div class="label">Estado</div><div class="value">${status}</div></div></div>
       </div>
-    </div>`;
+    </div></div>
+    ${commCount>0?`<div class="card"><div class="card-body"><p style="font-size:13px;font-weight:600;margin-bottom:8px">${icn('money',14)} Comisiones generadas</p>${c.commissions.map(cm=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F3F4F6;font-size:12px"><span>$${(cm.final_amount||0).toLocaleString('es-CO')}</span><span class="status-badge ${cm.financial_state==='PAID'?'status-active':'status-pending'}">${cm.financial_state==='PAID'?'Pagado':cm.financial_state==='PAYABLE'?'Por pagar':'Pendiente'}</span></div>`).join('')}</div></div>`:''}
+  </div>`;
 }
-
-function renderTimeline(){
-  const events=[
-    {date:'05/07/2024',event:'Prospecto creado',detail:'Registrado por María García'},
-    {date:'06/07/2024',event:'Seguimiento comercial',detail:'Cliente solicitó información de planes'},
-    {date:'08/07/2024',event:'Venta registrada',detail:'MegaUltra 100 · $59.990/mes'},
-    {date:'10/07/2024',event:'Instalación realizada',detail:'Técnico: Carlos Ruiz'},
-    {date:'10/07/2024',event:'Servicio activado',detail:'Activación exitosa'},
-    {date:'15/07/2024',event:'Primera factura emitida',detail:'$59.990'},
-    {date:'05/08/2024',event:'Pago recibido',detail:'$59.990 · Pago exitoso'},
-  ];
-  return `<div class="card"><div style="padding:16px"><div class="timeline">${events.map(e=>`<div class="timeline-item"><div class="date">${e.date}</div><div class="event">${e.event}</div><div class="detail">${e.detail}</div></div>`).join('')}</div></div></div>`;
-}
-
-function renderComercial(){
-  return `<div class="card"><div style="padding:20px">
-    <div class="grid-2">
-      <div><div class="field"><div class="label">Plan contratado</div><div class="value">MegaUltra 100</div></div></div>
-      <div><div class="field"><div class="label">Precio</div><div class="value">$59.990/mes</div></div></div>
-      <div><div class="field"><div class="label">Promoción</div><div class="value">Instalación gratis</div></div></div>
-      <div><div class="field"><div class="label">Comisión generada</div><div class="value" style="color:#059669">$6.000</div></div></div>
-      <div><div class="field"><div class="label">Fuente</div><div class="value">WhatsApp</div></div></div>
-      <div><div class="field"><div class="label">Campaña</div><div class="value">Fibra Julio</div></div></div>
-    </div>
-  </div></div>`;
-}
-
-function renderTecnico(){
-  return `<div class="card"><div style="padding:20px">
-    <div class="grid-2">
-      <div><div class="field"><div class="label">Tecnología</div><div class="value">GPON · Fibra Óptica</div></div></div>
-      <div><div class="field"><div class="label">Zona</div><div class="value">Fresno</div></div></div>
-    </div>
-    <div style="margin-top:12px;padding:12px;background:#FFFBEB;border-radius:8px;font-size:12px;color:#D97706">📋 Información técnica aún no registrada (caja, puerto, ONT).</div>
-  </div></div>`;
-}
-
-function renderFinanciero(){
-  return `<div class="card"><div style="padding:20px">
-    <div class="grid-3" style="margin-bottom:16px">
-      <div style="background:#ECFDF5;padding:12px;border-radius:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#059669">3</div><div style="font-size:10px;color:#059669">Pagadas</div></div>
-      <div style="background:#FFFBEB;padding:12px;border-radius:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#D97706">0</div><div style="font-size:10px;color:#D97706">Pendientes</div></div>
-      <div style="background:#F3F4F6;padding:12px;border-radius:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#6B7280">$59.990</div><div style="font-size:10px;color:#6B7280">Próxima</div></div>
-    </div>
-    <div class="field"><div class="label">Saldo</div><div class="value" style="color:#059669">$0 · Al día</div></div>
-    <div class="field"><div class="label">Método de pago</div><div class="value">Transferencia bancaria</div></div>
-  </div></div>`;
-}
-
-function renderSoporte(){
-  return `<div class="card"><div style="padding:20px">
-    <div style="padding:16px;background:#F9FAFB;border-radius:8px;text-align:center;color:#6B7280;font-size:13px">✅ Sin incidentes registrados</div>
-  </div></div>`;
-}
-
-function renderDocumentos(){
-  return `<div class="card"><div style="padding:20px">
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6"><span style="font-size:20px">📄</span><div><div style="font-size:13px;font-weight:500">Cédula</div><div style="font-size:11px;color:#6B7280">CC 123456789 · Verificada</div></div></div>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6"><span style="font-size:20px">📄</span><div><div style="font-size:13px;font-weight:500">Recibo público</div><div style="font-size:11px;color:#6B7280">Adjunto · Pendiente verificación</div></div></div>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><span style="font-size:20px">📄</span><div><div style="font-size:13px;font-weight:500">Contrato firmado</div><div style="font-size:11px;color:#6B7280">Firmado digitalmente el 08/07/2024</div></div></div>
-  </div></div>`;
-}
-
-function renderObservaciones(){
-  return `<div class="card"><div style="padding:20px">
-    <div style="display:flex;gap:8px;margin-bottom:16px"><input id="note-input" placeholder="Agregar observación..." style="flex:1;padding:10px 14px;border:1.5px solid #D1D5DB;border-radius:8px;font-size:13px;outline:none"><button onclick="addNote()" style="padding:10px 20px;background:#0066FF;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">Agregar</button></div>
-    <div style="font-size:12px;color:#6B7280;padding:12px;background:#F9FAFB;border-radius:8px">
-      <div style="margin-bottom:8px"><span style="color:#9CA3AF">10/07/2024 - María García:</span> Cliente solicitó cambio de contraseña WiFi</div>
-      <div style="margin-bottom:8px"><span style="color:#9CA3AF">15/07/2024 - Sistema:</span> Primera factura generada automáticamente</div>
-      <div><span style="color:#9CA3AF">05/08/2024 - Sistema:</span> Pago recibido exitosamente</div>
-    </div>
-  </div></div>`;
-}
-
-renderSearch();
+render();
 </script>
 </body>
 </html>

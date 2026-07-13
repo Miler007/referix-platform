@@ -4,187 +4,298 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Referix — Ventas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+:root{--primary:#0066FF;--primary-dark:#0047B3;--success:#059669;--warning:#D97706;--danger:#DC2626;--gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;--gray-300:#D1D5DB;--gray-400:#9CA3AF;--gray-500:#6B7280;--gray-600:#4B5563;--gray-700:#374151;--gray-800:#1F2937;--gray-900:#111827;--radius:14px;--shadow:0 1px 3px rgba(0,0,0,.04);--shadow-lg:0 8px 32px rgba(0,0,0,.08);--transition:all .25s cubic-bezier(.4,0,.2,1)}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F8F9FA;color:#111827;line-height:1.5;touch-action:manipulation}
-#app{max-width:440px;margin:0 auto;min-height:100vh;background:#FFFFFF;position:relative;overflow-x:hidden}
-/* Touch targets mínimos 44px */
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);color:var(--gray-900);line-height:1.5;touch-action:manipulation;font-feature-settings:'cv02','cv03','cv04','cv11'}
+::selection{background:var(--primary);color:#fff}
+#app{max-width:440px;margin:0 auto;min-height:100vh;background:#fff;position:relative;overflow-x:hidden;box-shadow:0 0 60px rgba(0,0,0,.04)}
 button,.btn,input,select{min-height:44px}
-input,select{font-size:16px!important} /* Evita zoom en iOS */
+input,select{font-size:16px!important}
 /* ── Spacing ── */
-.px-5{padding-left:20px;padding-right:20px}.py-4{padding-top:16px;padding-bottom:16px}.py-6{padding-top:24px;padding-bottom:24px}.py-10{padding-top:40px;padding-bottom:40px}.pb-20{padding-bottom:80px}
-.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-auto{margin-top:auto}
+.px-5{padding-left:24px;padding-right:24px}.py-4{padding-top:16px;padding-bottom:16px}.py-6{padding-top:28px;padding-bottom:28px}.py-10{padding-top:40px;padding-bottom:40px}.pb-20{padding-bottom:80px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mt-4{margin-top:16px}
 /* ── Typography ── */
-.text-xs{font-size:12px;line-height:1.4;color:#6B7280}.text-sm{font-size:14px;line-height:1.5;color:#6B7280}
-.text-lg{font-size:18px;font-weight:700;color:#111827;line-height:1.3}.text-xl{font-size:22px;font-weight:700;line-height:1.3}
-.text-2xl{font-size:28px;font-weight:800;line-height:1.2}.text-3xl{font-size:34px;font-weight:800;line-height:1.1}
+.text-xs{font-size:12px;line-height:1.4;color:var(--gray-400)}.text-sm{font-size:14px;line-height:1.5;color:var(--gray-500)}
+.text-lg{font-size:18px;font-weight:700;color:var(--gray-900);line-height:1.3;letter-spacing:-.3px}.text-xl{font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-.3px}
 .font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}
 .text-center{text-align:center}.text-right{text-align:right}.flex{display:flex}.flex-col{flex-direction:column}
 .items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}
 .justify-between{justify-content:space-between}.flex-1{flex:1}.gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}
-.grid{display:grid}.grid-cols-2{grid-template-columns:1fr 1fr}.grid-cols-3{grid-template-columns:1fr 1fr 1fr}
+.grid{display:grid}.grid-cols-2{grid-template-columns:1fr 1fr}
 /* ── Colors ── */
-.primary{color:#0066FF}.primary-bg{background:#0066FF;color:#fff}
-.success{color:#059669}.success-bg{background:#059669;color:#fff}
-.warning{color:#D97706}.muted{color:#9CA3AF}.subtle{color:#6B7280}
-.bg-subtle{background:#F3F4F6}.bg-surface{background:#fff}.bg-premium{background:linear-gradient(135deg,#0066FF,#0052CC)}
+.primary{color:var(--primary)}.success{color:var(--success)}.warning{color:var(--warning)}.muted{color:var(--gray-400)}.subtle{color:var(--gray-500)}
 /* ── Buttons ── */
-.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
-.btn:active{transform:scale(0.97)}
-.btn-primary{background:#0066FF;color:#fff}.btn-primary:hover{background:#0052CC}
-.btn-success{background:#059669;color:#fff}.btn-success:hover{background:#047857}
-.btn-ghost{background:transparent;color:#0066FF;padding:8px}.btn-ghost:hover{background:#F3F4F6}
-.btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}.btn-outline:hover{background:#F9FAFB}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:600;border:none;cursor:pointer;transition:var(--transition);letter-spacing:-.2px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 16px rgba(0,102,255,.2)}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(0,102,255,.3);transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,var(--success),#047857);color:#fff;box-shadow:0 4px 16px rgba(5,150,105,.2)}
+.btn-ghost{background:transparent;color:var(--primary);padding:8px;border-radius:8px;transition:var(--transition)}
+.btn-ghost:hover{background:var(--gray-50)}
+.btn-outline{background:#fff;color:var(--gray-700);border:1.5px solid var(--gray-200)}.btn-outline:hover{background:var(--gray-50);border-color:var(--gray-300)}
 /* ── Cards ── */
-.card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:20px;transition:all .2s;cursor:pointer}
-.card:hover{border-color:#D1D5DB;box-shadow:0 4px 12px rgba(0,0,0,.04)}
-.card:active{transform:scale(0.99)}
-.card-selected{border-color:#0066FF;background:#F5F9FF;box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+.card{background:#fff;border:1px solid var(--gray-100);border-radius:16px;padding:20px;transition:var(--transition);cursor:pointer;box-shadow:var(--shadow)}
+.card:hover{border-color:var(--gray-200);box-shadow:var(--shadow-lg)}
+.card:active{transform:scale(.99)}
+.card-selected{border-color:var(--primary);background:#F5F9FF;box-shadow:0 0 0 3px rgba(0,102,255,.1)}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;gap:4px}
-.badge-gpon{background:#EFF6FF;color:#0066FF}.badge-tv{background:#FEF3C7;color:#D97706}
-.badge-sym{background:#ECFDF5;color:#059669}.badge-cere{background:#F3E8FF;color:#9333EA}
+.badge-gpon{background:var(--primary-light, #EFF6FF);color:var(--primary)}.badge-tv{background:#FEF3C7;color:var(--warning)}
+.badge-sym{background:#ECFDF5;color:var(--success)}.badge-cere{background:#F3E8FF;color:#9333EA}
 /* ── Animations ── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .animate-fadeUp{animation:fadeUp .35s ease-out both}.animate-fadeIn{animation:fadeIn .25s ease-out both}
 .animate-pulse{animation:pulse 2s ease-in-out infinite}
 .delay-1{animation-delay:.05s}.delay-2{animation-delay:.1s}.delay-3{animation-delay:.15s}
 /* ── Inputs ── */
-input,select{width:100%;padding:14px 16px;border:1.5px solid #E5E7EB;border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;background:#fff}
-input:focus{border-color:#0066FF;box-shadow:0 0 0 3px rgba(0,102,255,.1)}
-input::placeholder{color:#9CA3AF}
-/* ── Shadows ── */
-.shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.04)}.shadow-md{box-shadow:0 4px 16px rgba(0,0,0,.06)}
-/* ── Divider ── */
-.divider{border:none;border-top:1px solid #F0F0F0;margin:16px 0}
+input,select{width:100%;padding:14px 16px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:var(--transition);background:#fff}
+input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,102,255,.1)}
+input::placeholder{color:var(--gray-400)}
 /* ── Misc ── */
-.rounded-full{border-radius:999px}.rounded-xl{border-radius:14px}.rounded-2xl{border-radius:16px}
-.w-full{width:100%}.h-full{height:100%}.block{display:block}.hidden{display:none}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-/* Scroll suave */
+.shadow-sm{box-shadow:var(--shadow)}.shadow-md{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.divider{border:none;border-top:1px solid var(--gray-100);margin:16px 0}
+.rounded-full{border-radius:999px}.rounded-xl{border-radius:14px}
+.w-full{width:100%}.block{display:block}.hidden{display:none}
 html{scroll-behavior:smooth}
-/* Checkbox personalizado */
-.check-card{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px solid #E5E7EB;border-radius:12px;cursor:pointer;transition:all .2s;margin-bottom:8px}
-.check-card:hover{border-color:#D1D5DB}.check-card.active{border-color:#0066FF;background:#F5F9FF}
-.check-card .check{width:22px;height:22px;border:2px solid #D1D5DB;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;flex-shrink:0}.check-card.active .check{background:#0066FF;border-color:#0066FF;color:#fff}
+.svg-icon svg{width:100%;height:100%}
+.check-card{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px solid var(--gray-200);border-radius:12px;cursor:pointer;transition:var(--transition);margin-bottom:8px}
+.check-card:hover{border-color:var(--gray-300)}.check-card.active{border-color:var(--primary);background:#F5F9FF}
+.check-card .check{width:22px;height:22px;border:2px solid var(--gray-300);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:var(--transition);flex-shrink:0}.check-card.active .check{background:var(--primary);border-color:var(--primary);color:#fff}
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:2px}
 </style>
 </head>
 <body>
 <div id="app"></div>
 
+<script src="/icons.js"></script>
 <script>
 // ─── API ──────────────────────────────────────────────────────────
-const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay'},
-  async get(p){try{const r=await fetch(this.base+p,{headers:this.headers});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}},
-  async post(p,b){try{const r=await fetch(this.base+p,{method:'POST',headers:this.headers,body:JSON.stringify(b)});if(!r.ok)return null;return(await r.json()).data}catch(e){return null}}};
+const _user=JSON.parse(localStorage.getItem('referix_user')||'{}');
+function apiFetch(url,opts,timeout=6000){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),timeout);
+  return fetch(url,{...opts,signal:ctrl.signal}).then(r=>{clearTimeout(t);return r;}).catch(()=>null);
+}
+const API={base:'https://referix-api.reto-diario.workers.dev',headers:{'Content-Type':'application/json','X-Tenant-Id':'interplay','X-User-Id':_user.id||''},
+  async get(p){try{const r=await apiFetch(this.base+p,{headers:this.headers,method:'GET'});if(!r||!r.ok)return null;return(await r.json()).data}catch(e){return null}},
+  async post(p,b){try{const r=await apiFetch(this.base+p,{headers:this.headers,method:'POST',body:JSON.stringify(b)});if(!r||!r.ok)return null;return(await r.json()).data}catch(e){return null}},
+  async del(p){try{const r=await apiFetch(this.base+p,{headers:this.headers,method:'DELETE'});if(!r||!r.ok)return null;return(await r.json()).data}catch(e){return null}}};
 
 // ─── State ────────────────────────────────────────────────────────
 let step='dashboard',zoneData=[],zoneList=[],plans=[],selectedPlan=null,selectedZone=null,coverResult=null;
-let clientType='RESIDENTIAL',formData={},docData={},userName='Carlos',userSales=18,userGoal=25,userComm=132000;
+let clientType='RESIDENTIAL',formData={},docData={},userName=_user.name||'Carlos',userRole=_user.role||'ADVISOR',userId=_user.id||'user-admin',userSales=0,userComm=0;
+let dashData={salesToday:0,installationsPending:0,commissionsHeld:{count:0,total:0},recentActivity:[],myClients:[]};
+let searchResults=[],searchTimer=null;;
 
 // ─── Init ─────────────────────────────────────────────────────────
 async function init(){
   zoneData=await API.get('/api/v2/catalog/zones')||[];
   zoneList=[...new Map(zoneData.map(z=>[z.name,z])).values()];
-  render();
+  await loadDash();
 }
 init();
 
 // ─── Router ──────────────────────────────────────────────────────
 function render(){
   const el=document.getElementById('app');
-  const views={dashboard:()=>renderDashboard(),coverage:()=>renderCoverage(),plans:async()=>{el.innerHTML='<div class="px-5 py-6"><p class="text-xs muted">Cargando planes...</p></div>';el.innerHTML=await renderPlans();},form:()=>renderForm(),docs:()=>renderDocs(),confirm:()=>renderConfirm(),success:()=>renderSuccess(),opportunity:()=>renderOpportunity()};
+  const views={dashboard:()=>renderDashboard(),coverage:()=>renderCoverage(),plans:async()=>{el.innerHTML='<div class="px-5 py-6"><p class="text-xs muted">Cargando planes...</p></div>';el.innerHTML=await renderPlans();},form:()=>renderForm(),docs:()=>renderDocs(),confirm:()=>renderConfirm(),success:()=>renderSuccess(),opportunity:()=>renderOpportunity(),commissions:async()=>{el.innerHTML='<div class="px-5 py-6"><p class="text-xs muted">Cargando comisiones...</p></div>';el.innerHTML=await renderCommissionsView();}};
   const viewFn=views[step]||renderDashboard;
   const result=viewFn();
   if(result instanceof Promise)result.then(function(html){if(html)el.innerHTML=html;});
   else el.innerHTML=result;
 }
 function go(s){step=s;render();}
-function getComm(p){return Math.round((p||0)*0.1);}
+function getComm(p){return Math.round((p||0)*0.5);}
 
 // ─── DASHBOARD ──────────────────────────────────────────────────
+async function loadDash(){
+  const d=await API.get('/api/v1/dashboard');
+  if(d){dashData={salesToday:d.salesToday||0,installationsPending:d.installationsPending||0,commissionsHeld:d.commissionsHeld||{count:0,total:0},recentActivity:(d.recentActivity||[]).slice(0,6),myClients:[]};}
+  const clients=await API.get('/api/v1/referrals?limit=5');
+  if(clients&&clients.length)dashData.myClients=clients;
+  render();
+}
+function searchClients(q){
+  clearTimeout(searchTimer);
+  const el=document.getElementById('search-results');
+  if(!q||q.length<2){searchResults=[];if(el){el.innerHTML='';el.style.display='none';}return;}
+  searchTimer=setTimeout(async function(){
+    const r=await API.get('/api/v1/clients/search?q='+encodeURIComponent(q));
+    searchResults=r||[];
+    if(!el)return;
+    el.style.display='block';
+    if(searchResults.length===0){el.innerHTML='<div style="padding:12px;font-size:13px;color:#9CA3AF;text-align:center">Sin resultados</div>';return;}
+    el.innerHTML=searchResults.map(c=>'<div style="padding:10px 12px;border-bottom:1px solid #F3F4F6;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="window.location=\'/customer360.html?id='+c.id+'\'"><div style="width:32px;height:32px;border-radius:50%;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0066FF">'+(c.full_name||'?')[0]+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+(c.full_name||'')+'</div><div style="font-size:11px;color:#9CA3AF">'+(c.phone||c.email||'')+'</div></div><span style="font-size:10px;font-weight:500;color:#6B7280;background:#F3F4F6;padding:2px 8px;border-radius:999px">'+(c.funnel_status||'')+'</span></div>').join('');
+  },250);
+}
 function renderDashboard(){
   const hora=new Date().getHours();
   const saludo=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
-  const momento=hora<9?'temprano':hora<12?'media mañana':hora<14?'mediodía':hora<17?'tarde':'final de la tarde';
-  const completado=Math.min(100,Math.round((userSales/userGoal)*70+15));
-  const healthClients=[
-    {name:'María Rodríguez',health:96,label:'Alta probabilidad',color:'#059669',bg:'#ECFDF5',action:'📞 Llamar',prio:'🔴'},
-    {name:'Pedro Martínez',health:65,label:'Necesita seguimiento',color:'#D97706',bg:'#FFFBEB',action:'📋 Documentos',prio:'🟠'},
-    {name:'Carlos Ruiz',health:30,label:'Riesgo de perder',color:'#DC2626',bg:'#FEF2F2',action:'📍 Visitar',prio:'🟡'},
-  ];
+  const {salesToday,installationsPending,commissionsHeld,recentActivity,myClients}=dashData;
+  const totalEarned=commissionsHeld.total||0;
+  const pendingCount=myClients.filter(c=>c.funnel_status==='NEW'||c.funnel_status==='CONTACTED').length;
   return `<div class="px-5 py-6 animate-fadeUp">
-    <!-- Saludo según momento del día -->
-    <div class="flex items-center gap-3 mb-4">
-      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#0052CC);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${userName[0]}</div>
-      <div><p class="text-lg">${saludo}, ${userName}</p><p class="text-xs" style="color:#9CA3AF">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})} · ${hora<12?'🌤️ Mañana':hora<18?'☀️ Tarde':'🌙 Noche'}</p></div>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0066FF,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;box-shadow:0 4px 16px rgba(0,102,255,.2)">${userName[0]}</div>
+      <div><p style="font-size:19px;font-weight:700;letter-spacing:-.3px">${saludo}, ${userName}</p><p style="font-size:12px;color:var(--gray-400)">${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</p></div>
     </div>
 
-    <!-- Agenda inteligente con prioridad -->
-    <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:14px;padding:20px;margin-bottom:16px">
-      <p style="font-size:15px;color:#003DA6;font-weight:500">${momento==='temprano'?'Comienza tu jornada con energía 💪':momento==='media mañana'?'Sigue así, llevas buen ritmo 📈':momento==='mediodía'?'Buen ritmo, aprovecha la tarde 🚀':momento==='tarde'?'Aún hay tiempo para más ventas ⏳':'Antes de terminar, revisa estos seguimientos 📋'}</p>
-      <p style="font-size:13px;color:#0052CC;margin-top:6px">Has completado el <strong>${completado}%</strong> de tu jornada · ${userSales} clientes conectados este mes</p>
+    <!-- Search bar -->
+    <div style="position:relative;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:14px;padding:0 14px;transition:all .2s" id="search-wrapper">
+        <span style="color:var(--gray-400);flex-shrink:0">${icn('search',16)}</span>
+        <input type="text" id="search-input" placeholder="Buscar cliente por nombre, teléfono o email..." oninput="searchClients(this.value)" style="border:none;background:transparent;padding:14px 8px;font-size:14px;outline:none;width:100%">
+      </div>
+      <div id="search-results" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--gray-200);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.1);z-index:100;max-height:280px;overflow-y:auto;display:none"></div>
     </div>
 
-    <!-- Prioridad inteligente -->
-    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
-      <p style="font-size:14px;font-weight:600;margin-bottom:10px">📋 Prioridades del día</p>
-      ${healthClients.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F3F4F6;cursor:pointer">
-        <div style="width:36px;height:36px;border-radius:50%;background:${c.bg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${c.color}">${c.name[0]}</div>
-        <div style="flex:1"><p style="font-size:13px;font-weight:500">${c.name} <span style="font-size:10px;color:${c.color};font-weight:600">${c.prio} ${c.health}/100</span></p><p style="font-size:11px;color:#6B7280">${c.label}</p></div>
-        <span style="font-size:12px;font-weight:500;color:#0066FF">${c.action}</span>
-      </div>`).join('')}
-    </div>
+    <!-- Hero CTA -->
+    <button class="btn" onclick="go('coverage')" style="background:linear-gradient(135deg,#0066FF,#003DA6);color:#fff;font-size:20px;font-weight:700;padding:20px;border-radius:16px;box-shadow:0 8px 32px rgba(0,102,255,.25);letter-spacing:-.3px;margin-bottom:16px">
+      <span style="display:flex;align-items:center;gap:10px">${icn('customer',22)} Atender cliente nuevo</span>
+    </button>
 
-    <!-- Una acción principal -->
-    <button class="btn btn-primary mb-4 shadow-md" onclick="go('coverage')" style="font-size:19px;padding:22px;border-radius:16px">🙋 Atender cliente</button>
-
-    <!-- Center de Inteligencia Comercial -->
-    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:14px;padding:14px;margin-bottom:16px">
-      <p style="font-size:12px;font-weight:600;color:#059669">💡 Inteligencia Comercial</p>
-      <p style="font-size:12px;color:#047857;margin-top:4px">Esta semana MegaUltra 100 creció 18% en Fresno. El 72% de familias de 4 personas eligen este plan.</p>
-    </div>
-
-    <!-- Timeline rápido -->
-    <div style="background:#fff;border:1px solid #F0F0F0;border-radius:14px;padding:16px;margin-bottom:16px">
-      <p style="font-size:14px;font-weight:600;margin-bottom:8px">⚡ Hoy</p>
-      <div style="border-left:2px solid #E5E7EB;padding-left:12px;margin-left:4px">
-        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:12</span><p style="font-size:12px;margin-top:2px">María Rodríguez — Interesada en fibra 🏠</p></div>
-        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:18</span><p style="font-size:12px;margin-top:2px">CERE recomendó MegaUltra 100 ✅</p></div>
-        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">09:22</span><p style="font-size:12px;margin-top:2px">Cotización enviada 📄</p></div>
-        <div style="padding:6px 0"><span style="font-size:10px;color:#9CA3AF">11:40</span><p style="font-size:12px;margin-top:2px">Cliente solicita tiempo 🕐</p></div>
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+      <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:12px;padding:12px 8px;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px">${icn('trendingUp',12)}<span style="font-size:8px;color:#059669;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Ventas</span></div>
+        <p style="font-size:20px;font-weight:800;color:#059669;letter-spacing:-.5px">${salesToday}</p>
+      </div>
+      <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:12px;padding:12px 8px;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px">${icn('money',12)}<span style="font-size:8px;color:#0066FF;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Comisiones</span></div>
+        <p style="font-size:20px;font-weight:800;color:#0066FF;letter-spacing:-.5px">$${Math.round(totalEarned).toLocaleString('es-CO')}</p>
+      </div>
+      <div style="background:linear-gradient(135deg,#FFFBEB,#FDE68A);border-radius:12px;padding:12px 8px;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px">${icn('clock',12)}<span style="font-size:8px;color:#D97706;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Pendientes</span></div>
+        <p style="font-size:20px;font-weight:800;color:#D97706;letter-spacing:-.5px">${pendingCount}</p>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="grid grid-cols-2 gap-2">
-      <button class="btn btn-outline" onclick="go('coverage')" style="padding:14px;font-size:13px">🙋 Atender cliente</button>
-      <button class="btn btn-outline" onclick="window.location='/customer360.html'" style="padding:14px;font-size:13px">👤 Buscar cliente</button>
+    <!-- Mis clientes -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:24px;height:24px;border-radius:6px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;color:var(--primary)">${icon('users','',16)}</div>
+          <span style="font-size:13px;font-weight:600;color:var(--gray-800);letter-spacing:-.2px">Mis clientes</span>
+        </div>
+        <span onclick="loadMoreClients()" style="font-size:11px;color:var(--primary);font-weight:500;cursor:pointer">Ver todos →</span>
+      </div>
+      ${myClients.length===0?'<div style="padding:24px 16px;background:var(--gray-50);border-radius:12px;text-align:center;font-size:12px;color:var(--gray-400)"><div style="margin-bottom:8px">'+icon('users','',24)+'</div>Aún no tienes clientes</div>':
+      myClients.map(c=>{
+        const initial=(c.full_name||'?')[0];
+        const isNew=c.funnel_status==='NEW';
+        return '<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:12px;margin-bottom:6px;cursor:pointer;transition:var(--transition)" onclick="window.location=\'/customer360.html?id='+c.id+'" onmouseover="this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.borderColor=\'var(--gray-100)\'"><div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--primary);flex-shrink:0">'+initial+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--gray-800)">'+(c.full_name||'')+'</div><div style="font-size:10px;color:var(--gray-400);margin-top:1px">'+((c.phone?'📱 '+c.phone:'')||c.email||'')+'</div></div><span style="font-size:9px;font-weight:600;color:'+(isNew?'var(--warning)':'var(--success)')+';background:'+(isNew?'#FFFBEB':'#ECFDF5')+';padding:2px 8px;border-radius:999px">'+(c.funnel_status||'')+'</span></div>';
+      }).join('')}
     </div>
+
+    <!-- Insight card -->
+    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:28px;height:28px;border-radius:8px;background:rgba(5,150,105,.12);display:flex;align-items:center;justify-content:center;color:#059669;flex-shrink:0">${icon('lightbulb','',16)}</div>
+      <div><p style="font-size:11px;font-weight:600;color:#065F46">Inteligencia Comercial</p><p style="font-size:10px;color:#047857;margin-top:2px;line-height:1.4">MegaUltra 100 creció <strong>18%</strong> en Fresno. El <strong>72%</strong> de familias de 4 personas eligen este plan.</p></div>
+    </div>
+
+    <!-- Activity card -->
+    <div style="background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <div style="width:22px;height:22px;border-radius:6px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;color:var(--primary)">${icon('bolt','',14)}</div>
+        <span style="font-size:11px;font-weight:600;color:var(--gray-800)">Actividad reciente</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--gray-400)">${recentActivity.length} eventos</span>
+      </div>
+      ${recentActivity.length===0?'<div style="padding:4px 0;font-size:11px;color:var(--gray-400)">Sin actividad registrada hoy</div>':
+      '<div>'+recentActivity.map(a=>{
+        const t=a.time?new Date(a.time).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}):'';
+        let label=a.event||'',ico=icon('pin','',10);
+        try{const p=JSON.parse(a.payload||'{}');
+          if(a.event==='COMMISSION_CREATED'){label=(p.planName||'')+' · '+(p.clientName||'');ico=icon('money','',10);}
+          else if(a.event==='INVOICE_PAID'){label='Factura pagada';ico=icon('check','',10);}
+          else if(a.event==='COMMISSION_PAID'){label='Comisión pagada';ico=icon('card','',10);}
+        }catch(e){}
+        return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--gray-50)"><span style="font-size:8px;color:var(--gray-400);width:28px;flex-shrink:0;font-variant-numeric:tabular-nums">'+t+'</span><span style="width:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+ico+'</span><span style="font-size:10px;color:var(--gray-600)">'+label+'</span></div>';
+      }).join('')+'</div>'}
+    </div>
+
+    <!-- CERE card -->
+    <div style="background:linear-gradient(135deg,#F3E8FF,#EDE9FE);border-radius:12px;padding:14px 16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="go('coverage')">
+      <div style="width:32px;height:32px;border-radius:8px;background:rgba(124,58,237,.12);display:flex;align-items:center;justify-content:center;color:#7C3AED;flex-shrink:0">${icon('brain','',16)}</div>
+      <div><p style="font-size:11px;font-weight:600;color:#5B21B6">Recomendación CERE</p><p style="font-size:10px;color:#6D28D9;margin-top:1px">Responde 3 preguntas y encuentra el plan perfecto</p></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn" onclick="go('coverage')" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:14px;font-size:13px;font-weight:600;border-radius:12px;box-shadow:0 4px 12px rgba(0,102,255,.15)">${icn('customer',14)} Nueva venta</button>
+      <button class="btn" onclick="go('commissions')" style="background:#fff;color:var(--gray-700);padding:14px;font-size:13px;font-weight:600;border-radius:12px;border:1px solid var(--gray-200)">${icn('money',14)} Mis comisiones</button>
+    </div>
+  </div>`;
+}
+async function loadMoreClients(){
+  const r=await API.get('/api/v1/referrals?limit=50');
+  if(r&&r.length){dashData.myClients=r;render();}
+}
+
+// ─── COMMISSIONS VIEW ──────────────────────────────────────────
+async function renderCommissionsView(){
+  const data=await API.get('/api/v1/commissions/my-commissions');
+  if(!data)return `<div class="px-5 py-6 animate-fadeUp"><button class="btn-ghost mb-4" onclick="go('dashboard')">${icn('back',14)} Volver</button><p class="text-lg mb-2">Comisiones</p><p class="text-sm muted">No se pudieron cargar las comisiones</p></div>`;
+  const {commissions,summary}=data;
+  const {pending,paid,totalPending,totalPaid,nextCut}=summary||{};
+  const cortes=['','ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  return `<div class="px-5 py-6 animate-fadeUp">
+    <button class="btn-ghost mb-4" onclick="go('dashboard')">${icn('back',14)} Volver</button>
+    <p class="text-lg mb-1">${icn('money',14)} Mis Comisiones</p>
+    <p class="text-sm muted mb-4">50% del valor del plan · Corte ${nextCut||'15/30 cada mes'}</p>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:16px;text-align:center">
+        <span style="font-size:11px;color:#92400E;font-weight:600;text-transform:uppercase">Pendientes</span>
+        <p style="font-size:22px;font-weight:800;color:#D97706;margin-top:4px">${pending||0}</p>
+        <p style="font-size:12px;color:#92400E">$${(totalPending||0).toLocaleString('es-CO')}</p>
+      </div>
+      <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:16px;text-align:center">
+        <span style="font-size:11px;color:#065F46;font-weight:600;text-transform:uppercase">Pagadas</span>
+        <p style="font-size:22px;font-weight:800;color:#059669;margin-top:4px">${paid||0}</p>
+        <p style="font-size:12px;color:#065F46">$${(totalPaid||0).toLocaleString('es-CO')}</p>
+      </div>
+    </div>
+    <div style="background:#EFF6FF;border-radius:12px;padding:14px;margin-bottom:20px">
+      <p style="font-size:12px;color:#003DA6">📅 Próximo corte de pago: <strong>${nextCut||'—'}</strong></p>
+      <p style="font-size:11px;color:#0052CC;margin-top:2px">Las comisiones se pagan los días 15 y 30 de cada mes</p>
+    </div>
+    <p style="font-size:13px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Historial</p>
+    ${(!commissions||commissions.length===0)?'<div style="padding:20px;background:#F9FAFB;border-radius:12px;text-align:center;font-size:13px;color:#9CA3AF">Aún no tienes comisiones registradas</div>':
+    commissions.map(c=>{
+      const est=c.financial_state;
+      const color=est==='PAID'?'#059669':est==='PAYABLE'?'#D97706':'#6B7280';
+      const bg=est==='PAID'?'#ECFDF5':est==='PAYABLE'?'#FFFBEB':'#F3F4F6';
+      const label=est==='PAID'?'Pagado':est==='PAYABLE'?'Por pagar':'Pendiente';
+      return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #F0F0F0;border-radius:12px;padding:12px;margin-bottom:6px"><div style="width:36px;height:36px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;color:'+color+'">'+icn('money',14)+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">$'+(c.final_amount||0).toLocaleString('es-CO')+'</div><div style="font-size:11px;color:#9CA3AF">Corte: '+(c.held_until||'—')+'</div></div><span style="font-size:10px;font-weight:600;color:'+color+';background:'+bg+';padding:3px 10px;border-radius:999px">'+label+'</span></div>';
+    }).join('')}
   </div>`;
 }
 
 // ─── COVERAGE ────────────────────────────────────────────────────
 function renderCoverage(){
+  const zoneIcon={alvarado:'pin',delicias:'pinTree',fresno:'pin','guayabal':'pinFiber','la sierra':'pinMountain','lérida':'pin','venadillo':'pin','alto del sol':'pinSun','iguacitos':'pinTree','san antonio':'pin','zelandia':'pinTree'};
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('dashboard')">← Volver</button>
+    <button class="btn-ghost mb-4" onclick="go('dashboard')">${icn('back',14)} Volver</button>
     <p class="text-lg mb-2">¿Dónde está el cliente?</p>
     <p class="text-sm mb-6">Elige el municipio para ver la cobertura disponible</p>
-    <div class="grid grid-cols-2 gap-2 mb-6">${zoneList.map((z,i)=>`<div class="card animate-fadeUp delay-${(i%3)+1}" onclick="selectedZone={id:'${z.zone_id}',name:'${z.name}'};coverResult={available:true,msg:'Cobertura GPON disponible'};go('plans')" style="text-align:center;padding:16px;border-color:${selectedZone?.name===z.name?'#0066FF':'#F0F0F0'}">📍<br><span style="font-weight:600;font-size:13px">${z.name}</span></div>`).join('')}</div>
-    ${selectedZone?`<p class="text-xs muted text-center">✅ Cobertura GPON disponible en ${selectedZone.name}</p>`:''}
+    <div class="grid grid-cols-2 gap-2 mb-6">${zoneList.map((z,i)=>`<div class="card animate-fadeUp delay-${(i%3)+1}" onclick="selectedZone={id:'${z.zone_id}',name:'${z.name}'};coverResult={available:true,msg:'Cobertura GPON disponible'};go('plans')" style="text-align:center;padding:16px;border-color:${selectedZone?.name===z.name?'#0066FF':'#F0F0F0'}">${icn(zoneIcon[z.name.toLowerCase()]||'wifi',20)}<br><span style="font-weight:600;font-size:13px">${z.name}</span></div>`).join('')}</div>
+    ${selectedZone?`<p class="text-xs muted text-center">${icn('check',14)} Cobertura GPON disponible en ${selectedZone.name}</p>`:''}
   </div>`;
 }
 
 // ─── PLANS (Premium) ─────────────────────────────────────────────
 function getPlanBadge(plan,idx){
-  if(idx===0&&plans.length>1)return{text:'💰 Más económico',color:'bg:#ECFDF5;color:#059669',icon:'💰'};
+  if(idx===0&&plans.length>1)return{text:`${icn('money',14)} Más económico`,color:'bg:#ECFDF5;color:#059669',icon:icn('money',14)};
   if(plan.download_speed>=200)return{text:'🚀 Mayor velocidad',color:'bg:#EFF6FF;color:#0066FF',icon:'🚀'};
   if(plan.download_speed>=100)return{text:'🔥 Más popular',color:'bg:#FEF3C7;color:#D97706',icon:'🔥'};
   if(plan.benefits&&plan.benefits.includes('TV'))return{text:'📺 TV incluida',color:'bg:#F3E8FF;color:#9333EA',icon:'📺'};
-  return{text:'✅ Recomendado',color:'bg:#ECFDF5;color:#059669',icon:'✅'};
+  return{text:`${icn('check',14)} Recomendado`,color:'bg:#ECFDF5;color:#059669',icon:icn('check',14)};
 }
 function selectPlan(idx){
   const display=getDisplayPlans();
@@ -204,13 +315,13 @@ async function renderPlans(){
   const cmpIdx=comparadorActivo;
   if(!display||display.length===0){
     return `<div class="px-5 py-6 animate-fadeUp">
-      <button class="btn-ghost mb-4" onclick="go('coverage')">← Municipios</button>
+      <button class="btn-ghost mb-4" onclick="go('coverage')">${icn('back',14)} Municipios</button>
       <p class="text-lg mb-2">Planes en ${selectedZone?.name||''}</p>
-      <p style="font-size:13px;color:#6B7280;margin-top:12px;padding:20px;background:#F9FAFB;border-radius:12px">📋 Catálogo pendiente de configurar para ${selectedZone?.name||'este municipio'}. Cuando INTERPLAY disponga de la información oficial, los planes aparecerán aquí.</p>
+      <p style="font-size:13px;color:#6B7280;margin-top:12px;padding:20px;background:#F9FAFB;border-radius:12px">${icn('document',14)} Catálogo pendiente de configurar para ${selectedZone?.name||'este municipio'}. Cuando INTERPLAY disponga de la información oficial, los planes aparecerán aquí.</p>
     </div>`;
   }
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('coverage')">← Municipios</button>
+    <button class="btn-ghost mb-4" onclick="go('coverage')">${icn('back',14)} Municipios</button>
     <div class="flex items-center justify-between mb-1">
       <p class="text-lg">Planes en ${selectedZone?.name||'Fresno'}</p>
       <span class="text-xs muted">${coverResult?.technologyName||'GPON'}</span>
@@ -220,84 +331,42 @@ async function renderPlans(){
     ${cmpIdx!==undefined?renderComparador(display,cmpIdx):''}
 
     <div class="flex flex-col gap-4">${display.map(function(plan,idx){
-      let ben=[];
-      try{ben=JSON.parse(plan.benefits||'[]');}catch(e){}
-      const hasTv=ben.some(function(b){return b.toLowerCase().includes('tv');});
       const instCost=plan.installation_cost||0;
-      return `<div class="card animate-fadeUp" style="padding:20px;border:2px solid ${selectedPlan?.name===plan.name?'#0066FF':'#F0F0F0'}"
-                onclick="selectPlan(${idx})">
-        <!-- Encabezado -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <span style="background:#EFF6FF;color:#0066FF;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600">🔵 ${coverResult?.technologyName||'GPON'}</span>
-        </div>
-        <div class="flex justify-between items-start mb-3">
-          <div><p class="text-lg font-bold" style="color:#111827">${plan.name}</p>
-            <p class="text-sm" style="color:#6B7280">${plan.download_speed} Mbps ${plan.is_symmetric?'Simétricos':''}</p></div>
-          <div class="text-right"><p class="text-xl font-bold primary">$${(plan.price||0).toLocaleString('es-CO')}</p>
-            <p class="text-xs muted">/mes</p></div>
-        </div>
-
-        <!-- Beneficios -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;font-size:13px">
-          <span style="color:#059669">✅ Internet Fibra Óptica</span>
-          <span style="color:#059669">✅ Router WiFi</span>
-          <span style="color:#059669">✅ Instalación Internet ${instCost===0?'GRATIS':'$'+instCost.toLocaleString('es-CO')}</span>
-          <span style="color:#059669">✅ Soporte INTERPLAY</span>
-          <span style="color:#059669">✅ Sin cláusula de permanencia</span>
-        </div>
-
-        <!-- TV -->
-        <div style="margin-bottom:12px;font-size:13px">
-          ${hasTv
-            ? '<span style="color:#059669">🟢 Incluye TV Digital HD</span>'
-            : '<span style="color:#6B7280">📺 TV Digital HD disponible como adicional</span>'}
-        </div>
-
-        <!-- Ideal para -->
-        <div style="margin-bottom:12px">
-          <p style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Ideal para</p>
-          <div style="display:flex;flex-wrap:wrap;gap:4px">
-            <span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">👨‍👩‍👧 ${plan.recommended_users||'2-3 personas'}</span>
-            <span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">📱 ${plan.recommended_devices||'Hasta 8 dispositivos'}</span>
-            ${(plan.recommended_use||'').split(',').map(function(u){return '<span style="background:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:11px">'+u.trim()+'</span>';}).join('')}
+      const tvIncluida=plan.has_tv===1||plan.has_tv==='1';
+      const isSelected=selectedPlan?.name===plan.name;
+      return `<div class="animate-fadeUp" style="background:#fff;border-radius:16px;overflow:hidden;border:2px solid ${isSelected?'#0066FF':'#E5E7EB'};box-shadow:${isSelected?'0 4px 20px rgba(0,102,255,.12)':'0 1px 3px rgba(0,0,0,.04)'};transition:all .25s;cursor:pointer" onclick="selectPlan(${idx})">
+        <!-- Accent bar when selected -->
+        ${isSelected?'<div style="height:3px;background:#0066FF"></div>':''}
+        <!-- Body -->
+        <div style="padding:18px 20px">
+          <!-- Price + Name -->
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p style="font-size:16px;font-weight:700;color:#111827">${plan.name}</p>
+              <p style="font-size:13px;color:#6B7280;margin-top:1px">${plan.download_speed} Mbps ${plan.is_symmetric?'Simétricos':''}</p>
+            </div>
+            <div class="text-right" style="flex-shrink:0">
+              <p style="font-size:22px;font-weight:800;color:#0066FF;letter-spacing:-.5px">$${(plan.price||0).toLocaleString('es-CO')}</p>
+              <p style="font-size:11px;color:#9CA3AF;margin-top:-2px">/mes</p>
+            </div>
           </div>
-        </div>
-
-        <!-- Costos -->
-        <div style="background:#F9FAFB;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
-            <span style="color:#6B7280">Plan mensual</span><span style="font-weight:600">$${(plan.price||0).toLocaleString('es-CO')}</span>
+          <!-- Tags row: technology + users + location -->
+          <div class="flex items-center gap-2" style="margin-bottom:14px;flex-wrap:wrap">
+            <span style="background:#EFF6FF;color:#0066FF;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;line-height:1.6">${coverResult?.technologyName||'GPON'}</span>
+            <span style="font-size:12px;color:#6B7280">${icn('users',14)} ${plan.recommended_users||'2-3 personas'}</span>
+            <span style="font-size:12px;color:#9CA3AF">${icn('location',14)} ${selectedZone?.name||''}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
-            <span style="color:#6B7280">Internet</span><span style="font-weight:600;color:#059669">${instCost===0?'Gratis':'$'+instCost.toLocaleString('es-CO')}</span>
+          <!-- Installation costs -->
+          <div style="margin-bottom:16px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span style="background:${instCost===0?'#ECFDF5':'#FEF3C7'};color:${instCost===0?'#059669':'#D97706'};font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;white-space:nowrap">${instCost===0?icn('check',14)+' Instalación gratis':icn('wifi',14)+' Instalación $79.990 a $99.990'}</span>
+              ${tvIncluida?`<span style="background:#FEF3C7;color:#D97706;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px">📺 TV $30.000</span>
+              <span style="background:#F3F4F6;color:#6B7280;font-size:11px;font-weight:500;padding:4px 12px;border-radius:999px">Punto extra $10.000</span>
+              <div style="width:100%;font-size:10px;color:#9CA3AF;margin-top:6px">TV Cosmos S.A.S · Pago único, no recurrente</div>`:''}
+            </div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
-            <span style="color:#6B7280">TV</span><span style="font-weight:600">${hasTv?'Incluida':'$'+ (plan.tv_installation_cost||30000).toLocaleString('es-CO')}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
-            <span style="color:#6B7280">TV adicional</span><span style="font-weight:600">$${(plan.additional_tv_point||10000).toLocaleString('es-CO')}</span>
-          </div>
-        </div>
-
-        <!-- Facturación -->
-        <div style="background:#EFF6FF;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#0052CC">
-          📋 Servicio mes vencido · Hoy instalas sin pagar · Facturación del 15 al 18 · Pago hasta el 30
-        </div>
-
-        <!-- Cobertura -->
-        <div style="font-size:12px;color:#059669;margin-bottom:12px">
-          📍 ${selectedZone?.name||''} · GPON disponible · ⏱ Instalación estimada 48 horas hábiles
-        </div>
-
-        <!-- CERE Recommendation (si aplica) -->
-        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#166534">
-          ⭐ Recomendación CERE · Ideal para este cliente · Cubre correctamente su necesidad
-        </div>
-
-        <!-- Botones -->
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" onclick="event.stopPropagation();selectPlan(${idx})" style="flex:1;font-size:15px;padding:14px">Elegir este plan</button>
-          <button class="btn btn-outline" onclick="event.stopPropagation();toggleComparador(${idx})" style="padding:14px;font-size:13px">📊</button>
+          <!-- CTA -->
+          <button class="btn btn-primary" onclick="event.stopPropagation();selectPlan(${idx})" style="font-size:15px;padding:14px;border-radius:12px">Elegir este plan</button>
         </div>
       </div>`;
     }).join('')}</div>
@@ -329,37 +398,47 @@ function renderComparador(display,baseIdx){
       ${fila('','🔵 '+base.name,otros[0]?.name,otros[1]?.name)}
       ${fila('Precio','$'+base.price.toLocaleString('es-CO'),otros[0]?'$'+otros[0].price.toLocaleString('es-CO'):'-',otros[1]?'$'+otros[1].price.toLocaleString('es-CO'):'-')}
       ${fila('Velocidad',base.download_speed+' Mbps',otros[0]?otros[0].download_speed+' Mbps':'-',otros[1]?otros[1].download_speed+' Mbps':'-')}
-      ${fila('TV',hasBaseTv?'✅ Sí':'❌ No',otros[0]?(()=>{try{return JSON.parse(otros[0].benefits||'[]').some(function(b){return b.toLowerCase().includes('tv');})?'✅ Sí':'❌ No'}catch(e){return '❌ No'}})():'-',otros[1]?(()=>{try{return JSON.parse(otros[1].benefits||'[]').some(function(b){return b.toLowerCase().includes('tv');})?'✅ Sí':'❌ No'}catch(e){return '❌ No'}})():'-')}
-      ${fila('Instalación',(base.installation_cost||0)===0?'✅ Gratis':'$'+((base.installation_cost||0)).toLocaleString('es-CO'),otros[0]?((otros[0].installation_cost||0)===0?'✅ Gratis':'$'+((otros[0].installation_cost||0)).toLocaleString('es-CO')):'-',otros[1]?((otros[1].installation_cost||0)===0?'✅ Gratis':'$'+((otros[1].installation_cost||0)).toLocaleString('es-CO')):'-')}
+      ${fila('TV',hasBaseTv?icn('check',14)+' Sí':'❌ No',otros[0]?(()=>{try{return JSON.parse(otros[0].benefits||'[]').some(function(b){return b.toLowerCase().includes('tv');})?icn('check',14)+' Sí':'❌ No'}catch(e){return '❌ No'}})():'-',otros[1]?(()=>{try{return JSON.parse(otros[1].benefits||'[]').some(function(b){return b.toLowerCase().includes('tv');})?icn('check',14)+' Sí':'❌ No'}catch(e){return '❌ No'}})():'-')}
+      ${fila('Instalación',(base.installation_cost||0)===0?icn('check',14)+' Gratis':'$'+((base.installation_cost||0)).toLocaleString('es-CO'),otros[0]?((otros[0].installation_cost||0)===0?icn('check',14)+' Gratis':'$'+((otros[0].installation_cost||0)).toLocaleString('es-CO')):'-',otros[1]?((otros[1].installation_cost||0)===0?icn('check',14)+' Gratis':'$'+((otros[1].installation_cost||0)).toLocaleString('es-CO')):'-')}
     </table>
   </div>`;
 }
 
 // ─── FORM ─────────────────────────────────────────────────────────
+function saveFormData(){
+  formData.name=document.getElementById('f-name')?.value||formData.name||'';
+  formData.phone=document.getElementById('f-phone')?.value||formData.phone||'';
+  formData.doc=document.getElementById('f-doc')?.value||formData.doc||'';
+  formData.email=document.getElementById('f-email')?.value||formData.email||'';
+  formData.address=document.getElementById('f-addr')?.value||formData.address||'';
+}
+function setClientType(t){
+  saveFormData();
+  clientType=t;
+  render();
+}
 function renderForm(){
   if(!selectedPlan)return go('plans');
-  const comm=getComm(selectedPlan.price);
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('plans')">← Planes</button>
+    <button class="btn-ghost mb-4" onclick="go('plans')">${icn('back',14)} Planes</button>
     <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-radius:16px;padding:20px;margin-bottom:24px">
       <p class="font-bold text-lg" style="color:#003DA6">${selectedPlan.name}</p>
       <div class="flex items-center justify-between mt-2">
         <span class="text-sm" style="color:#0052CC">$${(selectedPlan.price||0).toLocaleString('es-CO')}/mes</span>
-        <span class="text-sm success font-semibold">💰 $${comm.toLocaleString('es-CO')}</span>
       </div>
     </div>
     <p class="text-lg mb-4">Datos del cliente</p>
-    <input id="f-name" placeholder="Nombre completo" class="mb-3">
-    <input id="f-phone" placeholder="Teléfono" type="tel" class="mb-3">
-    <div class="grid grid-cols-2 gap-3 mb-3"><input id="f-doc" placeholder="Documento"><input id="f-email" placeholder="Correo"></div>
-    <input id="f-addr" placeholder="Dirección" class="mb-4">
+    <input id="f-name" placeholder="Nombre completo" class="mb-3" value="${formData.name||''}">
+    <input id="f-phone" placeholder="Teléfono" type="tel" class="mb-3" value="${formData.phone||''}">
+    <div class="grid grid-cols-2 gap-3 mb-3"><input id="f-doc" placeholder="Documento" value="${formData.doc||''}"><input id="f-email" placeholder="Correo" value="${formData.email||''}"></div>
+    <input id="f-addr" placeholder="Dirección" class="mb-4" value="${formData.address||''}">
     <p class="text-xs font-semibold" style="margin-bottom:8px">Tipo de cliente</p>
     <div class="grid grid-cols-2 gap-3 mb-6">
-      <div class="check-card ${clientType==='RESIDENTIAL'?'active':''}" onclick="clientType='RESIDENTIAL';render()">
+      <div class="check-card ${clientType==='RESIDENTIAL'?'active':''}" onclick="setClientType('RESIDENTIAL')">
         <div class="check">${clientType==='RESIDENTIAL'?'✓':''}</div>
         <div><p class="text-sm font-medium" style="color:#111827">Hogar</p><p class="text-xs muted">IVA 0%</p></div>
       </div>
-      <div class="check-card ${clientType==='COMMERCIAL'?'active':''}" onclick="clientType='COMMERCIAL';render()">
+      <div class="check-card ${clientType==='COMMERCIAL'?'active':''}" onclick="setClientType('COMMERCIAL')">
         <div class="check">${clientType==='COMMERCIAL'?'✓':''}</div>
         <div><p class="text-sm font-medium" style="color:#111827">Empresa</p><p class="text-xs muted">IVA 19%</p></div>
       </div>
@@ -375,7 +454,7 @@ function saveClient(){
 // ── DOCS ──────────────────────────────────────────────────────────
 function renderDocs(){
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('form')">← Datos</button>
+    <button class="btn-ghost mb-4" onclick="go('form')">${icn('back',14)} Datos</button>
     <p class="text-lg mb-2">Documentos requeridos</p>
     <p class="text-sm mb-6">Confirma los documentos del cliente para continuar</p>
     <div class="check-card ${docData.cc?'active':''}" onclick="docData.cc=!docData.cc;render()">
@@ -393,9 +472,9 @@ function renderDocs(){
 // ── CONFIRM ──────────────────────────────────────────────────────
 function renderConfirm(){
   if(!selectedPlan)return go('plans');
-  const price=selectedPlan.price||0,comm=getComm(price),iva=clientType==='COMMERCIAL'?Math.round(price*0.19):0;
+  const price=selectedPlan.price||0,iva=clientType==='COMMERCIAL'?Math.round(price*0.19):0;
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('docs')">← Documentos</button>
+    <button class="btn-ghost mb-4" onclick="go('docs')">${icn('back',14)} Documentos</button>
     <p class="text-lg mb-4">Confirmar venta</p>
     <div class="card shadow-sm" style="cursor:default;padding:24px">
       <div class="flex justify-between items-start mb-3">
@@ -409,47 +488,47 @@ function renderConfirm(){
         <span class="text-xs muted">Instalación</span><span class="text-xs font-medium" style="text-align:right">2-3 días hábiles</span>
         ${formData.phone?`<span class="text-xs muted">Teléfono</span><span class="text-xs font-medium" style="text-align:right">${formData.phone}</span>`:''}
       </div>
-      <hr class="divider">
-      <div class="flex items-center justify-between">
-        <span class="text-sm success font-semibold">💰 Comisión</span>
-        <span class="text-sm success font-bold">$${comm.toLocaleString('es-CO')}</span>
-      </div>
     </div>
     ${iva>0?`<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-top:12px;font-size:13px;color:#92400E">IVA 19% aplicado: $${iva.toLocaleString('es-CO')}</div>`:''}
-    <button class="btn btn-success mt-6 shadow-md" onclick="submitSale()" style="font-size:17px">✅ Registrar venta</button>
+    <button id="btn-submit-sale" class="btn btn-success mt-6 shadow-md" onclick="submitSale()" style="font-size:17px">${icn('check',14)} Registrar venta</button>
   </div>`;
 }
 
 // ── SUBMIT ───────────────────────────────────────────────────────
+let lastCommissionId=null;
 async function submitSale(){
-  // Intentar API, pero no esperar más de 3 segundos
-  const promesa = API.post('/api/v1/referrals',{fullName:formData.name,phone:formData.phone,email:formData.email,address:formData.address,planId:selectedPlan?.id,source:'SALES_APP'});
-  await Promise.race([promesa, new Promise(function(r){setTimeout(r,3000)})]);
-  userSales++;userComm+=getComm(selectedPlan?.price||0);
-  go('success');
+  const btn=document.getElementById('btn-submit-sale');
+  if(btn){btn.disabled=true;btn.innerHTML='⏳ Registrando...';btn.style.opacity='.6';}
+  const planId=selectedPlan?.id;
+  const planPrice=selectedPlan?.price||0;
+  if(!planId||!formData.name){
+    if(btn){btn.disabled=false;btn.innerHTML=icn('check',14)+' Registrar venta';btn.style.opacity='1';}
+    alert('Faltan datos del plan o cliente');return;
+  }
+  try {
+    const ref = await API.post('/api/v1/referrals',{fullName:formData.name,phone:formData.phone,email:formData.email,address:formData.address,planId,source:'SALES_APP'});
+    if(!ref){if(btn){btn.disabled=false;btn.innerHTML=icn('check',14)+' Registrar venta';btn.style.opacity='1';}alert('Error de conexión');return;}
+    await API.post('/api/v1/commissions/create',{referralId:ref.id,subscriptionId:null,planPrice,planName:selectedPlan?.name,clientName:formData.name,advisorName:userName,advisorId:userId});
+    userSales++;
+    go('success');
+  } catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML=icn('check',14)+' Registrar venta';btn.style.opacity='1';}
+    alert('Error al registrar: '+e.message);
+  }
 }
 function renderSuccess(){
-  const comm=getComm(selectedPlan?.price||0);
   return `<div class="px-5 py-8 text-center animate-fadeUp">
     <div style="font-size:72px;margin-bottom:12px">🎉</div>
-    <p class="text-xl mb-2">¡Un hogar más conectado!</p>
+    <p class="text-xl mb-2">¡Venta registrada!</p>
     <p class="text-sm muted mb-6">${selectedPlan?.name} · ${selectedZone?.name||'Fresno'}</p>
     <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:16px;padding:20px;margin-bottom:24px;text-align:left">
-      <p style="font-size:14px;font-weight:600;color:#059669">Resumen</p>
-      <div style="display:flex;justify-content:space-between;margin-top:8px">
-        <span style="font-size:13px;color:#047857">Cliente:</span><span style="font-size:13px;font-weight:500;color:#047857">${formData.name||'Cliente'}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px">
-        <span style="font-size:13px;color:#047857">Plan:</span><span style="font-size:13px;font-weight:500;color:#047857">${selectedPlan?.name} · $${(selectedPlan?.price||0).toLocaleString('es-CO')}/mes</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px">
-        <span style="font-size:13px;color:#059669;font-weight:600">💰 Comisión:</span><span style="font-size:13px;font-weight:600;color:#059669">$${comm.toLocaleString('es-CO')}</span>
-      </div>
-      <p style="font-size:11px;color:#047857;margin-top:8px">📋 Pendiente: validación de documentos</p>
+      <p style="font-size:14px;font-weight:600;color:#059669">Resumen de venta</p>
+      <div style="display:flex;justify-content:space-between;margin-top:8px"><span style="font-size:13px;color:#047857">Cliente:</span><span style="font-size:13px;font-weight:500;color:#047857">${formData.name||'Cliente'}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:13px;color:#047857">Plan:</span><span style="font-size:13px;font-weight:500;color:#047857">${selectedPlan?.name} · $${(selectedPlan?.price||0).toLocaleString('es-CO')}/mes</span></div>
     </div>
     <div class="grid grid-cols-2 gap-3">
-      <button class="btn btn-primary" onclick="resetAll()" style="padding:16px;font-size:15px">📝 Nueva venta</button>
-      <button class="btn btn-outline" onclick="go('dashboard')" style="padding:16px;font-size:15px">🏠 Ir al inicio</button>
+      <button class="btn btn-primary" onclick="resetAll()" style="padding:16px;font-size:15px">${icn('sales',14)} Nueva venta</button>
+      <button class="btn btn-outline" onclick="go('dashboard')" style="padding:16px;font-size:15px">${icn('home',14)} Ir al inicio</button>
     </div>
   </div>`;
 }
@@ -458,14 +537,16 @@ function resetAll(){selectedPlan=null;selectedZone=null;formData={};docData={};g
 // ── OPPORTUNITY ──────────────────────────────────────────────────
 function renderOpportunity(){
   return `<div class="px-5 py-6 animate-fadeUp">
-    <button class="btn-ghost mb-4" onclick="go('dashboard')">← Volver</button>
+    <button class="btn-ghost mb-4" onclick="go('dashboard')">${icn('back',14)} Volver</button>
     <p class="text-lg mb-2">Registrar oportunidad</p>
     <p class="text-sm muted mb-6">El cliente no compró hoy. ¿Cuál fue el motivo?</p>
     <div class="grid grid-cols-2 gap-2 mb-6">${['Precio','Comparando','Lo pensará','Sin documentos','Sin cobertura','Esperando pago','Hablar con familia','Otro'].map(function(m){return`<div class="card" onclick="selectedReason='${m}';render()" style="text-align:center;padding:14px;border-color:${selectedReason===m?'#0066FF':'#F0F0F0'}">${m}</div>`;}).join('')}</div>
-    <button class="btn btn-success" onclick="resetAll()">✅ Registrar</button>
+    <button class="btn btn-success" onclick="resetAll()">${icn('check',14)} Registrar</button>
   </div>`;
 }
 let selectedReason='';
 </script>
 </body>
 </html>
+   
+  
